@@ -1,0 +1,399 @@
+resources:
+  Dbp\Relay\CabinetBundle\Entity\Group:
+    types: ['https://schema.org/Organization']
+    shortName: 'CabinetGroup'
+    normalizationContext:
+      groups: ['CabinetGroup:output']
+
+    operations:
+      ApiPlatform\Metadata\Get:
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\GroupProvider
+        uriTemplate: '/cabinet/groups/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\GetCollection:
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\GroupProvider
+        uriTemplate: '/cabinet/groups'
+        openapiContext:
+          tags: ['Cabinet']
+
+    properties:
+      identifier:
+        identifier: true
+      name:
+        iri: 'https://schema.org/name'
+      street:
+        iri: 'https://schema.org/streetAddress'
+      locality:
+        iri: 'https://schema.org/addressLocality'
+      postalCode:
+        iri: 'https://schema.org/postalCode'
+      country:
+        iri: 'https://schema.org/addressCountry'
+      accessRights:
+
+  Dbp\Relay\CabinetBundle\Entity\DeliveryStatusChange:
+    types: ['https://schema.org/Status']
+    shortName: 'CabinetDeliveryStatusChange'
+    normalizationContext:
+      groups: ['CabinetDeliveryStatusChange:output']
+
+    operations:
+      ApiPlatform\Metadata\Get:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\DeliveryStatusChangeProvider
+        uriTemplate: '/cabinet/request-status-changes/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\GetCollection:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\DeliveryStatusChangeProvider
+        uriTemplate: '/cabinet/request-status-changes'
+        openapiContext:
+          tags: ['Cabinet']
+
+    properties:
+      identifier:
+        identifier: true
+      dateCreated:
+        iri: 'https://schema.org/dateCreated'
+      requestRecipient:
+      cabinetRequestRecipientIdentifier:
+        iri: 'https://schema.org/identifier'
+      statusType:
+        iri: 'https://schema.org/statusType'
+      cabinetStatus:
+        iri: 'https://schema.org/statusType'
+      description:
+        iri: 'https://schema.org/description'
+      fileFormat:
+        iri: 'https://schema.org/fileFormat'
+      fileContentUrl:
+        iri: 'http://schema.org/contentUrl'
+
+  Dbp\Relay\CabinetBundle\Entity\RequestRecipient:
+    types: ['https://schema.org/Person']
+    shortName: 'CabinetRequestRecipient'
+    normalizationContext:
+      groups: ['CabinetRequestRecipient:output']
+    denormalizationContext:
+      groups: ['CabinetRequestRecipient:input']
+
+    operations:
+
+      ApiPlatform\Metadata\GetCollection:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestRecipientProvider
+        uriTemplate: '/cabinet/request-recipients'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Post:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\RequestRecipientProcessor
+        uriTemplate: '/cabinet/request-recipients'
+        openapiContext:
+          tags: ["Cabinet"]
+          requestBody:
+            content:
+              application/ld+json:
+                schema:
+                  type: "object"
+                  example:
+                    cabinetRequestIdentifier: "4d553985-d44f-404f-acf3-cd0eac7ae9c2"
+                    givenName: "Max"
+                    familyName: "Mustermann"
+                    addressCountry: "AT"
+                    postalCode: "8010"
+                    addressLocality: "Graz"
+                    streetAddress: "Am Grund"
+                    buildingNumber: "1"
+                    birthDate: "1980-01-01"
+
+      ApiPlatform\Metadata\Get:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestRecipientProvider
+        uriTemplate: '/cabinet/request-recipients/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Delete:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestRecipientProvider
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\RequestRecipientProcessor
+        uriTemplate: '/cabinet/request-recipients/{identifier}'
+        openapiContext:
+          tags: ['Cabinet']
+
+    properties:
+      identifier:
+        identifier: true
+      dateCreated:
+        iri: 'https://schema.org/dateCreated'
+      request:
+      cabinetRequestIdentifier:
+        iri: 'https://schema.org/identifier'
+      givenName:
+        iri: 'https://schema.org/givenName'
+      familyName:
+        iri: 'https://schema.org/familyName'
+      addressCountry:
+        iri: 'https://schema.org/addressCountry'
+      postalCode:
+        iri: 'https://schema.org/postalCode'
+      addressLocality:
+        iri: 'https://schema.org/addressLocality'
+      streetAddress:
+        iri: 'https://schema.org/streetAddress'
+      buildingNumber:
+      birthDate:
+        iri: 'http://schema.org/birthDate'
+      dualDeliveryID:
+      appDeliveryID:
+      deliveryEndDate:
+        iri: 'https://schema.org/endDate'
+      personIdentifier:
+        iri: 'https://schema.org/identifier'
+      postalDeliverable:
+      electronicallyDeliverable:
+      lastStatusChange:
+      statusChanges:
+
+  Dbp\Relay\CabinetBundle\Entity\PreAddressingRequest:
+    types: ['https://schema.org/Action']
+    shortName: 'CabinetPreAddressingRequest'
+    normalizationContext:
+      groups: ['CabinetPreAddressingRequest:output']
+    denormalizationContext:
+      groups: ["CabinetPreAddressingRequest:input"]
+
+    operations:
+      ApiPlatform\Metadata\Get:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\PreAddressingRequestProvider
+        uriTemplate: '/cabinet/pre-addressing-requests/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\GetCollection:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\PreAddressingRequestProvider
+        uriTemplate: '/cabinet/pre-addressing-requests'
+        openapiContext:
+          tags: ['Cabinet']
+
+      ApiPlatform\Metadata\Post:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\PreAddressingRequestProcessor
+        uriTemplate: '/cabinet/pre-addressing-requests'
+        openapiContext:
+          tags: ['Cabinet']
+          requestBody:
+            content:
+              application/ld+json:
+                schema:
+                  type: "object"
+                  example:
+                    givenName: "Max"
+                    familyName: "Mustermann"
+                    birthDate: "1980-01-01"
+
+    properties:
+      identifier:
+        identifier: true
+      givenName:
+        iri: 'https://schema.org/givenName'
+      familyName:
+        iri: 'https://schema.org/familyName'
+      birthDate:
+        iri: 'http://schema.org/birthDate'
+
+  Dbp\Relay\CabinetBundle\Entity\RequestFile:
+    types: ['https://schema.org/DigitalDocument']
+    shortName: 'CabinetRequestFile'
+    normalizationContext:
+      groups: ['CabinetRequestFile:output', 'CabinetRequest:output']
+    denormalizationContext:
+      groups: ["CabinetRequestFile:input"]
+
+    operations:
+      ApiPlatform\Metadata\Get:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestFileProvider
+        uriTemplate: '/cabinet/request-files/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Delete:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestFileProvider
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\RequestFileProcessor
+        uriTemplate: '/cabinet/request-files/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Post:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        controller: Dbp\Relay\CabinetBundle\ApiPlatform\CreateRequestFileAction
+        uriTemplate: "/cabinet/request-files"
+        method: 'POST'
+        deserialize: false
+        openapiContext:
+          tags: ["Cabinet"]
+          responses:
+            415:
+              description: "Unsupported Media Type - Only PDF files can be added!"
+          requestBody:
+            content:
+              multipart/form-data:
+                schema:
+                  type: "object"
+                  required: ["file", "cabinetRequestIdentifier"]
+                  properties:
+                    cabinetRequestIdentifier:
+                      description: "ID of the request"
+                      type: "string"
+                      example: "4d553985-d44f-404f-acf3-cd0eac7ae9c2"
+                    file:
+                      type: "string"
+                      format: "binary"
+
+    properties:
+      identifier:
+        identifier: true
+      dateCreated:
+        iri: 'https://schema.org/dateCreated'
+      request:
+      cabinetRequestIdentifier:
+        iri: "https://schema.org/identifier"
+      name:
+        iri: 'https://schema.org/name'
+      contentUrl:
+        iri: 'http://schema.org/contentUrl'
+      fileFormat:
+        iri: 'https://schema.org/fileFormat'
+      contentSize:
+        iri: 'https://schema.org/contentSize'
+
+  Dbp\Relay\CabinetBundle\Entity\Request:
+    types: ['https://schema.org/Action']
+    shortName: 'CabinetRequest'
+    normalizationContext:
+      groups: ['CabinetRequest:output']
+    denormalizationContext:
+      groups: ["CabinetRequest:input"]
+
+    operations:
+      ApiPlatform\Metadata\Get:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProvider
+        uriTemplate: '/cabinet/requests/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Put:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProvider
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProcessor
+        uriTemplate: '/cabinet/requests/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Delete:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProvider
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProcessor
+        uriTemplate: '/cabinet/requests/{identifier}'
+        openapiContext:
+          tags: ["Cabinet"]
+
+      ApiPlatform\Metadata\Post:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        processor: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProcessor
+        uriTemplate: "/cabinet/requests"
+        openapiContext:
+          tags: ["Cabinet"]
+          requestBody:
+            content:
+              application/ld+json:
+                schema:
+                  type: "object"
+                  example:
+                    name: "Aussendung 42"
+                    senderFullName: "Max Mustermann"
+                    senderOrganizationName: "Studienservice TU Graz"
+                    senderAddressCountry: "AT"
+                    senderPostalCode: "8010"
+                    senderAddressLocality: "Graz"
+                    senderStreetAddress: "Am Grund"
+                    senderBuildingNumber: "1"
+                    groupId: "11072"
+                    referenceNumber: "GZ-2023/01-13"
+
+      ApiPlatform\Metadata\GetCollection:
+        security: "is_granted('IS_AUTHENTICATED_FULLY')"
+        provider: Dbp\Relay\CabinetBundle\ApiPlatform\RequestProvider
+        uriTemplate: '/cabinet/requests'
+        openapiContext:
+          tags: ['Cabinet']
+          parameters:
+            - name: "groupId"
+              in: "query"
+              description: 'The group ID for which to fetch requests'
+              required: true
+              type: "string"
+
+      post_submit:
+        security: 'is_granted("IS_AUTHENTICATED_FULLY")'
+        class: ApiPlatform\Metadata\Post
+        method: POST
+        uriTemplate: "/cabinet/requests/{identifier}/submit"
+        controller: Dbp\Relay\CabinetBundle\ApiPlatform\PostSubmitRequest
+        read: false
+        write: false
+        deserialize: false
+        validate: false
+        openapiContext:
+          summary: "Submits the request."
+          tags: ["Cabinet"]
+          parameters:
+            - name: "identifier"
+              in: "path"
+              description: 'ID of the request'
+              required: true
+              type: "string"
+              example: "4d553985-d44f-404f-acf3-cd0eac7ae9c2"
+          requestBody:
+            content:
+              application/ld+json:
+                schema:
+                  type: "object"
+                  example: '{}'
+
+    properties:
+      identifier:
+        identifier: true
+      name:
+        iri: 'https://schema.org/name'
+      dateCreated:
+        iri: 'https://schema.org/dateCreated'
+      personIdentifier:
+        iri: 'https://schema.org/identifier'
+      senderFullName:
+        iri: 'https://schema.org/alternateName'
+      senderOrganizationName:
+        iri: 'https://schema.org/alternateName'
+      dateSubmitted:
+      senderAddressCountry:
+        iri: 'https://schema.org/addressCountry'
+      senderPostalCode:
+        iri: 'https://schema.org/postalCode'
+      senderAddressLocality:
+        iri: 'https://schema.org/addressLocality'
+      senderStreetAddress:
+        iri: 'https://schema.org/streetAddress'
+      senderBuildingNumber:
+      groupId:
+      referenceNumber:

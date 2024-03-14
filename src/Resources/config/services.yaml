@@ -1,0 +1,54 @@
+services:
+  Dbp\Relay\CabinetBundle\ApiPlatform\:
+    resource: '../../ApiPlatform'
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Service\CabinetService:
+    autowire: true
+    autoconfigure: true
+    arguments:
+      $em: '@doctrine.orm.dbp_relay_cabinet_bundle_entity_manager'
+
+  Dbp\Relay\CabinetBundle\Service\BlobService:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Service\GroupService:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Command\:
+    resource: '../../Command'
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Authorization\AuthorizationService:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Authorization\EntityNormalizer:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Authorization\HealthCheck:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Service\DualDeliveryService:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\MessageHandler\RequestSubmissionHandler:
+    public: false
+    autowire: true
+    autoconfigure: true
+    tags: ['messenger.message_handler']
+
+  Dbp\Relay\CabinetBundle\Cron\StatusCronJob:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\Service\HealthCheck:
+    autowire: true
+    autoconfigure: true
