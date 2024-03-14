@@ -124,10 +124,6 @@ class CabinetService implements LoggerAwareInterface
 
     public function setConfig(array $config)
     {
-        $this->certPassword = $config['cert_password'] ?? '';
-        $this->cert = $config['cert'] ?? '';
-        $this->url = $config['service_url'];
-        $this->fileStorage = $config['file_storage'];
     }
 
     private function getCurrentPerson(): Person

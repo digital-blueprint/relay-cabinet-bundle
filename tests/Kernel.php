@@ -55,9 +55,6 @@ class Kernel extends BaseKernel
 
         $container->extension('dbp_relay_cabinet', [
             'database_url' => 'mysql://dummy:dummy@dummy',
-            'service_url' => 'https:/foo.bar',
-            'sender_profile' => 'foobar',
-            'sender_profile_version' => '42.42',
         ]);
 
         $container->extension('api_platform', [
