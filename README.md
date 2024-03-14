@@ -2,7 +2,7 @@
 
 [GitHub](https://github.com/digital-blueprint/relay-cabinet-bundle) |
 [Packagist](https://packagist.org/packages/dbp/relay-cabinet-bundle) |
-[Frontend Application](https://github.com/digital-blueprint/cabinet-ap) |
+[Frontend Application](https://github.com/digital-blueprint/cabinet-app) |
 [Changelog](https://github.com/digital-blueprint/relay-cabinet-bundle/blob/main/CHANGELOG.md)
 
 [![Test](https://github.com/digital-blueprint/relay-cabinet-bundle/actions/workflows/test.yml/badge.svg)](https://github.com/digital-blueprint/relay-cabinet-bundle/actions/workflows/test.yml)
