@@ -11,18 +11,12 @@ use Dbp\Relay\CoreBundle\HealthCheck\CheckResult;
 class HealthCheck implements CheckInterface
 {
     /**
-     * @var DualDeliveryService
-     */
-    private $dd;
-
-    /**
      * @var CabinetService
      */
     private $cabinet;
 
-    public function __construct(DualDeliveryService $dd, CabinetService $cabinet)
+    public function __construct(CabinetService $cabinet)
     {
-        $this->dd = $dd;
         $this->cabinet = $cabinet;
     }
 

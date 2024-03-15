@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\ApiPlatform;
 
-use Dbp\Relay\CoreBundle\Rest\AbstractDataProvider;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Entity\Group;
 use Dbp\Relay\CabinetBundle\Service\GroupService;
+use Dbp\Relay\CoreBundle\Rest\AbstractDataProvider;
 
 /**
  * @extends AbstractDataProvider<Group>

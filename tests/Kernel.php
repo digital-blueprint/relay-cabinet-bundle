@@ -6,8 +6,8 @@ namespace Dbp\Relay\CabinetBundle\Tests;
 
 use ApiPlatform\Symfony\Bundle\ApiPlatformBundle;
 use Dbp\Relay\BasePersonBundle\DbpRelayBasePersonBundle;
-use Dbp\Relay\CoreBundle\DbpRelayCoreBundle;
 use Dbp\Relay\CabinetBundle\DbpRelayCabinetBundle;
+use Dbp\Relay\CoreBundle\DbpRelayCoreBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
 use Doctrine\Bundle\MigrationsBundle\DoctrineMigrationsBundle;
 use Nelmio\CorsBundle\NelmioCorsBundle;

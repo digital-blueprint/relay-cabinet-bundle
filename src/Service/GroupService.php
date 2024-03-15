@@ -5,15 +5,15 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\Service;
 
 use ApiPlatform\Api\IriConverterInterface;
+use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
+use Dbp\Relay\CabinetBundle\DependencyInjection\Configuration;
+use Dbp\Relay\CabinetBundle\Entity\Group;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Dbp\Relay\CoreBundle\LocalData\LocalData;
 use Dbp\Relay\CoreBundle\LocalData\LocalDataAwareInterface;
 use Dbp\Relay\CoreBundle\Rest\Entity\NamedEntityInterface;
 use Dbp\Relay\CoreBundle\Rest\Query\Pagination\Pagination;
 use Dbp\Relay\CoreBundle\Rest\Query\Parameters;
-use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
-use Dbp\Relay\CabinetBundle\DependencyInjection\Configuration;
-use Dbp\Relay\CabinetBundle\Entity\Group;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Response;

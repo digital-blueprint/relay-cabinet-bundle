@@ -35,10 +35,6 @@ services:
     autowire: true
     autoconfigure: true
 
-  Dbp\Relay\CabinetBundle\Service\DualDeliveryService:
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\MessageHandler\RequestSubmissionHandler:
     public: false
     autowire: true

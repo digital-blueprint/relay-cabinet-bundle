@@ -6,16 +6,12 @@ namespace Dbp\Relay\CabinetBundle\Command;
 
 use Dbp\Relay\CabinetBundle\Service\CabinetService;
 use Symfony\Component\Console\Command\Command;
-use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
 
 class DebugCommand extends Command
 {
-    /**
-     * @var CabinetService
-     */
-//    private $cabinetService;
+    private CabinetService $cabinetService;
 
     public function __construct(CabinetService $cabinetService)
     {

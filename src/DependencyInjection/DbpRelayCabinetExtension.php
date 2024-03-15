@@ -4,11 +4,10 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\DependencyInjection;
 
-use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Message\RequestSubmissionMessage;
-use Dbp\Relay\CabinetBundle\Service\DualDeliveryService;
 use Dbp\Relay\CabinetBundle\Service\GroupService;
+use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 use Symfony\Component\DependencyInjection\Extension\PrependExtensionInterface;

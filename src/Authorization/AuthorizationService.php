@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Authorization;
 
-use Dbp\Relay\CoreBundle\Authorization\AbstractAuthorizationService;
-use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Dbp\Relay\CabinetBundle\DependencyInjection\Configuration;
 use Dbp\Relay\CabinetBundle\Entity\Group;
+use Dbp\Relay\CoreBundle\Authorization\AbstractAuthorizationService;
+use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuthorizationService extends AbstractAuthorizationService

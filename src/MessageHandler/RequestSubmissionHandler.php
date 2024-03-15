@@ -18,6 +18,6 @@ class RequestSubmissionHandler
 
     public function __invoke(RequestSubmissionMessage $message)
     {
-        $this->api->handleRequestSubmissionMessage($message);
+        //        $this->api->handleRequestSubmissionMessage($message);
     }
 }
