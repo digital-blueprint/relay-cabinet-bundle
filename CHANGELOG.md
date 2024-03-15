@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.4
+
+- Fix linting errors
+
 ## 0.0.3
 
 - Fix tests
