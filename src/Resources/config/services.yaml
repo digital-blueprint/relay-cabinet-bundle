@@ -48,3 +48,8 @@ services:
   Dbp\Relay\CabinetBundle\Service\HealthCheck:
     autowire: true
     autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\TypesenseApi\:
+    resource: '../../TypesenseApi'
+    autowire: true
+    autoconfigure: true

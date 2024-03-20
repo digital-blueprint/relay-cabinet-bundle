@@ -1,0 +1,3 @@
+typesense_api:
+  resource: ../../TypesenseApi/
+  type: annotation
