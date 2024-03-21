@@ -42,6 +42,9 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
         $definition = $container->getDefinition('Dbp\Relay\CabinetBundle\Service\CabinetService');
         $definition->addMethodCall('setConfig', [$mergedConfig]);
 
+        $definition = $container->getDefinition('Dbp\Relay\CabinetBundle\Service\TypesenseService');
+        $definition->addMethodCall('setConfig', [$mergedConfig]);
+
         $definition = $container->getDefinition(AuthorizationService::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
 
