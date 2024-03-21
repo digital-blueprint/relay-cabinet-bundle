@@ -4,12 +4,14 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Service;
 
-use Dbp\Relay\BlobLibrary\Api\BlobApi;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class TypesenseService implements LoggerAwareInterface
@@ -18,14 +20,8 @@ class TypesenseService implements LoggerAwareInterface
 
     private HttpClientInterface $client;
 
-    /**
-     * @var string
-     */
     private string $typesenseApiKey;
 
-    /**
-     * @var string
-     */
     private string $typesenseBaseUrl;
 
     public function __construct(HttpClientInterface $client)
@@ -42,16 +38,14 @@ class TypesenseService implements LoggerAwareInterface
     }
 
     /**
-     * @param string $path
-     * @param Request $request
-     * @return Response
-     * @throws \Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface
-     * @throws \Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface
+     * @throws ClientExceptionInterface
+     * @throws RedirectionExceptionInterface
+     * @throws ServerExceptionInterface
+     * @throws TransportExceptionInterface
      */
     public function doProxyRequest(string $path, Request $request): Response
     {
+        // TODO: Check bearer token
         // TODO: Check permissions
 
         $url = $this->typesenseBaseUrl.'/'.$path;
