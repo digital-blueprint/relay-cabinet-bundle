@@ -47,6 +47,7 @@ class TypesenseService implements LoggerAwareInterface
     {
         // TODO: Check bearer token
         // TODO: Check permissions
+        return new Response('Try later', Response::HTTP_UNAUTHORIZED);
 
         $url = $this->typesenseBaseUrl.'/'.$path;
         $method = $request->getMethod();
