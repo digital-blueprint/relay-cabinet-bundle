@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.5
+
+- Add Typesense settings and service
+
 ## 0.0.4
 
 - Fix linting errors
