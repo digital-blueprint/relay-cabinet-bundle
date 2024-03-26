@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Service;
 
+use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -20,13 +21,19 @@ class TypesenseService implements LoggerAwareInterface
 
     private HttpClientInterface $client;
 
+    /**
+     * @var AuthorizationService
+     */
+    private $auth;
+
     private string $typesenseApiKey;
 
     private string $typesenseBaseUrl;
 
-    public function __construct(HttpClientInterface $client)
+    public function __construct(HttpClientInterface $client, AuthorizationService $auth)
     {
         $this->client = $client;
+        $this->auth = $auth;
         $this->typesenseBaseUrl = '';
         $this->typesenseApiKey = '';
     }
@@ -45,9 +52,12 @@ class TypesenseService implements LoggerAwareInterface
      */
     public function doProxyRequest(string $path, Request $request): Response
     {
-        // TODO: Check bearer token
+        // Do basic authorization checks for the provided bearer token
         // TODO: Check permissions
-        return new Response('Try later', Response::HTTP_UNAUTHORIZED);
+        $this->auth->checkCanUse();
+
+        // return new Response('Try later', Response::HTTP_UNAUTHORIZED);
+        // var_dump($request->get('x-typesense-api-key'));
 
         $url = $this->typesenseBaseUrl.'/'.$path;
         $method = $request->getMethod();
