@@ -7,7 +7,7 @@
 #TYPESENSE_HOST="http://127.0.0.1:8108"
 TYPESENSE_HOST="http://typesense.localhost:8000"
 TYPESENSE_API_KEY="xyz"
-TYPESENSE_COLLECTION="students"
+TYPESENSE_COLLECTION="cabinet-students"
 
 printf "Deleting the students collection...\n\n"
 
@@ -21,7 +21,7 @@ curl -X POST "${TYPESENSE_HOST}/collections" \
     -H 'Content-Type: application/json' \
     -H "X-TYPESENSE-API-KEY: ${TYPESENSE_API_KEY}" \
     -d '{
-      "name": "students",
+      "name": "cabinet-students",
       "fields": [
         {"name": "student_id", "type": "string"},
         {"name": "name", "type": "string"},
