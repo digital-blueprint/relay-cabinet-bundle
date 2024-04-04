@@ -71,7 +71,13 @@ class TypesenseService implements LoggerAwareInterface
                 'body' => $request->getContent(),
             ]);
 
-            return new Response($response->getContent(), $response->getStatusCode(), $response->getHeaders());
+            // We must not send all headers back to the client!
+            // The request will be broken if we do, and we will get a "Network Error" in the browser
+            $headers = [
+                'Content-Type' => $response->getHeaders()['content-type'],
+            ];
+
+            return new Response($response->getContent(), $response->getStatusCode(), $headers);
         } catch (\Exception $e) {
             return new Response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
