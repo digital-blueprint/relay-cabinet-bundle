@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.6
+
+- Allow Typesense proxy to relay requests to the JS Typesense library in the frontend successfully
+
 ## 0.0.5
 
 - Add Typesense settings and service
