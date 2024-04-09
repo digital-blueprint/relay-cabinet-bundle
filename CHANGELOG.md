@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.7
+
+- Add authentication check for the Typesense proxy
+
 ## 0.0.6
 
 - Allow Typesense proxy to relay requests to the JS Typesense library in the frontend successfully

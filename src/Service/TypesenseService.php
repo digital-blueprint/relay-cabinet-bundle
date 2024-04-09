@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\Service;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
+use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
@@ -52,6 +53,10 @@ class TypesenseService implements LoggerAwareInterface
      */
     public function doProxyRequest(string $path, Request $request): Response
     {
+        if (!$this->auth->isAuthenticated()) {
+            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+        }
+
         // Do basic authorization checks for the provided bearer token
         // TODO: Check permissions
         $this->auth->checkCanUse();
