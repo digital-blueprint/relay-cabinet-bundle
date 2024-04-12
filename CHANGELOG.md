@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.8
+
+- Allow exceptions from e.g. server errors to be routed to the client in the Typesense proxy
+
 ## 0.0.7
 
 - Add authentication check for the Typesense proxy
