@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.0.9
+
+- Add support for api-platform 3.2
+
 ## 0.0.8
 
 - Allow exceptions from e.g. server errors to be routed to the client in the Typesense proxy
