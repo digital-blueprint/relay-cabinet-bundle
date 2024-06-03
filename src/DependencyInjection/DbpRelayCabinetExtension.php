@@ -79,7 +79,7 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
                         'connection' => 'dbp_relay_cabinet_bundle',
                         'mappings' => [
                             'dbp_relay_cabinet' => [
-                                'type' => 'annotation',
+                                'type' => 'attribute',
                                 'dir' => __DIR__.'/../Entity',
                                 'prefix' => 'Dbp\Relay\CabinetBundle\Entity',
                             ],

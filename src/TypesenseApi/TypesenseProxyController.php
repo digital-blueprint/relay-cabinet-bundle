@@ -19,9 +19,7 @@ class TypesenseProxyController extends AbstractController
         $this->typesenseService = $typesenseService;
     }
 
-    /**
-     * @Route("/cabinet/typesense/{path}", name="typesense_proxy", requirements={"path" = ".+"})
-     */
+    #[Route(path: '/cabinet/typesense/{path}', name: 'typesense_proxy', requirements: ['path' => '.+'])]
     public function proxy(Request $request, string $path): Response
     {
         return $this->typesenseService->doProxyRequest($path, $request);
