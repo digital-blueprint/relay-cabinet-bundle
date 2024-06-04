@@ -23,6 +23,7 @@ curl -X POST "${TYPESENSE_HOST}/collections" \
     -d '{
       "name": "cabinet-files",
       "fields": [
+        {"name": "name", "type": "string"},
         {"name": "filename", "type": "string"},
         {"name": "filetype", "type": "string"},
         {"name": "filesize", "type": "int32"}

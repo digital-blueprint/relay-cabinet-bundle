@@ -22,6 +22,7 @@ if ($file) {
         $filesize = generateFileSize();
 
         $jsonObject = [
+            'name' => $filename,
             'filetype' => $filetype,
             'filename' => $filename,
             'filesize' => $filesize,
