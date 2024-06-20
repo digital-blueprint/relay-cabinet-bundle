@@ -13,6 +13,14 @@ if [ -z "$TYPESENSE_API_KEY" ]; then
   exit 1
 fi
 
+## Generate search-only API key
+#printf "Creating search-only API key for ${TYPESENSE_COLLECTION} collection...\n\n"
+#curl "${TYPESENSE_HOST}/keys" \
+#    -X POST \
+#    -H "X-TYPESENSE-API-KEY: ${TYPESENSE_API_KEY}" \
+#    -H 'Content-Type: application/json' \
+#    -d '{"description":"Search-only companies key.","actions": ["documents:search"], "collections": ["cabinet-documents"]}'
+
 printf "Deleting the documents collection...\n\n"
 
 curl -X DELETE "${TYPESENSE_HOST}/collections/${TYPESENSE_COLLECTION}" \
