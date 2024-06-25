@@ -22,6 +22,10 @@ services:
     autowire: true
     autoconfigure: true
 
+  Dbp\Relay\CabinetBundle\Service\ConfigurationService:
+    autowire: true
+    autoconfigure: true
+
   Dbp\Relay\CabinetBundle\Command\:
     resource: '../../Command'
     autowire: true
