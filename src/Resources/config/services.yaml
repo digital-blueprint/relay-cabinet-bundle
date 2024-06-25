@@ -1,9 +1,4 @@
 services:
-  Dbp\Relay\CabinetBundle\ApiPlatform\:
-    resource: '../../ApiPlatform'
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\Service\CabinetService:
     autowire: true
     autoconfigure: true
@@ -15,10 +10,6 @@ services:
     autoconfigure: true
 
   Dbp\Relay\CabinetBundle\Service\TypesenseService:
-    autowire: true
-    autoconfigure: true
-
-  Dbp\Relay\CabinetBundle\Service\GroupService:
     autowire: true
     autoconfigure: true
 
@@ -35,21 +26,7 @@ services:
     autowire: true
     autoconfigure: true
 
-  Dbp\Relay\CabinetBundle\Authorization\EntityNormalizer:
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\Authorization\HealthCheck:
-    autowire: true
-    autoconfigure: true
-
-  Dbp\Relay\CabinetBundle\MessageHandler\RequestSubmissionHandler:
-    public: false
-    autowire: true
-    autoconfigure: true
-    tags: ['messenger.message_handler']
-
-  Dbp\Relay\CabinetBundle\Cron\StatusCronJob:
     autowire: true
     autoconfigure: true
 

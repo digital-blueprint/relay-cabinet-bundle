@@ -5,9 +5,7 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\DependencyInjection;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
-use Dbp\Relay\CabinetBundle\Message\RequestSubmissionMessage;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
-use Dbp\Relay\CabinetBundle\Service\GroupService;
 use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -46,16 +44,12 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
         $definition = $container->getDefinition(AuthorizationService::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
 
-        $definition = $container->getDefinition(GroupService::class);
-        $definition->addMethodCall('setConfig', [$mergedConfig[Configuration::GROUP_NODE] ?? []]);
-
         $definition = $container->getDefinition(ConfigurationService::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
     }
 
     public function prepend(ContainerBuilder $container): void
     {
-        $this->addQueueMessageClass($container, RequestSubmissionMessage::class);
         $configs = $container->getExtensionConfig($this->getAlias());
         $config = $this->processConfiguration(new Configuration(), $configs);
 

@@ -9,26 +9,14 @@ use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
 use Dbp\Relay\CoreBundle\TestUtils\UserAuthTrait;
 // use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 
 class ApiTest extends ApiTestCase
 {
     use UserAuthTrait;
 
-    /**
-     * @throws TransportExceptionInterface
-     */
-    public function testGetGroupsUnauthenticated()
+    public function test()
     {
-        $this->testRequestUnauthenticated('/cabinet/groups');
-    }
-
-    /**
-     * @throws TransportExceptionInterface
-     */
-    public function testGetGroupUnauthenticated()
-    {
-        $this->testRequestUnauthenticated('/cabinet/groups/1');
+        $this->assertTrue(true);
     }
 
     //    public function testGetGroupAuthenticated()
@@ -40,18 +28,6 @@ class ApiTest extends ApiTestCase
     //    {
     //        $this->testRequestAuthenticated('/cabinet/groups');
     //    }
-
-    /**
-     * @throws TransportExceptionInterface
-     */
-    private function testRequestUnauthenticated(string $url)
-    {
-        $client = self::createClient();
-
-        $response = $client->request('GET', $url);
-
-        $this->assertEquals(Response::HTTP_UNAUTHORIZED, $response->getStatusCode());
-    }
 
     //    private function testRequestAuthenticated(string $url)
     //    {
