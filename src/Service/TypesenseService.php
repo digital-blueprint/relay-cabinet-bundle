@@ -27,22 +27,13 @@ class TypesenseService implements LoggerAwareInterface
      */
     private $auth;
 
-    private string $typesenseApiKey;
+    private ConfigurationService $config;
 
-    private string $typesenseBaseUrl;
-
-    public function __construct(HttpClientInterface $client, AuthorizationService $auth)
+    public function __construct(HttpClientInterface $client, AuthorizationService $auth, ConfigurationService $config)
     {
         $this->client = $client;
         $this->auth = $auth;
-        $this->typesenseBaseUrl = '';
-        $this->typesenseApiKey = '';
-    }
-
-    public function setConfig(array $config): void
-    {
-        $this->typesenseBaseUrl = $config['typesense_base_url'] ?? '';
-        $this->typesenseApiKey = $config['typesense_api_key'] ?? '';
+        $this->config = $config;
     }
 
     /**
@@ -64,14 +55,14 @@ class TypesenseService implements LoggerAwareInterface
         // return new Response('Try later', Response::HTTP_UNAUTHORIZED);
         // var_dump($request->get('x-typesense-api-key'));
 
-        $url = $this->typesenseBaseUrl.'/'.$path;
+        $url = $this->config->getTypesenseBaseUrl().'/'.$path;
         $method = $request->getMethod();
 
         // Forward the request to Typesense server and return the response
         try {
             $response = $this->client->request($method, $url, [
                 'headers' => [
-                    'X-TYPESENSE-API-KEY' => $this->typesenseApiKey,
+                    'X-TYPESENSE-API-KEY' => $this->config->getTypesenseApiKey(),
                 ],
                 'body' => $request->getContent(),
             ]);
