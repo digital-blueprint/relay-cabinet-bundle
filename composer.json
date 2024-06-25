@@ -6,30 +6,31 @@
         "php": ">=8.1",
         "ext-dom": "*",
         "ext-json": "*",
+        "ext-mbstring": "*",
         "ext-simplexml": "*",
         "ext-soap": "*",
-        "ext-mbstring": "*",
         "api-platform/core": "^2.7.11 || ^3.2",
         "dbp/relay-base-person-bundle": "^0.2.26",
         "dbp/relay-blob-library": "^0.2.0",
         "dbp/relay-core-bundle": "^0.1.153",
-        "symfony/framework-bundle": "^5.4.30 || ^6.4",
-        "doctrine/orm": "^2.18",
-        "doctrine/doctrine-migrations-bundle": "^3.3",
-        "doctrine/dbal": "^3.8",
         "doctrine/collections": "^1.8 || ^2",
+        "doctrine/dbal": "^3.8",
+        "doctrine/doctrine-migrations-bundle": "^3.3",
         "doctrine/migrations": "^3.5",
-        "symfony/uid": "^5.4 || ^6.4",
-        "symfony/validator": "^5.4 || ^6.4",
-        "symfony/routing": "^5.4 || ^6.4",
-        "symfony/messenger": "^5.4 || ^6.4",
-        "symfony/console": "^5.4 || ^6.4",
+        "doctrine/orm": "^2.18",
+        "psr/log": "^1.1.4 || ^2.0 || ^3.0",
         "symfony/config": "^5.4 || ^6.4",
-        "symfony/http-client": "^5.4 || ^6.4",
+        "symfony/console": "^5.4 || ^6.4",
+        "symfony/dependency-injection": "^5.4 || ^6.4",
+        "symfony/framework-bundle": "^5.4.30 || ^6.4",
+        "symfony/http-client": "^6.4",
         "symfony/http-foundation": "^5.4 || ^6.4",
         "symfony/http-kernel": "^5.4 || ^6.4",
-        "symfony/dependency-injection": "^5.4 || ^6.4",
-        "psr/log": "^1.1.4 || ^2.0 || ^3.0"
+        "symfony/messenger": "^5.4 || ^6.4",
+        "symfony/routing": "^5.4 || ^6.4",
+        "symfony/uid": "^5.4 || ^6.4",
+        "symfony/validator": "^5.4 || ^6.4",
+        "typesense/typesense-php": "^4.9"
     },
     "require-dev": {
         "friendsofphp/php-cs-fixer": "^3.50",
@@ -59,7 +60,8 @@
             "php": "8.1"
         },
         "allow-plugins": {
-            "composer/package-versions-deprecated": false
+            "composer/package-versions-deprecated": false,
+            "php-http/discovery": false
         }
     },
     "scripts": {

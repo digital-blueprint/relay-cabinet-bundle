@@ -18,6 +18,10 @@ services:
     autowire: true
     autoconfigure: true
 
+  Dbp\Relay\CabinetBundle\Command\DebugCommand:
+    autowire: true
+    autoconfigure: true
+
   Dbp\Relay\CabinetBundle\Authorization\AuthorizationService:
     autowire: true
     autoconfigure: true
@@ -32,5 +36,9 @@ services:
 
   Dbp\Relay\CabinetBundle\TypesenseApi\:
     resource: '../../TypesenseApi'
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex:
     autowire: true
     autoconfigure: true

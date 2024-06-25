@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\TypesenseApi;
 
-use Dbp\Relay\CabinetBundle\TypesenseApi\TypesenseService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;

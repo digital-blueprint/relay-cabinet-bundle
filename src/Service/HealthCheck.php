@@ -4,20 +4,20 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Service;
 
+use Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex;
 use Dbp\Relay\CoreBundle\HealthCheck\CheckInterface;
 use Dbp\Relay\CoreBundle\HealthCheck\CheckOptions;
 use Dbp\Relay\CoreBundle\HealthCheck\CheckResult;
 
 class HealthCheck implements CheckInterface
 {
-    /**
-     * @var CabinetService
-     */
-    private $cabinet;
+    private CabinetService $cabinet;
+    private SearchIndex $searchIndex;
 
-    public function __construct(CabinetService $cabinet)
+    public function __construct(CabinetService $cabinet, SearchIndex $searchIndex)
     {
         $this->cabinet = $cabinet;
+        $this->searchIndex = $searchIndex;
     }
 
     public function getName(): string
@@ -25,12 +25,11 @@ class HealthCheck implements CheckInterface
         return 'cabinet';
     }
 
-    private function checkDbConnection(): CheckResult
+    private function checkMethod(string $description, callable $func): CheckResult
     {
-        $result = new CheckResult('Check if we can connect to the DB');
-
+        $result = new CheckResult($description);
         try {
-            $this->cabinet->checkConnection();
+            $func();
         } catch (\Throwable $e) {
             $result->set(CheckResult::STATUS_FAILURE, $e->getMessage(), ['exception' => $e]);
 
@@ -43,6 +42,9 @@ class HealthCheck implements CheckInterface
 
     public function check(CheckOptions $options): array
     {
-        return [$this->checkDbConnection()];
+        return [
+            $this->checkMethod('Check if we can connect to the DB', [$this->cabinet, 'checkConnection']),
+            $this->checkMethod('Check if we can connect to Typesense', [$this->searchIndex, 'checkConnection']),
+        ];
     }
 }
