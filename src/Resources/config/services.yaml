@@ -42,3 +42,10 @@ services:
   Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex:
     autowire: true
     autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\PersonSync\DummyPersonSync:
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface:
+      '@Dbp\Relay\CabinetBundle\PersonSync\DummyPersonSync'
