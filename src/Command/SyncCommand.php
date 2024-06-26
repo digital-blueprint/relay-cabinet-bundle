@@ -34,7 +34,54 @@ class SyncCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $output->writeln('todo');
+        $schema = json_decode('{
+  "name": "persons",
+  "fields": [
+    {
+      "name": "objectType",
+      "type": "string",
+      "facet": false,
+      "optional": false
+    },
+    {
+      "name": "person:id",
+      "type": "string",
+      "facet": false,
+      "optional": false
+    },
+    {
+      "name": "person:givenName",
+      "type": "string",
+      "facet": false,
+      "optional": false
+    },
+    {
+      "name": "person:familyName",
+      "type": "string",
+      "facet": false,
+      "optional": false
+    }
+  ]
+}', true, flags: JSON_THROW_ON_ERROR);
+
+        $this->searchIndex->setSchema($schema);
+        $this->searchIndex->ensureSetup();
+        $collectionName = $this->searchIndex->createNewCollection();
+
+        $res = $this->personSync->getAllPersons();
+        $documents = [];
+        foreach ($res->getPersons() as $person) {
+            $documents[] = [
+                'objectType' => 'person',
+                'person:id' => $person['id'],
+                'person:givenName' => $person['givenName'],
+                'person:familyName' => $person['familyName'],
+            ];
+        }
+
+        $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+        $this->searchIndex->updateAlias($collectionName);
+        $this->searchIndex->expireOldCollections();
 
         return 0;
     }
