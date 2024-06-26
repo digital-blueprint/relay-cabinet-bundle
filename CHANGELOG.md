@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.0
+
+- Bump minor version for easier updates
+
 ## 0.0.10
 
 - Port to PHPUnit 10
