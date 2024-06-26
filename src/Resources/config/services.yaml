@@ -53,6 +53,7 @@ services:
     resource: '../../EventSubscriber'
     autowire: true
     autoconfigure: true
+
   Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex:
     autowire: true
     autoconfigure: true
