@@ -4,6 +4,14 @@
 
 - Migrate dev document seed scripts from `student` to `person`
 
+## 0.1.2
+
+- Add basic sync functionality
+
+## 0.1.1
+
+- Add dummy implementations for the sync service
+
 ## 0.1.0
 
 - Bump minor version for easier updates
