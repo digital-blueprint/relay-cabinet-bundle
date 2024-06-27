@@ -41,13 +41,13 @@ curl -X POST "${TYPESENSE_HOST}/collections" \
             {"name": "file-filename", "type": "string" },
             {"name": "file-mimetype", "type": "string" },
             {"name": "file-filesize", "type": "int32" },
-            {"name": "student-firstname", "type": "string" },
-            {"name": "student-lastname", "type": "string" },
-            {"name": "student-birthday", "type": "string" },
-            {"name": "student-address", "type": "string" },
-            {"name": "student-zip", "type": "string" },
-            {"name": "student-city", "type": "string" },
-            {"name": "student-country", "type": "string" }
+            {"name": "person-firstname", "type": "string" },
+            {"name": "person-lastname", "type": "string" },
+            {"name": "person-birthday", "type": "string" },
+            {"name": "person-address", "type": "string" },
+            {"name": "person-zip", "type": "string" },
+            {"name": "person-city", "type": "string" },
+            {"name": "person-country", "type": "string" }
           ]
         }'
 

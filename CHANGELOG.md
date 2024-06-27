@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Migrate dev document seed scripts from `student` to `person`
+
 ## 0.1.0
 
 - Bump minor version for easier updates

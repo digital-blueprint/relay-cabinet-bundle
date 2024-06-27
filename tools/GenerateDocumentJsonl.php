@@ -14,8 +14,8 @@ function getRandomElement($array)
     return $array[array_rand($array)];
 }
 
-$studentFirstNames = ['John', 'Jane', 'Michael', 'Emily', 'Joshua', 'Emma', 'Olivia', 'Lucas', 'Sophia', 'Liam', 'Ava', 'Charlotte', 'James', 'Mia', 'Henry', 'Amelia', 'Grace', 'Isabella', 'Lily', 'Daniel', 'Ella'];
-$studentLastNames = ['Doe', 'Smith', 'Brown', 'Davis', 'Garcia', 'Johnson', 'Lee', 'Martinez', 'Robinson', 'Walker', 'Young', 'Hernandez', 'Lopez', 'Clark', 'King', 'Scott', 'Allen', 'Sanchez', 'Green', 'Adams', 'Roberts'];
+$personFirstNames = ['John', 'Jane', 'Michael', 'Emily', 'Joshua', 'Emma', 'Olivia', 'Lucas', 'Sophia', 'Liam', 'Ava', 'Charlotte', 'James', 'Mia', 'Henry', 'Amelia', 'Grace', 'Isabella', 'Lily', 'Daniel', 'Ella'];
+$personLastNames = ['Doe', 'Smith', 'Brown', 'Davis', 'Garcia', 'Johnson', 'Lee', 'Martinez', 'Robinson', 'Walker', 'Young', 'Hernandez', 'Lopez', 'Clark', 'King', 'Scott', 'Allen', 'Sanchez', 'Green', 'Adams', 'Roberts'];
 $addresses = ['Maple Street', 'Oak Avenue', 'Pine Road', 'Birch Lane', 'Cedar Street', 'Spruce Road', 'Elm Street', 'Pine Lane', 'Walnut Street', 'Cherry Avenue', 'Magnolia Street', 'Cedar Road', 'Oak Lane', 'Cedar Lane', 'Birch Avenue', 'Cedar Lane', 'Oak Road'];
 $cities = ['Beverly Hills', 'Atlanta', 'Chicago', 'Dallas', 'Seattle', 'New York', 'San Francisco', 'Phoenix'];
 $zipCodes = ['90210', '30303', '60614', '75201', '98101', '10001', '94102', '85001'];
@@ -25,42 +25,44 @@ $fileObjectTypes = ['fileCitizenshipCertificate', 'fileConversation', 'fileEmail
 $lines = [];
 
 for ($i = 0; $i < 200; ++$i) {
-    $type = $i % 2 === 0 ? 'student' : 'file';
+    $type = $i % 2 === 0 ? 'person' : 'file';
 
-    if ($type === 'student') {
-        $firstName = getRandomElement($studentFirstNames);
-        $lastName = getRandomElement($studentLastNames);
+    if ($type === 'person') {
+        $firstName = getRandomElement($personFirstNames);
+        $lastName = getRandomElement($personLastNames);
         $line = [
-            'objectType' => 'student',
-            'type' => 'student',
+            'objectType' => 'person',
+            'type' => 'person',
             'name' => "$firstName $lastName",
             'file-filename' => '',
             'file-mimetype' => '',
             'file-filesize' => 0,
-            'student-firstname' => $firstName,
-            'student-lastname' => $lastName,
-            'student-birthday' => getRandomDate('2003-01-01', '2010-12-31'),
-            'student-address' => getRandomElement($addresses),
-            'student-zip' => getRandomElement($zipCodes),
-            'student-city' => getRandomElement($cities),
-            'student-country' => getRandomElement($countries),
+            'person-firstname' => $firstName,
+            'person-lastname' => $lastName,
+            'person-birthday' => getRandomDate('2003-01-01', '2010-12-31'),
+            'person-address' => getRandomElement($addresses),
+            'person-zip' => getRandomElement($zipCodes),
+            'person-city' => getRandomElement($cities),
+            'person-country' => getRandomElement($countries),
         ];
     } else {
         $objectType = getRandomElement($fileObjectTypes);
+        $name = ucfirst(str_replace('file', '', $objectType)).' '.str_pad((string) mt_rand(1, 999), 3, '0', STR_PAD_LEFT);
+
         $line = [
             'objectType' => $objectType,
             'type' => 'file',
-            'name' => ucfirst(str_replace('file', '', $objectType)),
-            'file-filename' => strtolower(str_replace(' ', '_', ucfirst(str_replace('file', '', $objectType)))).'.pdf',
+            'name' => $name,
+            'file-filename' => strtolower(str_replace(' ', '_', $name)).'.pdf',
             'file-mimetype' => 'application/pdf',
             'file-filesize' => mt_rand(1024, 51200),
-            'student-firstname' => '',
-            'student-lastname' => '',
-            'student-birthday' => '',
-            'student-address' => '',
-            'student-zip' => '',
-            'student-city' => '',
-            'student-country' => '',
+            'person-firstname' => '',
+            'person-lastname' => '',
+            'person-birthday' => '',
+            'person-address' => '',
+            'person-zip' => '',
+            'person-city' => '',
+            'person-country' => '',
         ];
     }
 
@@ -69,4 +71,4 @@ for ($i = 0; $i < 200; ++$i) {
 
 file_put_contents('seed/documents.jsonl', implode("\n", $lines));
 
-echo 'Generated 200 JSONL lines and saved to seed/documents.jsonl';
+echo 'Generated 500 JSONL lines and saved to seed/documents.jsonl';
