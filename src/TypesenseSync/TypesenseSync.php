@@ -56,6 +56,9 @@ class TypesenseSync implements LoggerAwareInterface
             }
 
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+            $this->addDummyDocuments($collectionName);
+            $this->searchIndex->ensureSetup();
+
             $this->searchIndex->updateAlias($collectionName);
             $this->searchIndex->expireOldCollections();
 
@@ -71,11 +74,159 @@ class TypesenseSync implements LoggerAwareInterface
             }
             $collectionName = $this->searchIndex->getCollectionName();
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+            $this->addDummyDocuments($collectionName);
 
             $item->set($res->getCursor());
             $item->expiresAfter(3600 * 24);
             $this->cachePool->save($item);
         }
+    }
+
+    public function addDummyDocuments(string $collectionName)
+    {
+        $documents = [];
+
+        $getRandom = function (array $values) {
+            return $values[array_rand($values)];
+        };
+
+        $phases = ['Application phase', 'Study phase', 'Graduation phase', 'General documents'];
+        $comment = ['Some comment', 'Some other comment'];
+        $subjectOf = ['GZ 2021-0.123.456', 'AZ 10 C 1234/23', 'VR 2023/789-B', '567/2022-XYZ', '987654-AB/2023'];
+        $countryOfOrigin = ['Österreich', 'Deutschland', 'France', 'Italia', 'Schweiz'];
+
+        // citizenshipCertificate
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-citizenshipCertificate.$i",
+                'objectType' => 'file-cabinet-citizenshipCertificate',
+                'file-cabinet-citizenshipCertificate' => [
+                    'comment' => $getRandom($comment),
+                    'studentLifeCyclePhase' => $getRandom($phases),
+                    'subjectOf' => $getRandom($subjectOf),
+                    'additionalType' => 'CitizenshipCertificate',
+                    'countryOfOrigin' => $getRandom($countryOfOrigin),
+                ],
+            ];
+        }
+
+        // identityDocument
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-identityDocument.$i",
+                'objectType' => 'file-cabinet-identityDocument',
+                'file-cabinet-identityDocument' => [
+                    'comment' => $getRandom($comment),
+                    'studentLifeCyclePhase' => $getRandom($phases),
+                    'subjectOf' => $getRandom($subjectOf),
+                    'additionalType' => $getRandom(['PersonalLicence', 'Passport', 'DriversLicence']),
+                    'countryOfOrigin' => $getRandom($countryOfOrigin),
+                    'identifier' => $getRandom(['AT-L-123456', 'P7890123', '23456789']),
+                    'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                ],
+            ];
+        }
+
+        // minimalSchema
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-minimalSchema.$i",
+                'objectType' => 'file-cabinet-minimalSchema',
+                'file-cabinet-minimalSchema' => [
+                    'comment' => $getRandom($comment),
+                    'studentLifeCyclePhase' => $getRandom($phases),
+                    'subjectOf' => $getRandom($subjectOf),
+                    'additionalType' => $getRandom(['BirthCertificate', 'MaritalStatusCertificate', 'SupervisionAcceptance']),
+                ],
+            ];
+        }
+
+        // conversation
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-conversation.$i",
+                'objectType' => 'file-cabinet-conversation',
+                'file-cabinet-conversation' => [
+                    'comment' => $getRandom($comment),
+                    'studentLifeCyclePhase' => $getRandom($phases),
+                    'subjectOf' => $getRandom($subjectOf),
+                    'additionalType' => $getRandom(['PhoneCall', 'InPersonConversation']),
+                    'abstract' => 'Short description or summarization of the phone call or in-person conversation',
+                    'agent' => [
+                        'givenName' => 'James',
+                        'familyName' => 'Bond',
+                    ],
+                    'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                ],
+            ];
+        }
+
+        // email
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-email.$i",
+                'objectType' => 'file-cabinet-email',
+                'file-cabinet-email' => [
+                    'comment' => $getRandom($comment),
+                    'studentLifeCyclePhase' => $getRandom($phases),
+                    'subjectOf' => $getRandom($subjectOf),
+                    'additionalType' => $getRandom(['Email']),
+                    'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
+                    'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                    'sender' => [
+                        'givenName' => 'Elim',
+                        'familyName' => 'Garak',
+                        'email' => 'garak@ds9.org',
+                    ],
+                    'recipient' => [
+                        'givenName' => 'Enabran',
+                        'familyName' => 'Tain',
+                        'email' => 'enabran@obsidian.org',
+                    ],
+                    'ccRecipient' => 'benjamin@ds9.org',
+                    'bccRecipient' => 'odo@ds9.org',
+                ],
+            ];
+        }
+
+        // letter
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-letter.$i",
+                'objectType' => 'file-cabinet-letter',
+                'file-cabinet-letter' => [
+                    'comment' => $getRandom($comment),
+                    'studentLifeCyclePhase' => $getRandom($phases),
+                    'subjectOf' => $getRandom($subjectOf),
+                    'additionalType' => $getRandom(['PostalLetter']),
+                    'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
+                    'dateSent' => $getRandom(['2021-02-11', '2021-02-12']),
+                    'dateReceived' => $getRandom(['2021-02-13', '2021-02-14']),
+                    'sender' => [
+                        'givenName' => 'Elim',
+                        'familyName' => 'Garak',
+                        'worksFor' => [
+                            'legalName' => 'Legal',
+                            'department' => 'Department',
+                        ],
+                        'legalName' => 'Legal',
+                        'department' => 'Department',
+                    ],
+                    'recipient' => [
+                        'givenName' => 'Enabran',
+                        'familyName' => 'Tain',
+                        'worksFor' => [
+                            'legalName' => 'Legal',
+                            'department' => 'Department',
+                        ],
+                        'legalName' => 'Legal',
+                        'department' => 'Department',
+                    ],
+                ],
+            ];
+        }
+
+        $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
     }
 
     public static function personToDocument(array $person): array
@@ -107,8 +258,6 @@ class TypesenseSync implements LoggerAwareInterface
                 'givenName' => $person['givenName'],
                 'familyName' => $person['familyName'],
                 'persName' => $person['givenName'].' '.$person['familyName'],
-                'birthDate' => '1970-01-01',
-                'birthYear' => 1970,
                 'studies' => $studies,
                 'applications' => $applications,
                 'nationality' => [
