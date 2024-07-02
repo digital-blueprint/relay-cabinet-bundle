@@ -66,6 +66,14 @@ class SearchIndex implements LoggerAwareInterface
         return $collectionName;
     }
 
+    public function getCollectionName(): string
+    {
+        $client = $this->getClient();
+        $alias = $client->aliases[$this->getAliasName()]->retrieve();
+
+        return $alias['collection_name'];
+    }
+
     public function addDocumentsToCollection(string $collectionName, array $documents): void
     {
         // See https://typesense.org/docs/guide/syncing-data-into-typesense.html

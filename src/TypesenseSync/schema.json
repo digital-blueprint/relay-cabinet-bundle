@@ -1,0 +1,31 @@
+{
+  "name": "Student Record Typesense Schema",
+  "enable_nested_fields": true,
+  "fields": [
+    {"name": "objectType", "type": "string", "facet": false, "optional":false},
+
+    {"name": "person.stPersonNr", "type": "int32", "optional": true, "facet": false},
+    {"name": "person.studId", "type": "string", "optional": true, "facet": false},
+    {"name": "person.givenName", "type": "string", "optional": false, "facet": false, "stem":true},
+    {"name": "person.familyName", "type": "string", "optional": false, "facet": false, "stem":true},
+    {"name": "person.persName", "type": "string", "optional": false, "facet": true},
+    {"name": "person.birthDate", "type": "string", "optional": false, "facet": false},
+    {"name": "person.birthYear", "type": "int32", "optional": false, "facet": true},
+    {"name": "person.identNrObfuscated", "type": "string", "optional": false, "facet": false},
+    {"name": "person.nationality.key", "type": "string", "optional": false, "facet": false},
+    {"name": "person.nationality.text", "type": "string", "optional": false, "facet": true},
+    {"name": "person.gender.key", "type": "string", "optional": false, "facet": false},
+    {"name": "person.gender.text", "type": "string", "optional": false, "facet": true},
+    {"name": "person.studentStatus.key", "type": "string", "optional": false, "facet": false},
+    {"name": "person.studentStatus.text", "type": "string", "optional": false, "facet": true},
+
+    {"name": "person.studies.studyKey", "type": "string[]", "optional": true, "facet": false},
+    {"name": "person.studies.studyType", "type": "string[]", "optional": true, "facet": true},
+    {"name": "person.studies.studyName", "type": "string[]", "optional": true, "facet": false},
+    {"name": "person.studies.studyCurriculumVersion", "type": "string[]", "optional": true, "facet": false},
+
+    {"name": "person.applications.studyKey", "type": "string[]", "optional": true, "facet": false},
+    {"name": "person.applications.studyType", "type": "string[]", "optional": true, "facet": true},
+    {"name": "person.applications.studyName", "type": "string[]", "optional": true, "facet": false}
+  ]
+}
