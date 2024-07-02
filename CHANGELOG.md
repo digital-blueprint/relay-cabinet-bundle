@@ -1,8 +1,11 @@
 # Changelog
 
-## Unreleased
+## 0.1.3
 
 - Migrate dev document seed scripts from `student` to `person`
+- "dbp:relay:cabinet:sync" now supports incremental syncs
+- typesense schema updates and "sync" now fills typesense with dummy file documents
+  in addition to person documents.
 
 ## 0.1.2
 
