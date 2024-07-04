@@ -56,7 +56,7 @@ class TypesenseSync implements LoggerAwareInterface
             }
 
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-            $this->addDummyDocuments($collectionName);
+            $this->addDummyDocuments($collectionName, $documents);
             $this->searchIndex->ensureSetup();
 
             $this->searchIndex->updateAlias($collectionName);
@@ -74,7 +74,7 @@ class TypesenseSync implements LoggerAwareInterface
             }
             $collectionName = $this->searchIndex->getCollectionName();
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-            $this->addDummyDocuments($collectionName);
+            $this->addDummyDocuments($collectionName, $documents);
 
             $item->set($res->getCursor());
             $item->expiresAfter(3600 * 24);
@@ -82,7 +82,7 @@ class TypesenseSync implements LoggerAwareInterface
         }
     }
 
-    public function addDummyDocuments(string $collectionName)
+    public function addDummyDocuments(string $collectionName, array $personDocuments): void
     {
         $documents = [];
 
@@ -100,12 +100,17 @@ class TypesenseSync implements LoggerAwareInterface
             $documents[] = [
                 'id' => "file-cabinet-citizenshipCertificate.$i",
                 'objectType' => 'file-cabinet-citizenshipCertificate',
-                'file-cabinet-citizenshipCertificate' => [
-                    'comment' => $getRandom($comment),
-                    'studentLifeCyclePhase' => $getRandom($phases),
-                    'subjectOf' => $getRandom($subjectOf),
-                    'additionalType' => 'CitizenshipCertificate',
-                    'countryOfOrigin' => $getRandom($countryOfOrigin),
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'additionalType' => 'CitizenshipCertificate',
+                    ],
+                    'citizenshipCertificate' => [
+                        'countryOfOrigin' => $getRandom($countryOfOrigin),
+                    ],
                 ],
             ];
         }
@@ -115,14 +120,19 @@ class TypesenseSync implements LoggerAwareInterface
             $documents[] = [
                 'id' => "file-cabinet-identityDocument.$i",
                 'objectType' => 'file-cabinet-identityDocument',
-                'file-cabinet-identityDocument' => [
-                    'comment' => $getRandom($comment),
-                    'studentLifeCyclePhase' => $getRandom($phases),
-                    'subjectOf' => $getRandom($subjectOf),
-                    'additionalType' => $getRandom(['PersonalLicence', 'Passport', 'DriversLicence']),
-                    'countryOfOrigin' => $getRandom($countryOfOrigin),
-                    'identifier' => $getRandom(['AT-L-123456', 'P7890123', '23456789']),
-                    'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'additionalType' => $getRandom(['PersonalLicence', 'Passport', 'DriversLicence']),
+                    ],
+                    'identityDocument' => [
+                        'countryOfOrigin' => $getRandom($countryOfOrigin),
+                        'identifier' => $getRandom(['AT-L-123456', 'P7890123', '23456789']),
+                        'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                    ],
                 ],
             ];
         }
@@ -132,11 +142,16 @@ class TypesenseSync implements LoggerAwareInterface
             $documents[] = [
                 'id' => "file-cabinet-minimalSchema.$i",
                 'objectType' => 'file-cabinet-minimalSchema',
-                'file-cabinet-minimalSchema' => [
-                    'comment' => $getRandom($comment),
-                    'studentLifeCyclePhase' => $getRandom($phases),
-                    'subjectOf' => $getRandom($subjectOf),
-                    'additionalType' => $getRandom(['BirthCertificate', 'MaritalStatusCertificate', 'SupervisionAcceptance']),
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'additionalType' => $getRandom(['BirthCertificate', 'MaritalStatusCertificate', 'SupervisionAcceptance']),
+                    ],
+                    'minimalSchema' => [
+                    ],
                 ],
             ];
         }
@@ -146,17 +161,22 @@ class TypesenseSync implements LoggerAwareInterface
             $documents[] = [
                 'id' => "file-cabinet-conversation.$i",
                 'objectType' => 'file-cabinet-conversation',
-                'file-cabinet-conversation' => [
-                    'comment' => $getRandom($comment),
-                    'studentLifeCyclePhase' => $getRandom($phases),
-                    'subjectOf' => $getRandom($subjectOf),
-                    'additionalType' => $getRandom(['PhoneCall', 'InPersonConversation']),
-                    'abstract' => 'Short description or summarization of the phone call or in-person conversation',
-                    'agent' => [
-                        'givenName' => 'James',
-                        'familyName' => 'Bond',
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'additionalType' => $getRandom(['PhoneCall', 'InPersonConversation']),
                     ],
-                    'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                    'conversation' => [
+                        'abstract' => 'Short description or summarization of the phone call or in-person conversation',
+                        'agent' => [
+                            'givenName' => 'James',
+                            'familyName' => 'Bond',
+                        ],
+                        'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                    ],
                 ],
             ];
         }
@@ -166,25 +186,30 @@ class TypesenseSync implements LoggerAwareInterface
             $documents[] = [
                 'id' => "file-cabinet-email.$i",
                 'objectType' => 'file-cabinet-email',
-                'file-cabinet-email' => [
-                    'comment' => $getRandom($comment),
-                    'studentLifeCyclePhase' => $getRandom($phases),
-                    'subjectOf' => $getRandom($subjectOf),
-                    'additionalType' => $getRandom(['Email']),
-                    'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
-                    'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
-                    'sender' => [
-                        'givenName' => 'Elim',
-                        'familyName' => 'Garak',
-                        'email' => 'garak@ds9.org',
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'additionalType' => $getRandom(['Email']),
                     ],
-                    'recipient' => [
-                        'givenName' => 'Enabran',
-                        'familyName' => 'Tain',
-                        'email' => 'enabran@obsidian.org',
+                    'email' => [
+                        'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
+                        'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                        'sender' => [
+                            'givenName' => 'Elim',
+                            'familyName' => 'Garak',
+                            'email' => 'garak@ds9.org',
+                        ],
+                        'recipient' => [
+                            'givenName' => 'Enabran',
+                            'familyName' => 'Tain',
+                            'email' => 'enabran@obsidian.org',
+                        ],
+                        'ccRecipient' => 'benjamin@ds9.org',
+                        'bccRecipient' => 'odo@ds9.org',
                     ],
-                    'ccRecipient' => 'benjamin@ds9.org',
-                    'bccRecipient' => 'odo@ds9.org',
                 ],
             ];
         }
@@ -194,33 +219,38 @@ class TypesenseSync implements LoggerAwareInterface
             $documents[] = [
                 'id' => "file-cabinet-letter.$i",
                 'objectType' => 'file-cabinet-letter',
-                'file-cabinet-letter' => [
-                    'comment' => $getRandom($comment),
-                    'studentLifeCyclePhase' => $getRandom($phases),
-                    'subjectOf' => $getRandom($subjectOf),
-                    'additionalType' => $getRandom(['PostalLetter']),
-                    'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
-                    'dateSent' => $getRandom(['2021-02-11', '2021-02-12']),
-                    'dateReceived' => $getRandom(['2021-02-13', '2021-02-14']),
-                    'sender' => [
-                        'givenName' => 'Elim',
-                        'familyName' => 'Garak',
-                        'worksFor' => [
-                            'legalName' => 'Legal',
-                            'department' => 'Department',
-                        ],
-                        'legalName' => 'Legal',
-                        'department' => 'Department',
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'additionalType' => $getRandom(['PostalLetter']),
                     ],
-                    'recipient' => [
-                        'givenName' => 'Enabran',
-                        'familyName' => 'Tain',
-                        'worksFor' => [
+                    'letter' => [
+                        'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
+                        'dateSent' => $getRandom(['2021-02-11', '2021-02-12']),
+                        'dateReceived' => $getRandom(['2021-02-13', '2021-02-14']),
+                        'sender' => [
+                            'givenName' => 'Elim',
+                            'familyName' => 'Garak',
+                            'worksFor' => [
+                                'legalName' => 'Legal',
+                                'department' => 'Department',
+                            ],
                             'legalName' => 'Legal',
                             'department' => 'Department',
                         ],
-                        'legalName' => 'Legal',
-                        'department' => 'Department',
+                        'recipient' => [
+                            'givenName' => 'Enabran',
+                            'familyName' => 'Tain',
+                            'worksFor' => [
+                                'legalName' => 'Legal',
+                                'department' => 'Department',
+                            ],
+                            'legalName' => 'Legal',
+                            'department' => 'Department',
+                        ],
                     ],
                 ],
             ];
@@ -253,11 +283,13 @@ class TypesenseSync implements LoggerAwareInterface
         return [
             'id' => 'person.'.$person['id'],
             'objectType' => 'person',
-            'person' => [
-                'identNrObfuscated' => $person['id'],
+            'base' => [
                 'givenName' => $person['givenName'],
                 'familyName' => $person['familyName'],
                 'persName' => $person['givenName'].' '.$person['familyName'],
+                'identNrObfuscated' => $person['id'],
+            ],
+            'person' => [
                 'studies' => $studies,
                 'applications' => $applications,
                 'nationality' => [
