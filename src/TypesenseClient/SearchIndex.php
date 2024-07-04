@@ -134,6 +134,13 @@ class SearchIndex implements LoggerAwareInterface
         $alias = $client->aliases[$this->getAliasName()]->retrieve();
         $collectionNameSkipList = [$alias['collection_name']];
 
+        // TODO: remove this once we are done testing
+        // We use these for testing as well, so skip for now
+        $collectionNameSkipList = array_merge(
+            $collectionNameSkipList,
+            ['cabinet-students', 'cabinet-files']
+        );
+
         // Fetch all collections
         try {
             $collections = $client->collections->retrieve();
