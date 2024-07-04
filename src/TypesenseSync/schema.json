@@ -67,9 +67,9 @@
     {"name": "file.letter.sender.department", "type": "string", "optional": true, "facet": false},
     {"name": "file.letter.recipient.givenName", "type": "string", "optional": true, "facet": false},
     {"name": "file.letter.recipient.familyName", "type": "string", "optional": true, "facet": false},
-    {"name": "file.letter.recepient.worksFor.legalName", "type": "string", "optional": true, "facet": false},
-    {"name": "file.letter.recepient.worksFor.department", "type": "string", "optional": true, "facet": false},
-    {"name": "file.letter.recepient.legalName", "type": "string", "optional": true, "facet": false},
-    {"name": "file.letter.recepient.department", "type": "string", "optional": true, "facet": false}
+    {"name": "file.letter.recipient.worksFor.legalName", "type": "string", "optional": true, "facet": false},
+    {"name": "file.letter.recipient.worksFor.department", "type": "string", "optional": true, "facet": false},
+    {"name": "file.letter.recipient.legalName", "type": "string", "optional": true, "facet": false},
+    {"name": "file.letter.recipient.department", "type": "string", "optional": true, "facet": false}
   ]
 }
