@@ -6,9 +6,9 @@ namespace Dbp\Relay\CabinetBundle\PersonSync;
 
 class DummyPersonSync implements PersonSyncInterface
 {
-    public function getPerson(string $id): ?array
+    public function getPersons(array $ids, ?string $cursor = null): PersonSyncResultInterface
     {
-        return null;
+        return new DummyPersonSyncResult();
     }
 
     public function getAllPersons(?string $cursor = null): PersonSyncResultInterface

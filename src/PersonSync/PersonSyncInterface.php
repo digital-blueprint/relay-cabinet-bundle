@@ -7,9 +7,12 @@ namespace Dbp\Relay\CabinetBundle\PersonSync;
 interface PersonSyncInterface
 {
     /**
-     * Returns an entry for a specific person. Or null if not found.
+     * Returns a result containing all the requested person items. If an ID isn't found
+     * an error is thrown.
+     *
+     * @param string[] $ids
      */
-    public function getPerson(string $id): ?array;
+    public function getPersons(array $ids, ?string $cursor = null): PersonSyncResultInterface;
 
     /**
      * Returns a result containing all person items. Passing a cursor string
