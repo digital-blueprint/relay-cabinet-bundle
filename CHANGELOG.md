@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0
+
+- typesense schema changes
+- breaking changes to the PersonSyncInterface
+- don't delete legacy testing collections in typesense for now
+
 ## 0.1.3
 
 - Migrate dev document seed scripts from `student` to `person`
