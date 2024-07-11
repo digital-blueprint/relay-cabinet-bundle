@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.1
+
+- add `file.base.fileName` to schema and sync service
+
 ## 0.2.0
 
 - typesense schema changes

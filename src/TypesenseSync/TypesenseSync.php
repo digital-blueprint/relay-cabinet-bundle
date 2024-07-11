@@ -82,6 +82,34 @@ class TypesenseSync implements LoggerAwareInterface
         }
     }
 
+    private static function generateRandomPDFNames($count = 50): array
+    {
+        $fileNames = [];
+
+        $words = [
+            'report', 'analysis', 'summary', 'proposal', 'plan',
+            'review', 'guide', 'manual', 'study', 'brief',
+            'outline', 'overview', 'document', 'paper', 'thesis',
+            'essay', 'article', 'journal', 'presentation', 'notes',
+        ];
+
+        $adjectives = [
+            'annual', 'quarterly', 'monthly', 'weekly', 'daily',
+            'final', 'interim', 'preliminary', 'revised', 'updated',
+            'comprehensive', 'detailed', 'executive', 'technical', 'financial',
+            'strategic', 'operational', 'marketing', 'sales', 'research',
+        ];
+
+        for ($i = 0; $i < $count; ++$i) {
+            $adjective = $adjectives[array_rand($adjectives)];
+            $word = $words[array_rand($words)];
+            $number = rand(1, 99);
+            $fileNames[] = $adjective.'_'.$word.'_'.$number.'.pdf';
+        }
+
+        return $fileNames;
+    }
+
     public function addDummyDocuments(string $collectionName, array $personDocuments): void
     {
         $documents = [];
@@ -94,6 +122,7 @@ class TypesenseSync implements LoggerAwareInterface
         $comment = ['Some comment', 'Some other comment'];
         $subjectOf = ['GZ 2021-0.123.456', 'AZ 10 C 1234/23', 'VR 2023/789-B', '567/2022-XYZ', '987654-AB/2023'];
         $countryOfOrigin = ['Österreich', 'Deutschland', 'France', 'Italia', 'Schweiz'];
+        $fileNames = self::generateRandomPDFNames();
 
         // citizenshipCertificate
         for ($i = 0; $i < 50; ++$i) {
@@ -103,6 +132,7 @@ class TypesenseSync implements LoggerAwareInterface
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
@@ -123,6 +153,7 @@ class TypesenseSync implements LoggerAwareInterface
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
@@ -145,6 +176,7 @@ class TypesenseSync implements LoggerAwareInterface
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
@@ -164,6 +196,7 @@ class TypesenseSync implements LoggerAwareInterface
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
@@ -189,6 +222,7 @@ class TypesenseSync implements LoggerAwareInterface
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
@@ -222,6 +256,7 @@ class TypesenseSync implements LoggerAwareInterface
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),

@@ -29,6 +29,7 @@
     {"name": "person.applications.studyType", "type": "string[]", "optional": true, "facet": true},
     {"name": "person.applications.studyName", "type": "string[]", "optional": true, "facet": false},
 
+    {"name": "file.base.fileName", "type": "string", "optional": true, "facet": false},
     {"name": "file.base.comment", "type": "string", "optional": true, "facet": false},
     {"name": "file.base.studentLifeCyclePhase", "type": "string", "optional": true, "facet": true},
     {"name": "file.base.subjectOf", "type": "string", "optional": true, "facet": true},
