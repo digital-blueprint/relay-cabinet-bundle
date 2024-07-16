@@ -2,7 +2,7 @@
   "name": "Student Record Typesense Schema",
   "enable_nested_fields": true,
   "fields": [
-    {"name": "objectType", "type": "string", "optional": false, "facet": false},
+    {"name": "objectType", "type": "string", "optional": false, "facet": false, "sort": true},
 
     {"name": "base.stPersonNr", "type": "string", "optional": true, "facet": false},
     {"name": "base.studId", "type": "string", "optional": true, "facet": false},
