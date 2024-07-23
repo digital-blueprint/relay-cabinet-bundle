@@ -1,3 +1,7 @@
 typesense_api:
   resource: ../../TypesenseApi/
   type: annotation
+
+controller_api:
+  resource: ../../Controller/
+  type: annotation
