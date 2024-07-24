@@ -56,7 +56,9 @@ class TypesenseSync implements LoggerAwareInterface
             }
 
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-            $this->addDummyDocuments($collectionName, $documents);
+            if ($documents !== []) {
+                $this->addDummyDocuments($collectionName, $documents);
+            }
             $this->searchIndex->ensureSetup();
 
             $this->searchIndex->updateAlias($collectionName);
@@ -74,7 +76,6 @@ class TypesenseSync implements LoggerAwareInterface
             }
             $collectionName = $this->searchIndex->getCollectionName();
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-            $this->addDummyDocuments($collectionName, $documents);
 
             $item->set($res->getCursor());
             $item->expiresAfter(3600 * 24);

@@ -76,6 +76,9 @@ class SearchIndex implements LoggerAwareInterface
 
     public function addDocumentsToCollection(string $collectionName, array $documents): void
     {
+        if ($documents === []) {
+            return;
+        }
         // See https://typesense.org/docs/guide/syncing-data-into-typesense.html
         $responses = $this->getClient()->collections[$collectionName]->documents->import($documents, ['action' => 'upsert']);
         assert(is_array($responses));
