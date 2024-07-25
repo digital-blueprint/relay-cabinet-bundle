@@ -19,7 +19,7 @@ class BlobSignatureController extends AbstractController
         $this->blobService = $blobService;
     }
 
-    #[Route(path: '/cabinet/signature', name: 'blob_signature', requirements: ['path' => '.+'])]
+    #[Route(path: '/cabinet/signature', name: 'cabinet_blob_signature', requirements: ['path' => '.+'])]
     public function proxy(Request $request): Response
     {
         return $this->blobService->getSignatureForGivenRequest($request);
