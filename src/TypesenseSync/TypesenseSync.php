@@ -33,13 +33,31 @@ class TypesenseSync implements LoggerAwareInterface
         $this->cachePool = $cachePool;
     }
 
-    public function sync(bool $full = false)
+    private function getCursor(): ?string
     {
         $item = $this->cachePool->getItem('cursor');
         $cursor = null;
-        if ($item->isHit() && !$full) {
+        if ($item->isHit()) {
             $cursor = $item->get();
         }
+
+        return $cursor;
+    }
+
+    private function saveCursor(?string $cursor): void
+    {
+        $item = $this->cachePool->getItem('cursor');
+        $item->set($cursor);
+        $item->expiresAfter(3600 * 24);
+        $this->cachePool->save($item);
+    }
+
+    public function sync(bool $full = false)
+    {
+        if ($full) {
+            $this->saveCursor(null);
+        }
+        $cursor = $this->getCursor();
 
         if ($cursor === null) {
             $this->logger->info('Starting a full sync');
@@ -64,8 +82,7 @@ class TypesenseSync implements LoggerAwareInterface
             $this->searchIndex->updateAlias($collectionName);
             $this->searchIndex->expireOldCollections();
 
-            $item->set($res->getCursor());
-            $this->cachePool->save($item);
+            $this->saveCursor($res->getCursor());
         } else {
             $this->logger->info('Starting a partial sync');
             $res = $this->personSync->getAllPersons($cursor);
@@ -77,10 +94,22 @@ class TypesenseSync implements LoggerAwareInterface
             $collectionName = $this->searchIndex->getCollectionName();
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
 
-            $item->set($res->getCursor());
-            $item->expiresAfter(3600 * 24);
-            $this->cachePool->save($item);
+            $this->saveCursor($res->getCursor());
         }
+    }
+
+    public function syncOne(string $id)
+    {
+        $this->logger->info('Syncing one person: '.$id);
+        $cursor = $this->getCursor();
+        $res = $this->personSync->getPersons([$id], $cursor);
+        $documents = [];
+        foreach ($res->getPersons() as $person) {
+            $documents[] = self::personToDocument($person);
+        }
+        $collectionName = $this->searchIndex->getCollectionName();
+        $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+        $this->saveCursor($res->getCursor());
     }
 
     private static function generateRandomPDFNames($count = 50): array
