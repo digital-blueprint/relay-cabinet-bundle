@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.3
+
+- fix version of `dbp/relay-blob-library`
+
 ## 0.2.2
 
 - add `/cabinet/signatures` endpoint for blob signature verification
