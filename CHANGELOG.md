@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.4
+
+- typesense schema changes
+- more fields in typesense schema
+
 ## 0.2.3
 
 - fix version of `dbp/relay-blob-library`
