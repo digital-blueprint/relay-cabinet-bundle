@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2
+
+- add `/cabinet/signatures` endpoint for blob signature verification
+
 ## 0.2.1
 
 - add `file.base.fileName` to schema and sync service
