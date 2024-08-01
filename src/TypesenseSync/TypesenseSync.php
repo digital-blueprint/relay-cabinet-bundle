@@ -19,13 +19,15 @@ class TypesenseSync implements LoggerAwareInterface
     private CacheItemPoolInterface $cachePool;
     private SearchIndex $searchIndex;
     private PersonSyncInterface $personSync;
+    private DocumentTranslator $translator;
 
-    public function __construct(SearchIndex $searchIndex, PersonSyncInterface $personSync)
+    public function __construct(SearchIndex $searchIndex, PersonSyncInterface $personSync, DocumentTranslator $translator)
     {
         $this->cachePool = new ArrayAdapter();
         $this->searchIndex = $searchIndex;
         $this->personSync = $personSync;
         $this->logger = new NullLogger();
+        $this->translator = $translator;
     }
 
     public function setCache(?CacheItemPoolInterface $cachePool)
@@ -61,7 +63,7 @@ class TypesenseSync implements LoggerAwareInterface
 
         if ($cursor === null) {
             $this->logger->info('Starting a full sync');
-            $schema = json_decode(file_get_contents(__DIR__.'/schema.json'), true, flags: JSON_THROW_ON_ERROR);
+            $schema = $this->translator->getSchema();
 
             $this->searchIndex->setSchema($schema);
             $this->searchIndex->ensureSetup();
@@ -70,7 +72,7 @@ class TypesenseSync implements LoggerAwareInterface
             $res = $this->personSync->getAllPersons();
             $documents = [];
             foreach ($res->getPersons() as $person) {
-                $documents[] = self::personToDocument($person);
+                $documents[] = $this->personToDocument($person);
             }
 
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
@@ -89,7 +91,7 @@ class TypesenseSync implements LoggerAwareInterface
 
             $documents = [];
             foreach ($res->getPersons() as $person) {
-                $documents[] = self::personToDocument($person);
+                $documents[] = $this->personToDocument($person);
             }
             $collectionName = $this->searchIndex->getCollectionName();
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
@@ -105,7 +107,7 @@ class TypesenseSync implements LoggerAwareInterface
         $res = $this->personSync->getPersons([$id], $cursor);
         $documents = [];
         foreach ($res->getPersons() as $person) {
-            $documents[] = self::personToDocument($person);
+            $documents[] = $this->personToDocument($person);
         }
         $collectionName = $this->searchIndex->getCollectionName();
         $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
@@ -324,251 +326,8 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
     }
 
-    public static function personToDocument(array $input): array
+    public function personToDocument(array $person): array
     {
-        // By removing the key from the input we can more easily track which values
-        // are already translated and which aren't.
-        $pop = function (&$array, $key) {
-            $value = $array[$key];
-            unset($array[$key]);
-
-            return $value;
-        };
-
-        $studies = [];
-        foreach ($input['studies'] as &$study) {
-            $studyStatus = $pop($study, 'status');
-            $studyResult = [
-                'studyKey' => $pop($study, 'key'),
-                'studyType' => $pop($study, 'type'),
-                'studyName' => $pop($study, 'name'),
-                'studyCurriculumVersion' => $pop($study, 'curriculumVersion'),
-                'studyImmatriculationDate' => $pop($study, 'immatriculationDate'),
-                'studyImmatriculationSemester' => $pop($study, 'immatriculationSemester'),
-                'coUrl' => $pop($study, 'webUrl'),
-                'studySemester' => $pop($study, 'semester'),
-                'studyStatus' => [
-                    'key' => $studyStatus['key'],
-                    'text' => $studyStatus['translations']['de'],
-                ],
-            ];
-            $exmatriculationDate = $pop($study, 'exmatriculationDate');
-            if ($exmatriculationDate !== null) {
-                $studyResult['studyExmatriculationDate'] = $exmatriculationDate;
-            }
-            $exmatriculationSemester = $pop($study, 'exmatriculationSemester');
-            if ($exmatriculationSemester !== null) {
-                $studyResult['studyExmatriculatioSemester'] = $exmatriculationSemester;
-            }
-            $qualificationType = $pop($study, 'qualificationType');
-            if ($qualificationType !== null) {
-                $studyResult['studyQualificationState'] = [
-                    'key' => $qualificationType['key'],
-                    'text' => $qualificationType['translations']['de'],
-                ];
-            }
-            $qualificationDate = $pop($study, 'qualificationDate');
-            if ($qualificationDate !== null) {
-                $studyResult['studyQualificationDate'] = $qualificationDate;
-            }
-            $qualificationState = $pop($study, 'qualificationState');
-            if ($qualificationState !== null) {
-                $studyResult['studyQualificationState'] = [
-                    'key' => $qualificationState['key'],
-                    'text' => $qualificationState['translations']['de'],
-                ];
-            }
-            $exmatriculationType = $pop($study, 'exmatriculationType');
-            if ($exmatriculationType !== null) {
-                $studyResult['studyExmatriculationType'] = [
-                    'key' => $exmatriculationType['key'],
-                    'text' => $exmatriculationType['translations']['de'],
-                ];
-            }
-            $studies[] = $studyResult;
-        }
-
-        $applications = [];
-        foreach ($input['applications'] as &$application) {
-            $applications[] = [
-                'studyKey' => $pop($application, 'studyKey'),
-                'studyType' => $pop($application, 'studyType'),
-                'studyName' => $pop($application, 'studyName'),
-            ];
-        }
-
-        $nationality = $pop($input, 'nationality');
-        $gender = $pop($input, 'gender');
-        $studentStatus = $pop($input, 'studentStatus');
-        $personalStatus = $pop($input, 'personalStatus');
-        $admissionQualificationType = $pop($input, 'admissionQualificationType');
-
-        $person = [
-            'studies' => $studies,
-            'applications' => $applications,
-            'coUrl' => $pop($input, 'webUrl'),
-            'syncTimestamp' => (new \DateTimeImmutable($pop($input, 'syncDateTime')))->getTimestamp(),
-            'nationality' => [
-                'key' => $nationality['key'],
-                'text' => $nationality['translations']['de'],
-            ],
-            'gender' => [
-                'key' => $gender['key'],
-                'text' => $gender['translations']['de'],
-            ],
-            'studentStatus' => [
-                'key' => $studentStatus['key'],
-                'text' => $studentStatus['translations']['de'],
-            ],
-            'admissionQualificationType' => [
-                'key' => $admissionQualificationType['key'],
-                'text' => $admissionQualificationType['translations']['de'],
-            ],
-            'schoolCertificateDate' => $pop($input, 'schoolCertificateDate'),
-            'personalStatus' => [
-                'key' => $personalStatus['key'],
-                'text' => $personalStatus['translations']['de'],
-            ],
-            'immatriculationDate' => $pop($input, 'immatriculationDate'),
-            'immatriculationSemester' => $pop($input, 'immatriculationSemester'),
-        ];
-
-        $exmatriculationStatus = $pop($input, 'exmatriculationStatus');
-        if ($exmatriculationStatus !== null) {
-            $person['exmatriculationStatus'] = [
-                'key' => $exmatriculationStatus['key'],
-                'text' => $exmatriculationStatus['translations']['de'],
-            ];
-        }
-
-        $exmatriculationDate = $pop($input, 'exmatriculationDate');
-        if ($exmatriculationDate !== null) {
-            $person['exmatriculationDate'] = $exmatriculationDate;
-        }
-
-        $formerFamilyName = $pop($input, 'formerFamilyName');
-        if ($formerFamilyName !== null) {
-            $person['formerFamilyName'] = $formerFamilyName;
-        }
-
-        $academicTitlePreceding = $pop($input, 'academicTitlePreceding');
-        if ($academicTitlePreceding !== null) {
-            $person['academicTitlePreceding'] = $academicTitlePreceding;
-        }
-
-        $academicTitleFollowing = $pop($input, 'academicTitleFollowing');
-        if ($academicTitleFollowing !== null) {
-            $person['academicTitleFollowing'] = $academicTitleFollowing;
-        }
-
-        $socialSecurityNr = $pop($input, 'socialSecurityNumber');
-        if ($socialSecurityNr !== null) {
-            $person['socialSecurityNr'] = $socialSecurityNr;
-        }
-
-        $sectorSpecificPersonalIdentifier = $pop($input, 'sectorSpecificPersonalIdentifier');
-        if ($sectorSpecificPersonalIdentifier !== null) {
-            $person['bpk'] = $sectorSpecificPersonalIdentifier;
-        }
-
-        $admissionQualificationState = $pop($input, 'admissionQualificationState');
-        if ($admissionQualificationState !== null) {
-            $person['admissionQualificationState'] = [
-                'key' => $admissionQualificationState['key'],
-                'text' => $admissionQualificationState['translations']['de'],
-            ];
-        }
-
-        $homeAddressNote = $pop($input, 'homeAddressNote');
-        if ($homeAddressNote !== null) {
-            $person['homeAddress']['note'] = $homeAddressNote;
-        }
-        $homeAddressStreet = $pop($input, 'homeAddressStreet');
-        if ($homeAddressStreet !== null) {
-            $person['homeAddress']['street'] = $homeAddressStreet;
-        }
-        $homeAddressPlace = $pop($input, 'homeAddressPlace');
-        if ($homeAddressPlace !== null) {
-            $person['homeAddress']['place'] = $homeAddressPlace;
-        }
-        $homeAddressPostCode = $pop($input, 'homeAddressPostCode');
-        if ($homeAddressPostCode !== null) {
-            $person['homeAddress']['postCode'] = $homeAddressPostCode;
-        }
-        $homeAddressCountry = $pop($input, 'homeAddressCountry');
-        if ($homeAddressCountry !== null) {
-            $person['homeAddress']['country'] = [
-                'key' => $homeAddressCountry['key'],
-                'text' => $homeAddressCountry['translations']['de'],
-            ];
-        }
-
-        $studyAddressNote = $pop($input, 'studyAddressNote');
-        if ($studyAddressNote !== null) {
-            $person['studAddress']['note'] = $studyAddressNote;
-        }
-        $studyAddressStreet = $pop($input, 'studyAddressStreet');
-        if ($studyAddressStreet !== null) {
-            $person['studAddress']['street'] = $studyAddressStreet;
-        }
-        $studyAddressPlace = $pop($input, 'studyAddressPlace');
-        if ($studyAddressPlace !== null) {
-            $person['studAddress']['place'] = $studyAddressPlace;
-        }
-        $studyAddressPostCode = $pop($input, 'studyAddressPostCode');
-        if ($studyAddressPostCode !== null) {
-            $person['studAddress']['postCode'] = $studyAddressPostCode;
-        }
-        $studyAddressCountry = $pop($input, 'studyAddressCountry');
-        if ($studyAddressCountry !== null) {
-            $person['studAddress']['country'] = [
-                'key' => $studyAddressCountry['key'],
-                'text' => $studyAddressCountry['translations']['de'],
-            ];
-        }
-
-        $emailAddressUniversity = $pop($input, 'emailAddressUniversity');
-        if ($emailAddressUniversity !== null) {
-            $person['emailAddressUniversity'] = $emailAddressUniversity;
-        }
-        $emailAddressConfirmed = $pop($input, 'emailAddressConfirmed');
-        if ($emailAddressConfirmed !== null) {
-            $person['emailAddressConfirmed'] = $emailAddressConfirmed;
-        }
-        $emailAddressTemporary = $pop($input, 'emailAddressTemporary');
-        if ($emailAddressTemporary !== null) {
-            $person['emailAddressTemporary'] = $emailAddressTemporary;
-        }
-
-        $nationalitySecondary = $pop($input, 'nationalitySecondary');
-        if ($nationalitySecondary !== null) {
-            $person['nationalitySecondary'] = [
-                'key' => $nationalitySecondary['key'],
-                'text' => $nationalitySecondary['translations']['de'],
-            ];
-        }
-
-        $givenName = $pop($input, 'givenName');
-        $familyName = $pop($input, 'familyName');
-        $id = $pop($input, 'id');
-        $birthDate = $pop($input, 'birthDate');
-        $birthYear = (int) substr($birthDate, 0, 4);
-        $result = [
-            'id' => 'person.'.$id,
-            'objectType' => 'person',
-            'base' => [
-                'givenName' => $givenName,
-                'familyName' => $familyName,
-                'persName' => $givenName.' '.$familyName,
-                'identNrObfuscated' => $id,
-                'birthDate' => $birthDate,
-                'birthYear' => $birthYear,
-                'studId' => $pop($input, 'studentId'),
-                'stPersonNr' => $pop($input, 'studentPersonNumber'),
-            ],
-            'person' => $person,
-        ];
-
-        return $result;
+        return $this->translator->translateDocument('person', $person);
     }
 }

@@ -28,6 +28,10 @@ services:
     calls:
       - setCache: [ '@dbp.relay.cabinet.cache.sync' ]
 
+  Dbp\Relay\CabinetBundle\TypesenseSync\DocumentTranslator:
+    autowire: true
+    autoconfigure: true
+
   Dbp\Relay\CabinetBundle\Command\SyncCommand:
     autowire: true
     autoconfigure: true

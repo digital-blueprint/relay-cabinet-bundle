@@ -24,6 +24,7 @@
         "symfony/config": "^5.4 || ^6.4",
         "symfony/console": "^5.4 || ^6.4",
         "symfony/dependency-injection": "^5.4 || ^6.4",
+        "symfony/event-dispatcher": "^6.4",
         "symfony/framework-bundle": "^5.4.30 || ^6.4",
         "symfony/http-client": "^6.4",
         "symfony/http-foundation": "^5.4 || ^6.4",
