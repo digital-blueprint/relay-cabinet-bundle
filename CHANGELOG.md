@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.6
+
+- schema creation is now done via the SchemaRetrievalEvent
+- person translation is now done via the DocumentTranslationEvent
+
 ## 0.2.5
 
 - use GET parameters in `/cabinet/signatures` endpoint
