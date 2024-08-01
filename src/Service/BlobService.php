@@ -77,11 +77,11 @@ class BlobService implements LoggerAwareInterface
         $creationTime = rawurlencode((new \DateTime())->format('c'));
 
         // get stuff from body
-        $prefix = $request->request->get('prefix', '');
-        $fileName = $request->request->get('fileName', '');
-        $retentionDuration = $request->request->get('retentionDuration', '');
-        $notifyEmail = $request->request->get('notifyEmail', '');
-        $type = $request->request->get('type', '');
+        $prefix = $request->query->get('prefix', '');
+        $fileName = $request->query->get('fileName', '');
+        $retentionDuration = $request->query->get('retentionDuration', '');
+        $notifyEmail = $request->query->get('notifyEmail', '');
+        $type = $request->query->get('type', '');
 
         try {
             $params = [

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.5
+
+- use GET parameters in `/cabinet/signatures` endpoint
+
 ## 0.2.4
 
 - typesense schema changes
