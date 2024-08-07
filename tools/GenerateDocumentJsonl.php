@@ -20,7 +20,7 @@ $addresses = ['Maple Street', 'Oak Avenue', 'Pine Road', 'Birch Lane', 'Cedar St
 $cities = ['Beverly Hills', 'Atlanta', 'Chicago', 'Dallas', 'Seattle', 'New York', 'San Francisco', 'Phoenix'];
 $zipCodes = ['90210', '30303', '60614', '75201', '98101', '10001', '94102', '85001'];
 $countries = ['USA'];
-$fileObjectTypes = ['fileCitizenshipCertificate', 'fileConversation', 'fileEmail', 'fileLetter', 'filePersonalLicense'];
+$fileObjectTypes = ['fileCitizenshipCertificate', 'fileCommunication', 'fileEmail', 'fileLetter', 'filePersonalLicense'];
 
 $lines = [];
 

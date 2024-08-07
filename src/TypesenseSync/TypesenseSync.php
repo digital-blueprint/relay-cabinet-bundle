@@ -220,11 +220,11 @@ class TypesenseSync implements LoggerAwareInterface
             ];
         }
 
-        // conversation
+        // communication
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
-                'id' => "file-cabinet-conversation.$i",
-                'objectType' => 'file-cabinet-conversation',
+                'id' => "file-cabinet-communication.$i",
+                'objectType' => 'file-cabinet-communication',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
@@ -232,10 +232,10 @@ class TypesenseSync implements LoggerAwareInterface
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
-                        'additionalType' => $getRandom(['PhoneCall', 'InPersonConversation']),
+                        'additionalType' => $getRandom(['PhoneCall', 'InPersonCommunication']),
                     ],
-                    'conversation' => [
-                        'abstract' => 'Short description or summarization of the phone call or in-person conversation',
+                    'communication' => [
+                        'abstract' => 'Short description or summarization of the phone call or in-person communication',
                         'agent' => [
                             'givenName' => 'James',
                             'familyName' => 'Bond',

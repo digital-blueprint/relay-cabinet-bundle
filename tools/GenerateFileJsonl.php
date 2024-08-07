@@ -3,7 +3,7 @@
 
 declare(strict_types=1);
 // Define possible filetypes
-$filetypes = ['personalLicence', 'letter', 'email', 'citizenshipCertificate', 'conversation'];
+$filetypes = ['personalLicence', 'letter', 'email', 'citizenshipCertificate', 'communication'];
 
 // Function to generate random file size
 function generateFileSize(): int

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.7
+
+- `conversation` got renamed to `communication`
+
 ## 0.2.6
 
 - schema creation is now done via the SchemaRetrievalEvent
