@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.9
+
+- update dummy documents to new schema
+- drop support for Symfony 5 and api-platform 2
+
 ## 0.2.8
 
 - add @type and fileSource fields to dummy file documents
