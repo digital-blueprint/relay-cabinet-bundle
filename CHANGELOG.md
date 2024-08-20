@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.8
+
+- add @type and fileSource fields to dummy file documents
+
 ## 0.2.7
 
 - `conversation` got renamed to `communication`
