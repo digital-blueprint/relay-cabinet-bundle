@@ -154,16 +154,20 @@ class TypesenseSync implements LoggerAwareInterface
         $comment = ['Some comment', 'Some other comment'];
         $subjectOf = ['GZ 2021-0.123.456', 'AZ 10 C 1234/23', 'VR 2023/789-B', '567/2022-XYZ', '987654-AB/2023'];
         $countryOfOrigin = ['Österreich', 'Deutschland', 'France', 'Italia', 'Schweiz'];
+        $fileSource = 'blob-cabinetBucket';
+        $atType = 'DocumentFile';
         $fileNames = self::generateRandomPDFNames();
 
         // citizenshipCertificate
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
                 'id' => "file-cabinet-citizenshipCertificate.$i",
+                '@type' => $atType,
                 'objectType' => 'file-cabinet-citizenshipCertificate',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileSource' => $fileSource,
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
@@ -181,10 +185,12 @@ class TypesenseSync implements LoggerAwareInterface
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
                 'id' => "file-cabinet-identityDocument.$i",
+                '@type' => $atType,
                 'objectType' => 'file-cabinet-identityDocument',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileSource' => $fileSource,
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
@@ -204,10 +210,12 @@ class TypesenseSync implements LoggerAwareInterface
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
                 'id' => "file-cabinet-minimalSchema.$i",
+                '@type' => $atType,
                 'objectType' => 'file-cabinet-minimalSchema',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileSource' => $fileSource,
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
@@ -224,10 +232,12 @@ class TypesenseSync implements LoggerAwareInterface
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
                 'id' => "file-cabinet-communication.$i",
+                '@type' => $atType,
                 'objectType' => 'file-cabinet-communication',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileSource' => $fileSource,
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
@@ -250,10 +260,12 @@ class TypesenseSync implements LoggerAwareInterface
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
                 'id' => "file-cabinet-email.$i",
+                '@type' => $atType,
                 'objectType' => 'file-cabinet-email',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileSource' => $fileSource,
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
@@ -284,10 +296,12 @@ class TypesenseSync implements LoggerAwareInterface
         for ($i = 0; $i < 50; ++$i) {
             $documents[] = [
                 'id' => "file-cabinet-letter.$i",
+                '@type' => $atType,
                 'objectType' => 'file-cabinet-letter',
                 'base' => $getRandom($personDocuments)['base'],
                 'file' => [
                     'base' => [
+                        'fileSource' => $fileSource,
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
