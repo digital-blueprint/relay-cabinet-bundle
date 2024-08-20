@@ -11,6 +11,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Uid\Uuid;
 
 class TypesenseSync implements LoggerAwareInterface
 {
@@ -153,10 +154,38 @@ class TypesenseSync implements LoggerAwareInterface
         $phases = ['Application phase', 'Study phase', 'Graduation phase', 'General documents'];
         $comment = ['Some comment', 'Some other comment'];
         $subjectOf = ['GZ 2021-0.123.456', 'AZ 10 C 1234/23', 'VR 2023/789-B', '567/2022-XYZ', '987654-AB/2023'];
-        $countryOfOrigin = ['Österreich', 'Deutschland', 'France', 'Italia', 'Schweiz'];
+        $studyField = ['234', '456', '890'];
         $fileSource = 'blob-cabinetBucket';
         $atType = 'DocumentFile';
         $fileNames = self::generateRandomPDFNames();
+
+        // admissionNotice
+        for ($i = 0; $i < 50; ++$i) {
+            $documents[] = [
+                'id' => "file-cabinet-admissionNotice.$i",
+                '@type' => $atType,
+                'objectType' => 'file-cabinet-admissionNotice',
+                'base' => $getRandom($personDocuments)['base'],
+                'file' => [
+                    'base' => [
+                        'fileSource' => $fileSource,
+                        'groupId' => Uuid::v7()->toRfc4122(),
+                        'fileId' => Uuid::v7()->toRfc4122(),
+                        'fileName' => $getRandom($fileNames),
+                        'comment' => $getRandom($comment),
+                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'subjectOf' => $getRandom($subjectOf),
+                        'studyField' => $getRandom($studyField),
+                        'additionalType' => 'AdmissionNotice',
+                    ],
+                    'admissionNotice' => [
+                        'dateCreated' => $getRandom(['2024-12-24', '1970-01-01', '1978-01-03']),
+                        'previousStudy' => $getRandom(['Something', 'Completely', 'Different']),
+                        'decision' => $getRandom(['rejected', 'refused', 'granted']),
+                    ],
+                ],
+            ];
+        }
 
         // citizenshipCertificate
         for ($i = 0; $i < 50; ++$i) {
@@ -168,14 +197,18 @@ class TypesenseSync implements LoggerAwareInterface
                 'file' => [
                     'base' => [
                         'fileSource' => $fileSource,
+                        'groupId' => Uuid::v7()->toRfc4122(),
+                        'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
+                        'studyField' => $getRandom($studyField),
                         'additionalType' => 'CitizenshipCertificate',
                     ],
                     'citizenshipCertificate' => [
-                        'countryOfOrigin' => $getRandom($countryOfOrigin),
+                        'nationality' => $getRandom(['MNE', 'AUT', 'HRV']),
+                        'dateCreated' => $getRandom(['2024-11-24', '1970-01-02', '1978-01-03']),
                     ],
                 ],
             ];
@@ -191,16 +224,19 @@ class TypesenseSync implements LoggerAwareInterface
                 'file' => [
                     'base' => [
                         'fileSource' => $fileSource,
+                        'groupId' => Uuid::v7()->toRfc4122(),
+                        'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
+                        'studyField' => $getRandom($studyField),
                         'additionalType' => $getRandom(['PersonalLicence', 'Passport', 'DriversLicence']),
                     ],
                     'identityDocument' => [
-                        'countryOfOrigin' => $getRandom($countryOfOrigin),
+                        'nationality' => $getRandom(['MNE', 'AUT', 'HRV']),
                         'identifier' => $getRandom(['AT-L-123456', 'P7890123', '23456789']),
-                        'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
+                        'dateCreated' => $getRandom(['2024-11-26', '1970-01-03', '1978-01-03']),
                     ],
                 ],
             ];
@@ -216,10 +252,13 @@ class TypesenseSync implements LoggerAwareInterface
                 'file' => [
                     'base' => [
                         'fileSource' => $fileSource,
+                        'groupId' => Uuid::v7()->toRfc4122(),
+                        'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
+                        'studyField' => $getRandom($studyField),
                         'additionalType' => $getRandom(['BirthCertificate', 'MaritalStatusCertificate', 'SupervisionAcceptance']),
                     ],
                     'minimalSchema' => [
@@ -238,10 +277,13 @@ class TypesenseSync implements LoggerAwareInterface
                 'file' => [
                     'base' => [
                         'fileSource' => $fileSource,
+                        'groupId' => Uuid::v7()->toRfc4122(),
+                        'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
                         'studentLifeCyclePhase' => $getRandom($phases),
                         'subjectOf' => $getRandom($subjectOf),
+                        'studyField' => $getRandom($studyField),
                         'additionalType' => $getRandom(['PhoneCall', 'InPersonCommunication']),
                     ],
                     'communication' => [
@@ -250,88 +292,7 @@ class TypesenseSync implements LoggerAwareInterface
                             'givenName' => 'James',
                             'familyName' => 'Bond',
                         ],
-                        'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
-                    ],
-                ],
-            ];
-        }
-
-        // email
-        for ($i = 0; $i < 50; ++$i) {
-            $documents[] = [
-                'id' => "file-cabinet-email.$i",
-                '@type' => $atType,
-                'objectType' => 'file-cabinet-email',
-                'base' => $getRandom($personDocuments)['base'],
-                'file' => [
-                    'base' => [
-                        'fileSource' => $fileSource,
-                        'fileName' => $getRandom($fileNames),
-                        'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
-                        'subjectOf' => $getRandom($subjectOf),
-                        'additionalType' => $getRandom(['Email']),
-                    ],
-                    'email' => [
-                        'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
-                        'dateCreated' => $getRandom(['2021-02-11 11:30', '2021-02-12 19:40']),
-                        'sender' => [
-                            'givenName' => 'Elim',
-                            'familyName' => 'Garak',
-                            'email' => 'garak@ds9.org',
-                        ],
-                        'recipient' => [
-                            'givenName' => 'Enabran',
-                            'familyName' => 'Tain',
-                            'email' => 'enabran@obsidian.org',
-                        ],
-                        'ccRecipient' => 'benjamin@ds9.org',
-                        'bccRecipient' => 'odo@ds9.org',
-                    ],
-                ],
-            ];
-        }
-
-        // letter
-        for ($i = 0; $i < 50; ++$i) {
-            $documents[] = [
-                'id' => "file-cabinet-letter.$i",
-                '@type' => $atType,
-                'objectType' => 'file-cabinet-letter',
-                'base' => $getRandom($personDocuments)['base'],
-                'file' => [
-                    'base' => [
-                        'fileSource' => $fileSource,
-                        'fileName' => $getRandom($fileNames),
-                        'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
-                        'subjectOf' => $getRandom($subjectOf),
-                        'additionalType' => $getRandom(['PostalLetter']),
-                    ],
-                    'letter' => [
-                        'abstract' => 'Short description or summarization of the email. Can also be a plain text copy.',
-                        'dateSent' => $getRandom(['2021-02-11', '2021-02-12']),
-                        'dateReceived' => $getRandom(['2021-02-13', '2021-02-14']),
-                        'sender' => [
-                            'givenName' => 'Elim',
-                            'familyName' => 'Garak',
-                            'worksFor' => [
-                                'legalName' => 'Legal',
-                                'department' => 'Department',
-                            ],
-                            'legalName' => 'Legal',
-                            'department' => 'Department',
-                        ],
-                        'recipient' => [
-                            'givenName' => 'Enabran',
-                            'familyName' => 'Tain',
-                            'worksFor' => [
-                                'legalName' => 'Legal',
-                                'department' => 'Department',
-                            ],
-                            'legalName' => 'Legal',
-                            'department' => 'Department',
-                        ],
+                        'dateCreated' => $getRandom(['2023-05-15T09:30:45+05:00', '2021-12-31T23:59:59+02:00', '2024-02-29T00:00:00+00:00']),
                     ],
                 ],
             ];
