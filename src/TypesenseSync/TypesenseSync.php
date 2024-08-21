@@ -62,40 +62,46 @@ class TypesenseSync implements LoggerAwareInterface
         }
         $cursor = $this->getCursor();
 
+        // Process in chunks to reduce memory consumption
+        $chunkSize = 10000;
+
         if ($cursor === null) {
             $this->logger->info('Starting a full sync');
             $schema = $this->translator->getSchema();
 
             $this->searchIndex->setSchema($schema);
             $this->searchIndex->ensureSetup();
+            $this->searchIndex->deleteOldCollections();
             $collectionName = $this->searchIndex->createNewCollection();
 
             $res = $this->personSync->getAllPersons();
-            $documents = [];
-            foreach ($res->getPersons() as $person) {
-                $documents[] = $this->personToDocument($person);
+            foreach (array_chunk($res->getPersons(), $chunkSize) as $persons) {
+                $documents = [];
+                foreach ($persons as $person) {
+                    $documents[] = $this->personToDocument($person);
+                }
+                $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+                if ($documents !== []) {
+                    $this->addDummyDocuments($collectionName, $documents);
+                }
             }
-
-            $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-            if ($documents !== []) {
-                $this->addDummyDocuments($collectionName, $documents);
-            }
-            $this->searchIndex->ensureSetup();
 
             $this->searchIndex->updateAlias($collectionName);
-            $this->searchIndex->expireOldCollections();
+            $this->searchIndex->deleteOldCollections();
 
             $this->saveCursor($res->getCursor());
         } else {
             $this->logger->info('Starting a partial sync');
             $res = $this->personSync->getAllPersons($cursor);
-
-            $documents = [];
-            foreach ($res->getPersons() as $person) {
-                $documents[] = $this->personToDocument($person);
-            }
             $collectionName = $this->searchIndex->getCollectionName();
-            $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+
+            foreach (array_chunk($res->getPersons(), $chunkSize) as $persons) {
+                $documents = [];
+                foreach ($persons as $person) {
+                    $documents[] = $this->personToDocument($person);
+                }
+                $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+            }
 
             $this->saveCursor($res->getCursor());
         }

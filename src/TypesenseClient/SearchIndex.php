@@ -106,7 +106,7 @@ class SearchIndex implements LoggerAwareInterface
     {
         $newName = $this->createNewCollection();
         $this->updateAlias($newName);
-        $this->expireOldCollections(0);
+        $this->deleteOldCollections();
     }
 
     protected function isAliasExists(string $aliasName): bool
@@ -130,28 +130,20 @@ class SearchIndex implements LoggerAwareInterface
         }
     }
 
-    public function expireOldCollections(int $keepLast = 3): bool
+    /**
+     * Delete all collections that are no longer actively used.
+     */
+    public function deleteOldCollections(): void
     {
         $client = $this->getClient();
+        $collectionNameSkipList = [];
+
         // Don't delete the currently linked collection in all cases
         $alias = $client->aliases[$this->getAliasName()]->retrieve();
-        $collectionNameSkipList = [$alias['collection_name']];
-
-        // TODO: remove this once we are done testing
-        // We use these for testing as well, so skip for now
-        $collectionNameSkipList = array_merge(
-            $collectionNameSkipList,
-            ['cabinet-students', 'cabinet-files']
-        );
-
-        // Fetch all collections
-        try {
-            $collections = $client->collections->retrieve();
-        } catch (Exception|TypesenseClientErrorAlias) {
-            return false;
-        }
+        $collectionNameSkipList[] = $alias['collection_name'];
 
         // Collect all collections with the given prefix that are not in the skip list
+        $collections = $client->collections->retrieve();
         $collectionNameList = [];
         foreach ($collections as $collection) {
             if (str_starts_with($collection['name'], $this->getCollectionPrefix())
@@ -160,21 +152,11 @@ class SearchIndex implements LoggerAwareInterface
             }
         }
 
-        rsort($collectionNameList);
-        // Slice off $keepLast collections
-        $collectionNameList = array_slice($collectionNameList, $keepLast);
-
         // Delete the remaining collections
         foreach ($collectionNameList as $collectionName) {
             $this->logger->info("Deleting old collection '$collectionName'");
-            try {
-                $client->collections[$collectionName]->delete();
-            } catch (Exception|TypesenseClientErrorAlias $e) {
-                $this->logger->error('Deleting collection failed', ['exception' => $e]);
-            }
+            $client->collections[$collectionName]->delete();
         }
-
-        return true;
     }
 
     public function setLogger(LoggerInterface $logger): void
