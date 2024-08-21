@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.10
+
+- reduce memory usage a bit when syncing to typesense
+
 ## 0.2.9
 
 - update dummy documents to new schema
