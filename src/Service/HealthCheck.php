@@ -13,11 +13,13 @@ class HealthCheck implements CheckInterface
 {
     private CabinetService $cabinet;
     private SearchIndex $searchIndex;
+    private BlobService $blob;
 
-    public function __construct(CabinetService $cabinet, SearchIndex $searchIndex)
+    public function __construct(CabinetService $cabinet, SearchIndex $searchIndex, BlobService $blob)
     {
         $this->cabinet = $cabinet;
         $this->searchIndex = $searchIndex;
+        $this->blob = $blob;
     }
 
     public function getName(): string
@@ -45,6 +47,7 @@ class HealthCheck implements CheckInterface
         return [
             $this->checkMethod('Check if we can connect to the DB', [$this->cabinet, 'checkConnection']),
             $this->checkMethod('Check if we can connect to Typesense', [$this->searchIndex, 'checkConnection']),
+            $this->checkMethod('Check if we can connect to Blob', [$this->blob, 'checkConnection']),
         ];
     }
 }

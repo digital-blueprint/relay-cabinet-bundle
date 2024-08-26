@@ -56,7 +56,7 @@ class TypesenseService implements LoggerAwareInterface
         // return new Response('Try later', Response::HTTP_UNAUTHORIZED);
         // var_dump($request->get('x-typesense-api-key'));
 
-        $url = $this->config->getTypesenseBaseUrl().'/'.$path;
+        $url = $this->config->getTypesenseApiUrl().'/'.$path;
         $method = $request->getMethod();
 
         // Forward the request to Typesense server and return the response

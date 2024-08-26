@@ -35,9 +35,6 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
         );
         $loader->load('services.yaml');
 
-        $definition = $container->getDefinition('Dbp\Relay\CabinetBundle\Service\BlobService');
-        $definition->addMethodCall('setConfig', [$mergedConfig]);
-
         $definition = $container->getDefinition('Dbp\Relay\CabinetBundle\Service\CabinetService');
         $definition->addMethodCall('setConfig', [$mergedConfig]);
 

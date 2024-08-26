@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Command;
 
+use Dbp\Relay\CabinetBundle\Service\BlobService;
 use Dbp\Relay\CabinetBundle\Service\CabinetService;
 use Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex;
 use Symfony\Component\Console\Command\Command;
@@ -14,13 +15,15 @@ class DebugCommand extends Command
 {
     private CabinetService $cabinetService;
     private SearchIndex $searchIndex;
+    private BlobService $blobService;
 
-    public function __construct(CabinetService $cabinetService, SearchIndex $searchIndex)
+    public function __construct(CabinetService $cabinetService, SearchIndex $searchIndex, BlobService $blobService)
     {
         parent::__construct();
 
         $this->cabinetService = $cabinetService;
         $this->searchIndex = $searchIndex;
+        $this->blobService = $blobService;
     }
 
     /**

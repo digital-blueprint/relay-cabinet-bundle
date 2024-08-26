@@ -27,7 +27,7 @@ class SearchIndex implements LoggerAwareInterface
     public function __construct(ConfigurationService $config)
     {
         $this->config = $config;
-        $this->connection = new Connection($config->getTypesenseBaseUrl(), $config->getTypesenseApiKey());
+        $this->connection = new Connection($config->getTypesenseApiUrl(), $config->getTypesenseApiKey());
         $this->logger = new NullLogger();
         $this->schema = [];
     }

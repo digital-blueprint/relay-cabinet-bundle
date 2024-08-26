@@ -11,56 +11,28 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
+use Symfony\Component\Uid\Uuid;
 
 class BlobService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    /**
-     * @var mixed
-     */
-    private $blobKey;
-    /**
-     * @var mixed
-     */
-    private $blobBucketId;
+    private AuthorizationService $auth;
 
-    /**
-     * @var UrlGeneratorInterface
-     */
-    private $router;
+    private ConfigurationService $config;
 
-    /**
-     * @var string
-     */
-    private $blobBaseUrl;
-
-    /**
-     * @var BlobApi
-     */
-    private $blobApi;
-
-    /**
-     * @var AuthorizationService
-     */
-    private $auth;
-
-    public function __construct(UrlGeneratorInterface $router, AuthorizationService $auth)
+    public function __construct(AuthorizationService $auth, ConfigurationService $config)
     {
-        $this->router = $router;
-        $this->blobBaseUrl = '';
-        $this->blobKey = '';
-        $this->blobBucketId = '';
         $this->auth = $auth;
+        $this->config = $config;
     }
 
-    public function setConfig(array $config)
+    public function checkConnection(): void
     {
-        $this->blobBaseUrl = $config['blob_base_url'] ?? '';
-        $this->blobKey = $config['blob_key'] ?? '';
-        $this->blobBucketId = $config['blob_bucket_id'] ?? '';
-        $this->blobApi = new BlobApi($this->blobBaseUrl, $this->blobBucketId, $this->blobKey);
+        $config = $this->config;
+        $blobApi = new BlobApi($config->getBlobApiUrlInternal(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+        $blobApi->setOAuth2Token($config->getBlobIdpUrl(), $config->getBlobIdpClientId(), $config->getBlobIdpClientSecret());
+        $blobApi->getFileDataByPrefix(Uuid::v4()->toRfc4122(), 0);
     }
 
     public function getSignatureForGivenRequest(Request $request): Response
@@ -73,6 +45,7 @@ class BlobService implements LoggerAwareInterface
         // TODO: Check permissions
         $this->auth->checkCanUse();
 
+        $config = $this->config;
         $method = 'POST';
         $creationTime = rawurlencode((new \DateTime())->format('c'));
 
@@ -83,9 +56,11 @@ class BlobService implements LoggerAwareInterface
         $notifyEmail = $request->query->get('notifyEmail', '');
         $type = $request->query->get('type', '');
 
+        $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+
         try {
             $params = [
-                'bucketIdentifier' => $this->blobBucketId,
+                'bucketIdentifier' => $config->getBlobBucketId(),
                 'creationTime' => $creationTime,
                 'fileName' => $fileName,
                 'method' => $method,
@@ -95,7 +70,7 @@ class BlobService implements LoggerAwareInterface
                 'type' => $type,
             ];
 
-            $responseUrl = $this->blobApi->getSignedBlobFilesUrl($params);
+            $responseUrl = $blobApi->getSignedBlobFilesUrl($params);
 
             return new Response($responseUrl, 200);
         } catch (\Exception $e) {
