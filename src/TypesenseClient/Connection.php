@@ -41,7 +41,7 @@ class Connection implements LoggerAwareInterface
         $this->logger = new NullLogger();
     }
 
-    public function getClient(): Client
+    public function getClient(int $numRetries = self::TYPESENSE_CLIENT_RETRY_COUNT): Client
     {
         $parsedUrl = parse_url($this->baseUrl);
         if ($parsedUrl === false) {
@@ -61,7 +61,7 @@ class Connection implements LoggerAwareInterface
         $symfonyClient = new TraceableHttpClient(HttpClient::create());
         $symfonyClient->setLogger($this->logger);
         $symfonyClient = new RetryableHttpClient(
-            $symfonyClient, null, self::TYPESENSE_CLIENT_RETRY_COUNT,
+            $symfonyClient, null, $numRetries,
             $this->logger);
 
         return new Client(

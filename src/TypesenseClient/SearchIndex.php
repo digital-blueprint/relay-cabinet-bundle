@@ -167,7 +167,8 @@ class SearchIndex implements LoggerAwareInterface
 
     public function checkConnection(): void
     {
-        $client = $this->connection->getClient();
+        // Limit retries, so we fail more quickly
+        $client = $this->connection->getClient(3);
         $client->getHealth()->retrieve();
         $client->getMultiSearch()->perform(['searches' => [['q' => 'healthcheck']]]);
     }
