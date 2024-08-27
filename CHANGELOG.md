@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.2.11
+
+- Added a health check for the blob connection
+- Fixes the typesense health check to not block forever if the connection fails
+- config changes:
+  - typesense_base_url -> typesense.api_url
+  - typesense_api_key -> typesense.api_key
+  - blob_base_url -> blob.api_url
+  - blob_bucket_id -> blob.bucket_id
+  - blob_key -> blob.bucket_key
+- new config options:
+  - blob.idp_url
+  - blob.idp_client_id
+  - blob.idp_client_secret
+  - blob.api_url_internal (optional)
+
 ## 0.2.10
 
 - reduce memory usage a bit when syncing to typesense
