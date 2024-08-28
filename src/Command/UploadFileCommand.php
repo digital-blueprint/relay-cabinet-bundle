@@ -32,6 +32,8 @@ class UploadFileCommand extends Command
         $this->addArgument('filepath', InputArgument::REQUIRED, 'The path to the file to upload');
         $this->addOption('type', 't', InputOption::VALUE_OPTIONAL, 'The type of the file');
         $this->addOption('metadata', 'm', InputOption::VALUE_OPTIONAL, 'The metadata of the file');
+        $this->addOption('filename', 'f', InputOption::VALUE_REQUIRED,
+            'The filename, defaults to the filename of the given filepath');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -48,7 +50,7 @@ class UploadFileCommand extends Command
             return Command::FAILURE;
         }
 
-        $filename = basename($filepath);
+        $filename = $input->getOption('filename') ?? basename($filepath);
         $payload = file_get_contents($filepath);
 
         if ($payload === false) {

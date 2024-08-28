@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\DependencyInjection;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
+use Dbp\Relay\CabinetBundle\Blob\TypesenseTask;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
 use Symfony\Component\Config\FileLocator;
@@ -88,5 +89,7 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
                 'Dbp\Relay\CabinetBundle\Migrations' => __DIR__.'/../Migrations',
             ],
         ]);
+
+        $this->addQueueMessageClass($container, TypesenseTask::class);
     }
 }

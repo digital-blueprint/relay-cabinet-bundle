@@ -91,6 +91,30 @@ class SearchIndex implements LoggerAwareInterface
         }
     }
 
+    /**
+     * Returns all documents of type $type where $key matches $value.
+     */
+    public function findDocuments(string $collectionName, string $type, string $key, string $value): array
+    {
+        if (preg_match('/\s/', $value) || preg_match('/\s/', $type)) {
+            throw new \RuntimeException('no whitespace supported');
+        }
+        $filterBy = $key.':='.$value.' && @type := '.$type;
+        $searchResult = $this->getClient()->collections[$collectionName]->documents->search(['q' => '*', 'filter_by' => $filterBy]);
+
+        $documents = [];
+        foreach ($searchResult['hits'] as $hit) {
+            $documents[] = $hit['document'];
+        }
+
+        return $documents;
+    }
+
+    public function deleteDocument(string $collectionName, string $id): void
+    {
+        $this->getClient()->collections[$collectionName]->documents[$id]->delete();
+    }
+
     public function updateAlias(string $collectionName): void
     {
         $aliasName = $this->getAliasName();

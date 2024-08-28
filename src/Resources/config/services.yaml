@@ -48,6 +48,10 @@ services:
     autowire: true
     autoconfigure: true
 
+  Dbp\Relay\CabinetBundle\Command\DeleteFileCommand:
+    autowire: true
+    autoconfigure: true
+
   Dbp\Relay\CabinetBundle\Authorization\AuthorizationService:
     autowire: true
     autoconfigure: true
@@ -65,8 +69,8 @@ services:
     autowire: true
     autoconfigure: true
 
-  Dbp\Relay\CabinetBundle\EventSubscriber\:
-    resource: '../../EventSubscriber'
+  Dbp\Relay\CabinetBundle\Blob\:
+    resource: '../../Blob'
     autowire: true
     autoconfigure: true
 

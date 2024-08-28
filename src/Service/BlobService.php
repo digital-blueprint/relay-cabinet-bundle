@@ -49,6 +49,13 @@ class BlobService implements LoggerAwareInterface
         return $blobApi->uploadFile($this->config->getBlobBucketPrefix(), $filename, $payload, $metadata ?? '', $type ?? '');
     }
 
+    public function deleteFile(string $id): void
+    {
+        $blobApi = $this->getInternalBlobApi();
+
+        $blobApi->deleteFileByIdentifier($id);
+    }
+
     public function getSignatureForGivenRequest(Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {
