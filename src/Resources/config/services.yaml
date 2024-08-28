@@ -44,6 +44,10 @@ services:
     autowire: true
     autoconfigure: true
 
+  Dbp\Relay\CabinetBundle\Command\UploadFileCommand:
+    autowire: true
+    autoconfigure: true
+
   Dbp\Relay\CabinetBundle\Authorization\AuthorizationService:
     autowire: true
     autoconfigure: true

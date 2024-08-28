@@ -27,12 +27,26 @@ class BlobService implements LoggerAwareInterface
         $this->config = $config;
     }
 
-    public function checkConnection(): void
+    private function getInternalBlobApi(): BlobApi
     {
         $config = $this->config;
         $blobApi = new BlobApi($config->getBlobApiUrlInternal(), $config->getBlobBucketId(), $config->getBlobBucketKey());
         $blobApi->setOAuth2Token($config->getBlobIdpUrl(), $config->getBlobIdpClientId(), $config->getBlobIdpClientSecret());
+
+        return $blobApi;
+    }
+
+    public function checkConnection(): void
+    {
+        $blobApi = $this->getInternalBlobApi();
         $blobApi->getFileDataByPrefix(Uuid::v4()->toRfc4122(), 0);
+    }
+
+    public function uploadFile(string $filename, string $payload, ?string $type = null, ?string $metadata = null): string
+    {
+        $blobApi = $this->getInternalBlobApi();
+
+        return $blobApi->uploadFile($this->config->getBlobBucketPrefix(), $filename, $payload, $metadata ?? '', $type ?? '');
     }
 
     public function getSignatureForGivenRequest(Request $request): Response

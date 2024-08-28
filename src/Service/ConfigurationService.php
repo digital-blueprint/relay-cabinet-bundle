@@ -57,4 +57,9 @@ class ConfigurationService
     {
         return $this->config['blob']['bucket_key'];
     }
+
+    public function getBlobBucketPrefix(): string
+    {
+        return 'document-';
+    }
 }
