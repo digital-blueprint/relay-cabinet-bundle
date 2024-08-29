@@ -164,6 +164,7 @@ class TypesenseSync implements LoggerAwareInterface
         $fileSource = 'blob-cabinetBucket';
         $atType = 'DocumentFile';
         $fileNames = self::generateRandomPDFNames();
+        $isPartOf = [[], ['CostReimbursement']];
 
         // admissionNotice
         for ($i = 0; $i < 50; ++$i) {
@@ -179,7 +180,7 @@ class TypesenseSync implements LoggerAwareInterface
                         'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'isPartOf' => $getRandom($isPartOf),
                         'subjectOf' => $getRandom($subjectOf),
                         'studyField' => $getRandom($studyField),
                         'additionalType' => 'AdmissionNotice',
@@ -207,7 +208,7 @@ class TypesenseSync implements LoggerAwareInterface
                         'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'isPartOf' => $getRandom($isPartOf),
                         'subjectOf' => $getRandom($subjectOf),
                         'studyField' => $getRandom($studyField),
                         'additionalType' => 'CitizenshipCertificate',
@@ -234,7 +235,7 @@ class TypesenseSync implements LoggerAwareInterface
                         'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'isPartOf' => $getRandom($isPartOf),
                         'subjectOf' => $getRandom($subjectOf),
                         'studyField' => $getRandom($studyField),
                         'additionalType' => $getRandom(['PersonalLicence', 'Passport', 'DriversLicence']),
@@ -262,7 +263,7 @@ class TypesenseSync implements LoggerAwareInterface
                         'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'isPartOf' => $getRandom($isPartOf),
                         'subjectOf' => $getRandom($subjectOf),
                         'studyField' => $getRandom($studyField),
                         'additionalType' => $getRandom(['BirthCertificate', 'MaritalStatusCertificate', 'SupervisionAcceptance']),
@@ -287,7 +288,7 @@ class TypesenseSync implements LoggerAwareInterface
                         'fileId' => Uuid::v7()->toRfc4122(),
                         'fileName' => $getRandom($fileNames),
                         'comment' => $getRandom($comment),
-                        'studentLifeCyclePhase' => $getRandom($phases),
+                        'isPartOf' => $getRandom($isPartOf),
                         'subjectOf' => $getRandom($subjectOf),
                         'studyField' => $getRandom($studyField),
                         'additionalType' => $getRandom(['PhoneCall', 'InPersonCommunication']),
