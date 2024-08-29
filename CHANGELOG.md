@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.12
+
+- New `dbp:relay:cabinet:upload-file` command for uploading files
+- Adjusted demo file metadata to match the newest schema
+
 ## 0.2.11
 
 - Added a health check for the blob connection
