@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.13
+
+- `dbp:relay:cabinet:upload-file` gained a `--filename` option for specifying the filename
+- New `dbp:relay:cabinet:delete-file` command for deleting files
+- Files changes in the blob bucket will not automatically be reflected to Typesense
+- `dbp:relay:cabinet:sync` no longer adds dummy file documents to Typesense
+
 ## 0.2.12
 
 - New `dbp:relay:cabinet:upload-file` command for uploading files
