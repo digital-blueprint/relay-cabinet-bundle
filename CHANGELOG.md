@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.14
+
+- `dbp:relay:cabinet:sync` and `dbp:relay:cabinet:sync-one` will now also sync files into typesense. And delta syncs of person information will be reflected in the files as well.
+
 ## 0.2.13
 
 - `dbp:relay:cabinet:upload-file` gained a `--filename` option for specifying the filename
