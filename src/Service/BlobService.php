@@ -49,11 +49,36 @@ class BlobService implements LoggerAwareInterface
         return $blobApi->uploadFile($this->config->getBlobBucketPrefix(), $filename, $payload, $metadata ?? '', $type ?? '');
     }
 
+    public function getBucketId(): string
+    {
+        return $this->config->getBlobBucketId();
+    }
+
     public function deleteFile(string $id): void
     {
         $blobApi = $this->getInternalBlobApi();
 
         $blobApi->deleteFileByIdentifier($id);
+    }
+
+    /**
+     * Get all blob files without data as an iterable, decoded as an array.
+     */
+    public function getAllFiles(int $perPage = 1000): iterable
+    {
+        $blobApi = $this->getInternalBlobApi();
+        $bucketPrefix = $this->config->getBlobBucketPrefix();
+        $page = 1;
+        while (true) {
+            $entries = $blobApi->getFileDataByPrefix($bucketPrefix, 0, page: $page, perPage: $perPage)['hydra:member'];
+            foreach ($entries as $entry) {
+                yield $entry;
+            }
+            if (count($entries) < $perPage) {
+                break;
+            }
+            ++$page;
+        }
     }
 
     public function getSignatureForGivenRequest(Request $request): Response

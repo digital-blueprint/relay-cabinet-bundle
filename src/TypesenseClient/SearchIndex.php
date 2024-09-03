@@ -91,6 +91,24 @@ class SearchIndex implements LoggerAwareInterface
         }
     }
 
+    public function getBaseMapping(string $collectionName, string $type, string $key, string $include)
+    {
+        if (preg_match('/\s/', $include) || preg_match('/\s/', $type) || preg_match('/\s/', $key)) {
+            throw new \RuntimeException('no whitespace supported');
+        }
+        $filterBy = '@type := '.$type;
+        $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy, 'include_fields' => $include]);
+        $lines = explode("\n", $lines);
+        $mapping = [];
+        foreach ($lines as $line) {
+            $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+            $id = $decoded[$include][$key];
+            $mapping[$id] = $decoded['base'];
+        }
+
+        return $mapping;
+    }
+
     /**
      * Returns all documents of type $type where $key matches $value.
      */

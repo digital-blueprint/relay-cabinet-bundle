@@ -12,7 +12,7 @@
         "api-platform/core": "^3.2",
         "dbp/relay-base-person-bundle": "^0.2.26",
         "dbp/relay-blob-bundle": "^0.1.40",
-        "dbp/relay-blob-library": "^0.2.9",
+        "dbp/relay-blob-library": "^0.2.10",
         "dbp/relay-core-bundle": "^0.1.153",
         "doctrine/collections": "^1.8 || ^2",
         "doctrine/dbal": "^3.8",
