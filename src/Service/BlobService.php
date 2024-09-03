@@ -81,7 +81,7 @@ class BlobService implements LoggerAwareInterface
         }
     }
 
-    public function getSignatureForGivenRequest(Request $request): Response
+    public function getSignatureForGivenPostRequest(Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {
             throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
@@ -97,10 +97,11 @@ class BlobService implements LoggerAwareInterface
 
         // get stuff from body
         $prefix = $request->query->get('prefix', '');
-        $fileName = $request->query->get('fileName', '');
-        $retentionDuration = $request->query->get('retentionDuration', '');
-        $notifyEmail = $request->query->get('notifyEmail', '');
         $type = $request->query->get('type', '');
+
+        if (!$type) {
+            throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The parameter type has to be provided', 'cabinet:missing-type');
+        }
 
         $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
 
@@ -108,15 +109,182 @@ class BlobService implements LoggerAwareInterface
             $params = [
                 'bucketIdentifier' => $config->getBlobBucketId(),
                 'creationTime' => $creationTime,
-                'fileName' => $fileName,
                 'method' => $method,
-                'notifyEmail' => $notifyEmail,
                 'prefix' => $prefix,
-                'retentionDuration' => $retentionDuration,
                 'type' => $type,
             ];
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params);
+
+            return new Response($responseUrl, 200);
+        } catch (\Exception $e) {
+            throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
+        }
+    }
+
+    public function getSignatureForGivenGetRequest(Request $request): Response
+    {
+        if (!$this->auth->isAuthenticated()) {
+            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+        }
+
+        // Do basic authorization checks for the provided bearer token
+        // TODO: Check permissions
+        $this->auth->checkCanUse();
+
+        $config = $this->config;
+        $method = 'GET';
+        $creationTime = rawurlencode((new \DateTime())->format('c'));
+
+        // get stuff from body
+        $includeData = $request->query->get('includeData', '');
+        $id = $request->query->get('identifier', '');
+
+        if ($includeData && $includeData !== '1') {
+            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST, 'The parameter includeData has to be 1 or not be provided at all.', 'cabinet:invalid-include-data');
+        }
+
+        if (!$id) {
+            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST, 'The parameter identifier has to be provided.', 'cabinet:missing-identifier');
+        }
+
+        $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+
+        try {
+            if ($includeData) {
+                $params = [
+                    'bucketIdentifier' => $config->getBlobBucketId(),
+                    'creationTime' => $creationTime,
+                    'includeData' => $includeData,
+                    'method' => $method,
+                ];
+            } else {
+                $params = [
+                    'bucketIdentifier' => $config->getBlobBucketId(),
+                    'creationTime' => $creationTime,
+                    'method' => $method,
+                ];
+            }
+
+            $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
+
+            return new Response($responseUrl, 200);
+        } catch (\Exception $e) {
+            throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
+        }
+    }
+
+    public function getSignatureForGivenDownloadRequest(Request $request): Response
+    {
+        if (!$this->auth->isAuthenticated()) {
+            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+        }
+
+        // Do basic authorization checks for the provided bearer token
+        // TODO: Check permissions
+        $this->auth->checkCanUse();
+
+        $config = $this->config;
+        $method = 'GET';
+        $creationTime = rawurlencode((new \DateTime())->format('c'));
+
+        // get stuff from body
+        $id = $request->query->get('identifier', '');
+
+        if (!$id) {
+            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST, 'The parameter identifier has to be provided.', 'cabinet:missing-identifier');
+        }
+
+        $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+
+        try {
+            $params = [
+                'bucketIdentifier' => $config->getBlobBucketId(),
+                'creationTime' => $creationTime,
+                'method' => $method,
+            ];
+
+            $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
+
+            return new Response($responseUrl, 200);
+        } catch (\Exception $e) {
+            throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
+        }
+    }
+
+    public function getSignatureForGivenDeleteRequest(Request $request): Response
+    {
+        if (!$this->auth->isAuthenticated()) {
+            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+        }
+
+        // Do basic authorization checks for the provided bearer token
+        // TODO: Check permissions
+        $this->auth->checkCanUse();
+
+        $config = $this->config;
+        $method = 'DELETE';
+        $creationTime = rawurlencode((new \DateTime())->format('c'));
+
+        $id = $request->query->get('identifier', '');
+
+        if (!$id) {
+            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST, 'The parameter identifier has to be provided.', 'cabinet:missing-identifier');
+        }
+
+        $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+
+        try {
+            $params = [
+                'bucketIdentifier' => $config->getBlobBucketId(),
+                'creationTime' => $creationTime,
+                'method' => $method,
+            ];
+
+            $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
+
+            return new Response($responseUrl, 200);
+        } catch (\Exception $e) {
+            throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
+        }
+    }
+
+    public function getSignatureForGivenPatchRequest(Request $request): Response
+    {
+        if (!$this->auth->isAuthenticated()) {
+            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+        }
+
+        // Do basic authorization checks for the provided bearer token
+        // TODO: Check permissions
+        $this->auth->checkCanUse();
+
+        $config = $this->config;
+        $method = 'PATCH';
+        $creationTime = rawurlencode((new \DateTime())->format('c'));
+
+        // get stuff from body
+        $prefix = $request->query->get('prefix', '');
+        $type = $request->query->get('type', '');
+        $id = $request->query->get('identifier', '');
+
+        $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+
+        try {
+            $params = [
+                'bucketIdentifier' => $config->getBlobBucketId(),
+                'creationTime' => $creationTime,
+                'method' => $method,
+            ];
+
+            if ($prefix) {
+                $params['prefix'] = $prefix;
+            }
+            if ($type) {
+                $params['type'] = $type;
+            }
+
+            $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
 
             return new Response($responseUrl, 200);
         } catch (\Exception $e) {
