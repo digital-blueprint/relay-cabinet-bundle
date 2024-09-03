@@ -118,11 +118,15 @@ class SearchIndex implements LoggerAwareInterface
             throw new \RuntimeException('no whitespace supported');
         }
         $filterBy = $key.':='.$value.' && @type := '.$type;
-        $searchResult = $this->getClient()->collections[$collectionName]->documents->search(['q' => '*', 'filter_by' => $filterBy]);
-
+        $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy]);
+        if ($lines === '') {
+            return [];
+        }
+        $lines = explode("\n", $lines);
         $documents = [];
-        foreach ($searchResult['hits'] as $hit) {
-            $documents[] = $hit['document'];
+        foreach ($lines as $line) {
+            $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+            $documents[] = $decoded;
         }
 
         return $documents;
