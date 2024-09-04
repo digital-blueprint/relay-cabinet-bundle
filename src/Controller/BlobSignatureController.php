@@ -20,6 +20,11 @@ class BlobSignatureController extends AbstractController
         $this->blobService = $blobService;
     }
 
+    public function __invoke(Request $request): Response
+    {
+        return $this->proxy($request);
+    }
+
     #[Route(path: '/cabinet/signature', name: 'cabinet_blob_signature', requirements: ['path' => '.+'])]
     public function proxy(Request $request): Response
     {

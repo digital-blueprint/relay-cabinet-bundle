@@ -1,0 +1,53 @@
+resources:
+  Dbp\Relay\CabinetBundle\Entity\Dummy:
+    types: ['https://schema.org/DigitalDocument']
+    shortName: "cabinet"
+    routePrefix: "/cabinet"
+    normalizationContext:
+      groups: [ "Cabinet:output" ]
+      jsonld_embed_context: true
+
+    operations:
+      signature:
+        class: ApiPlatform\Metadata\Get
+        method: GET
+        controller: Dbp\Relay\CabinetBundle\Controller\BlobSignatureController
+        uriTemplate: "/signature"
+        normalizationContext:
+          groups: [ "Cabinet:output" ]
+          jsonld_embed_context: true
+        read: false
+        openapiContext:
+          tags: ["Cabinet"]
+          summary: "Returns a signed blob url which can be used to do operations on blob"
+          parameters:
+            - name: method
+              in: query
+              description: "Blob method which will be used"
+              type: string
+              required: true
+              example: "GET"
+            - name: type
+              in: query
+              description: "Blob type which will be stored"
+              type: string
+              required: false
+              example: ""
+            - name: prefix
+              in: query
+              description: "Prefix to be stored for the blob resource"
+              type: string
+              required: false
+              example: ""
+            - name: identifier
+              in: query
+              description: "Identifier of the blob resource"
+              type: string
+              required: false
+              example: ""
+            - name: includeData
+              in: query
+              description: "1 if GET request should return base64 encoded filedata, not given otherwise"
+              type: string
+              required: false
+              example: ""

@@ -11,7 +11,7 @@
 
 | Parameter     | Description                                                                         | Type   | Possible values                              |
 |---------------|-------------------------------------------------------------------------------------|--------|----------------------------------------------|
-| `action`      | HTTP method which will be used on blob                                              | string | `POST`, `GET`, `DELETE`, `PATCH`, `DOWNLOAD` |
+| `method`      | HTTP method which will be used on blob                                              | string | `POST`, `GET`, `DELETE`, `PATCH`, `DOWNLOAD` |
 | `type`        | Type of the metadata                                                                | string | all in the blob bucket defined `types`       |
 | `prefix`      | Prefix stored in blob                                                               | string | all possible strings, including an empty string |
 | `identifier`  | Identifier of the blob resource                                                     | string | a valid blob identifier in uuidv7 format     |

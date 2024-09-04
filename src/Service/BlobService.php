@@ -281,6 +281,10 @@ class BlobService implements LoggerAwareInterface
         $type = $request->query->get('type', '');
         $id = $request->query->get('identifier', '');
 
+        if (!$id) {
+            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST, 'The parameter identifier has to be provided.', 'cabinet:missing-identifier');
+        }
+
         $blobApi = new BlobApi($this->config->getBlobApiUrl(), $config->getBlobBucketId(), $config->getBlobBucketKey());
 
         try {
