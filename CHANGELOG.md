@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.15
+
+- New `dbp:relay:cabinet:delete-all-files` command for deleting all cabinet related blob files
+- Blob events are now completely handled asynchronously
+- The `/cabinet/signature` endpoint gained new parameters for handling multiple methods
+
 ## 0.2.14
 
 - `dbp:relay:cabinet:sync` and `dbp:relay:cabinet:sync-one` will now also sync files into typesense. And delta syncs of person information will be reflected in the files as well.
