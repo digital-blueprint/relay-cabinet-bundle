@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.16
+
+- Fix some API regressions
+
 ## 0.2.15
 
 - New `dbp:relay:cabinet:delete-all-files` command for deleting all cabinet related blob files
