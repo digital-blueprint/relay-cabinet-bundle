@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Controller;
 
+use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Service\BlobService;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -14,10 +15,12 @@ use Symfony\Component\Routing\Annotation\Route;
 class BlobSignatureController extends AbstractController
 {
     private $blobService;
+    private AuthorizationService $auth;
 
-    public function __construct(BlobService $blobService)
+    public function __construct(BlobService $blobService, AuthorizationService $auth)
     {
         $this->blobService = $blobService;
+        $this->auth = $auth;
     }
 
     public function __invoke(Request $request): Response
@@ -28,6 +31,11 @@ class BlobSignatureController extends AbstractController
     #[Route(path: '/cabinet/signature', name: 'cabinet_blob_signature', requirements: ['path' => '.+'])]
     public function proxy(Request $request): Response
     {
+        if (!$this->auth->isAuthenticated()) {
+            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+        }
+        $this->auth->checkCanUse();
+
         $method = $request->query->get('method');
 
         if ($method === 'POST') {
