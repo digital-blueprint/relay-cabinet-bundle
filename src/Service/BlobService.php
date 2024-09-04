@@ -81,6 +81,13 @@ class BlobService implements LoggerAwareInterface
         }
     }
 
+    public function getFile(string $id): array
+    {
+        $blobApi = $this->getInternalBlobApi();
+
+        return $blobApi->getFileDataByIdentifier($id, 0);
+    }
+
     public function getSignatureForGivenPostRequest(Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {

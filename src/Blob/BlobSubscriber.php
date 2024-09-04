@@ -9,7 +9,6 @@ use Dbp\Relay\BlobBundle\Event\AddFileDataByPostSuccessEvent;
 use Dbp\Relay\BlobBundle\Event\ChangeFileDataByPatchSuccessEvent;
 use Dbp\Relay\BlobBundle\Event\DeleteFileDataByDeleteSuccessEvent;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
-use Dbp\Relay\CabinetBundle\TypesenseSync\DocumentTranslator;
 use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseSync;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
@@ -18,14 +17,12 @@ use Symfony\Component\Messenger\MessageBusInterface;
 class BlobSubscriber implements EventSubscriberInterface
 {
     private ConfigurationService $config;
-    private DocumentTranslator $translator;
     private TypesenseSync $typesenseSync;
     private MessageBusInterface $messageBus;
 
-    public function __construct(ConfigurationService $config, DocumentTranslator $translator, TypesenseSync $typesenseSync, MessageBusInterface $messageBus)
+    public function __construct(ConfigurationService $config, TypesenseSync $typesenseSync, MessageBusInterface $messageBus)
     {
         $this->config = $config;
-        $this->translator = $translator;
         $this->typesenseSync = $typesenseSync;
         $this->messageBus = $messageBus;
     }
@@ -34,9 +31,6 @@ class BlobSubscriber implements EventSubscriberInterface
     {
         $bucket = $fileData->getBucket();
         if ($bucket->getBucketID() !== $this->config->getBlobBucketId()) {
-            return false;
-        }
-        if ($fileData->getPrefix() !== $this->config->getBlobBucketPrefix()) {
             return false;
         }
 
@@ -52,20 +46,6 @@ class BlobSubscriber implements EventSubscriberInterface
         ];
     }
 
-    private function translateMetadata(FileData $fileData): array
-    {
-        $metadata = json_decode($fileData->getMetadata(), associative: true, flags: JSON_THROW_ON_ERROR);
-        $objectType = $metadata['objectType'];
-        $input = [
-            'id' => $fileData->getIdentifier(),
-            'fileSource' => $fileData->getBucket()->getBucketID(),
-            'fileName' => $fileData->getFileName(),
-            'metadata' => $metadata,
-        ];
-
-        return $this->translator->translateDocument($objectType, $input);
-    }
-
     public function onFileAdded(AddFileDataByPostSuccessEvent $event)
     {
         $fileData = $event->getFileData();
@@ -73,8 +53,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $translated = $this->translateMetadata($fileData);
-        $this->messageBus->dispatch(new TypesenseTask('upsert', $translated));
+        $this->messageBus->dispatch(new TypesenseTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
     }
 
     public function onFileChanged(ChangeFileDataByPatchSuccessEvent $event)
@@ -84,8 +63,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $translated = $this->translateMetadata($fileData);
-        $this->messageBus->dispatch(new TypesenseTask('upsert', $translated));
+        $this->messageBus->dispatch(new TypesenseTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
     }
 
     public function onFileRemoved(DeleteFileDataByDeleteSuccessEvent $event)
@@ -95,17 +73,21 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $translated = $this->translateMetadata($fileData);
-        $this->messageBus->dispatch(new TypesenseTask('delete', $translated));
+        $this->messageBus->dispatch(new TypesenseTask('delete', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
     }
 
     #[AsMessageHandler]
     public function handleTypesenseTask(TypesenseTask $task): void
     {
+        if ($task->getBucketId() !== $this->config->getBlobBucketId()) {
+            // Check again, in case the job is handled after the config has changed
+            return;
+        }
+
         if ($task->getAction() === 'upsert') {
-            $this->typesenseSync->upsertPartialFile($task->getDocument());
+            $this->typesenseSync->upsertFile($task->getFileId());
         } elseif ($task->getAction() === 'delete') {
-            $this->typesenseSync->deletePartialFile($task->getDocument());
+            $this->typesenseSync->deleteFile($task->getFileId());
         } else {
             throw new \RuntimeException('unsupported task: '.$task->getAction());
         }

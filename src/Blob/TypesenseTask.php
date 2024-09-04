@@ -6,7 +6,7 @@ namespace Dbp\Relay\CabinetBundle\Blob;
 
 class TypesenseTask
 {
-    public function __construct(private string $action, private array $document)
+    public function __construct(private string $action, private string $bucketId, private string $fileId)
     {
     }
 
@@ -15,8 +15,13 @@ class TypesenseTask
         return $this->action;
     }
 
-    public function getDocument(): array
+    public function getBucketId(): string
     {
-        return $this->document;
+        return $this->bucketId;
+    }
+
+    public function getFileId(): string
+    {
+        return $this->fileId;
     }
 }

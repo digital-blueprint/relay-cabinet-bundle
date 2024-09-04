@@ -70,19 +70,9 @@ class TypesenseSync implements LoggerAwareInterface
         // In the end we upsert everything to typesense.
         $newDocuments = [];
         $notFound = [];
-        $bucketId = $this->blobService->getBucketId();
         $documentCount = 0;
         foreach ($this->blobService->getAllFiles() as $fileData) {
-            $metadata = json_decode($fileData['metadata'], associative: true, flags: JSON_THROW_ON_ERROR);
-            $objectType = $metadata['objectType'];
-            $input = [
-                'id' => $fileData['identifier'],
-                'fileSource' => $bucketId,
-                'fileName' => $fileData['fileName'],
-                'metadata' => $metadata,
-            ];
-            $translated = $this->translator->translateDocument($objectType, $input);
-
+            $translated = $this->fileDataToPartialDocument($fileData);
             $id = $translated['base']['identNrObfuscated'];
             // XXX: If the related person isn't in typesense, we just ignore the file
             if (!array_key_exists($id, $baseMapping)) {
@@ -102,6 +92,36 @@ class TypesenseSync implements LoggerAwareInterface
         }
         $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
         $this->logger->info('Upserted '.$documentCount.' file documents into typesense');
+    }
+
+    public function upsertFile(string $blobFileId): void
+    {
+        $collectionName = $this->searchIndex->getCollectionName();
+        $fileData = $this->blobService->getFile($blobFileId);
+        $partialFileDocument = $this->fileDataToPartialDocument($fileData);
+
+        $blobFileId = $partialFileDocument['base']['identNrObfuscated'];
+        $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'base.identNrObfuscated', $blobFileId);
+        if ($results) {
+            $partialFileDocument['base'] = $results[0]['base'];
+        } else {
+            // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
+            // atm the schema needs those fields, so just skip for now
+            $this->logger->warning('No person found in typesense matching '.$blobFileId.'. Skipping blob file');
+
+            return;
+        }
+        $this->searchIndex->addDocumentsToCollection($collectionName, [$partialFileDocument]);
+    }
+
+    public function deleteFile(string $blobFileId): void
+    {
+        $collectionName = $this->searchIndex->getCollectionName();
+        $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', 'file.base.fileId', $blobFileId);
+        foreach ($results as $result) {
+            $typesenseId = $result['id'];
+            $this->searchIndex->deleteDocument($collectionName, $typesenseId);
+        }
     }
 
     private function saveCursor(?string $cursor): void
@@ -199,36 +219,23 @@ class TypesenseSync implements LoggerAwareInterface
         $this->saveCursor($res->getCursor());
     }
 
-    public function upsertPartialFile(array $partialFileDocument): void
-    {
-        $collectionName = $this->searchIndex->getAliasName();
-
-        $id = $partialFileDocument['base']['identNrObfuscated'];
-
-        // Find the matching person, and copy over the base info
-        $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'base.identNrObfuscated', $id);
-        if ($results) {
-            $partialFileDocument['base'] = $results[0]['base'];
-        } else {
-            // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
-            // atm the schema needs those fields, so just skip for now
-            $this->logger->warning('No person found in typesense matching '.$id.'. Skipping blob file');
-
-            return;
-        }
-
-        $this->searchIndex->addDocumentsToCollection($collectionName, [$partialFileDocument]);
-    }
-
-    public function deletePartialFile(array $partialFileDocument): void
-    {
-        $collectionName = $this->searchIndex->getAliasName();
-        $id = $partialFileDocument['id'];
-        $this->searchIndex->deleteDocument($collectionName, $id);
-    }
-
     public function personToDocument(array $person): array
     {
         return $this->translator->translateDocument('person', $person);
+    }
+
+    public function fileDataToPartialDocument(array $fileData): array
+    {
+        $bucketId = $this->blobService->getBucketId();
+        $metadata = json_decode($fileData['metadata'], associative: true, flags: JSON_THROW_ON_ERROR);
+        $objectType = $metadata['objectType'];
+        $input = [
+            'id' => $fileData['identifier'],
+            'fileSource' => $bucketId,
+            'fileName' => $fileData['fileName'],
+            'metadata' => $metadata,
+        ];
+
+        return $this->translator->translateDocument($objectType, $input);
     }
 }
