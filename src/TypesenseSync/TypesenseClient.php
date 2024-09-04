@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dbp\Relay\CabinetBundle\TypesenseClient;
+namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Http\Client\Exception;
@@ -14,20 +14,20 @@ use Symfony\Component\Uid\Ulid;
 use Typesense\Client;
 use Typesense\Exceptions\TypesenseClientError as TypesenseClientErrorAlias;
 
-class SearchIndex implements LoggerAwareInterface
+class TypesenseClient implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
     private const COLLECTION_PREFIX = 'cabinet';
 
     private ConfigurationService $config;
-    private Connection $connection;
+    private TypesenseConnection $connection;
     private array $schema;
 
     public function __construct(ConfigurationService $config)
     {
         $this->config = $config;
-        $this->connection = new Connection($config->getTypesenseApiUrl(), $config->getTypesenseApiKey());
+        $this->connection = new TypesenseConnection($config->getTypesenseApiUrl(), $config->getTypesenseApiKey());
         $this->logger = new NullLogger();
         $this->schema = [];
     }

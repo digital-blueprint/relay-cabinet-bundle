@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dbp\Relay\CabinetBundle\TypesenseClient;
+namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Monolog\Level;
 use Psr\Log\LoggerAwareInterface;
@@ -14,7 +14,7 @@ use Symfony\Component\HttpClient\RetryableHttpClient;
 use Symfony\Component\HttpClient\TraceableHttpClient;
 use Typesense\Client;
 
-class Connection implements LoggerAwareInterface
+class TypesenseConnection implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 

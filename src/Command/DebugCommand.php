@@ -6,7 +6,7 @@ namespace Dbp\Relay\CabinetBundle\Command;
 
 use Dbp\Relay\CabinetBundle\Service\BlobService;
 use Dbp\Relay\CabinetBundle\Service\CabinetService;
-use Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex;
+use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseClient;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -14,10 +14,10 @@ use Symfony\Component\Console\Output\OutputInterface;
 class DebugCommand extends Command
 {
     private CabinetService $cabinetService;
-    private SearchIndex $searchIndex;
+    private TypesenseClient $searchIndex;
     private BlobService $blobService;
 
-    public function __construct(CabinetService $cabinetService, SearchIndex $searchIndex, BlobService $blobService)
+    public function __construct(CabinetService $cabinetService, TypesenseClient $searchIndex, BlobService $blobService)
     {
         parent::__construct();
 

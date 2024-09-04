@@ -6,7 +6,6 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
 use Dbp\Relay\CabinetBundle\Service\BlobService;
-use Dbp\Relay\CabinetBundle\TypesenseClient\SearchIndex;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -18,7 +17,7 @@ class TypesenseSync implements LoggerAwareInterface
     use LoggerAwareTrait;
 
     private CacheItemPoolInterface $cachePool;
-    private SearchIndex $searchIndex;
+    private TypesenseClient $searchIndex;
     private PersonSyncInterface $personSync;
     private DocumentTranslator $translator;
     private BlobService $blobService;
@@ -26,7 +25,7 @@ class TypesenseSync implements LoggerAwareInterface
     // Chunk processing to reduce memory consumption
     private const CHUNK_SIZE = 10000;
 
-    public function __construct(SearchIndex $searchIndex, PersonSyncInterface $personSync, DocumentTranslator $translator, BlobService $blobService)
+    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTranslator $translator, BlobService $blobService)
     {
         $this->cachePool = new ArrayAdapter();
         $this->searchIndex = $searchIndex;
