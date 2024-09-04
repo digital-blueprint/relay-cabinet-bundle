@@ -21,19 +21,25 @@ class BlobService implements LoggerAwareInterface
 
     private ConfigurationService $config;
 
+    private ?BlobApi $internalBlobApi;
+
     public function __construct(AuthorizationService $auth, ConfigurationService $config)
     {
         $this->auth = $auth;
         $this->config = $config;
+        $this->internalBlobApi = null;
     }
 
     private function getInternalBlobApi(): BlobApi
     {
-        $config = $this->config;
-        $blobApi = new BlobApi($config->getBlobApiUrlInternal(), $config->getBlobBucketId(), $config->getBlobBucketKey());
-        $blobApi->setOAuth2Token($config->getBlobIdpUrl(), $config->getBlobIdpClientId(), $config->getBlobIdpClientSecret());
+        if ($this->internalBlobApi === null) {
+            $config = $this->config;
+            $blobApi = new BlobApi($config->getBlobApiUrlInternal(), $config->getBlobBucketId(), $config->getBlobBucketKey());
+            $blobApi->setOAuth2Token($config->getBlobIdpUrl(), $config->getBlobIdpClientId(), $config->getBlobIdpClientSecret());
+            $this->internalBlobApi = $blobApi;
+        }
 
-        return $blobApi;
+        return $this->internalBlobApi;
     }
 
     public function checkConnection(): void
