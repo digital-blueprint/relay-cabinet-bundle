@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Blob;
 
-class TypesenseTask
+class BlobEventTask
 {
     public function __construct(private string $action, private string $bucketId, private string $fileId)
     {

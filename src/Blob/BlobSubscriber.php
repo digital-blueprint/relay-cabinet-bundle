@@ -53,7 +53,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->messageBus->dispatch(new TypesenseTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
+        $this->messageBus->dispatch(new BlobEventTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
     }
 
     public function onFileChanged(ChangeFileDataByPatchSuccessEvent $event)
@@ -63,7 +63,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->messageBus->dispatch(new TypesenseTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
+        $this->messageBus->dispatch(new BlobEventTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
     }
 
     public function onFileRemoved(DeleteFileDataByDeleteSuccessEvent $event)
@@ -73,11 +73,11 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->messageBus->dispatch(new TypesenseTask('delete', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
+        $this->messageBus->dispatch(new BlobEventTask('delete', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
     }
 
     #[AsMessageHandler]
-    public function handleTypesenseTask(TypesenseTask $task): void
+    public function handleBlobEventTask(BlobEventTask $task): void
     {
         if ($task->getBucketId() !== $this->config->getBlobBucketId()) {
             // Check again, in case the job is handled after the config has changed
