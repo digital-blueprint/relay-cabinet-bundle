@@ -68,7 +68,11 @@ class BlobSubscriber implements EventSubscriberInterface
 
     public function onFileRemoved(DeleteFileDataByDeleteSuccessEvent $event)
     {
+        // FIXME: DeleteFileDataByDeleteSuccessEvent currently has not bucket set in the latest blob release.
+        // Should be fixed with the next release.
+        return;
         $fileData = $event->getFileData();
+
         if (!$this->isForCabinet($fileData)) {
             return;
         }
