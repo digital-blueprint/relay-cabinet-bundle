@@ -24,16 +24,6 @@ services:
     tags:
       - { name: 'cache.pool', default_lifetime: 60 }
 
-  Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseSync:
-    autowire: true
-    autoconfigure: true
-    calls:
-      - setCache: [ '@dbp.relay.cabinet.cache.sync' ]
-
-  Dbp\Relay\CabinetBundle\TypesenseSync\DocumentTranslator:
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\Command\SyncCommand:
     autowire: true
     autoconfigure: true
@@ -74,6 +64,12 @@ services:
     resource: '../../TypesenseSync'
     autowire: true
     autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseSync:
+    autowire: true
+    autoconfigure: true
+    calls:
+      - setCache: [ '@dbp.relay.cabinet.cache.sync' ]
 
   Dbp\Relay\CabinetBundle\TypesenseApi\:
     resource: '../../TypesenseApi'

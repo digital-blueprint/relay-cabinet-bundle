@@ -131,6 +131,32 @@ class TypesenseSync implements LoggerAwareInterface
         $this->cachePool->save($item);
     }
 
+    public function syncFull()
+    {
+        $this->logger->info('Starting a full sync');
+        $schema = $this->translator->getSchema();
+
+        $this->searchIndex->ensureSetup();
+        $this->searchIndex->deleteOldCollections();
+        $collectionName = $this->searchIndex->createNewCollection($schema);
+
+        $res = $this->personSync->getAllPersons();
+        foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
+            $documents = [];
+            foreach ($persons as $person) {
+                $documents[] = $this->personToDocument($person);
+            }
+            $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+        }
+
+        $this->upsertAllFiles($collectionName);
+
+        $this->searchIndex->updateAlias($collectionName);
+        $this->searchIndex->deleteOldCollections();
+
+        $this->saveCursor($res->getCursor());
+    }
+
     public function sync(bool $full = false)
     {
         if ($full) {
@@ -139,34 +165,21 @@ class TypesenseSync implements LoggerAwareInterface
         $cursor = $this->getCursor();
 
         if ($cursor === null) {
-            $this->logger->info('Starting a full sync');
-            $schema = $this->translator->getSchema();
-
-            $this->searchIndex->setSchema($schema);
-            $this->searchIndex->ensureSetup();
-            $this->searchIndex->deleteOldCollections();
-            $collectionName = $this->searchIndex->createNewCollection();
-
-            $res = $this->personSync->getAllPersons();
-            foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
-                $documents = [];
-                foreach ($persons as $person) {
-                    $documents[] = $this->personToDocument($person);
-                }
-                $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-            }
-
-            $this->upsertAllFiles($collectionName);
-
-            $this->searchIndex->updateAlias($collectionName);
-            $this->searchIndex->deleteOldCollections();
-
-            $this->saveCursor($res->getCursor());
+            $this->syncFull();
         } else {
             $this->logger->info('Starting a partial sync');
-            $res = $this->personSync->getAllPersons($cursor);
-            $collectionName = $this->searchIndex->getCollectionName();
 
+            $collectionName = $this->searchIndex->getCollectionName();
+            $metadata = $this->searchIndex->getSchemaMetadata($collectionName);
+            $outdated = $this->translator->isSchemaOutdated($metadata);
+            if ($outdated) {
+                $this->logger->info('Schema is outdated, falling back to a full sync');
+                $this->syncFull();
+
+                return;
+            }
+
+            $res = $this->personSync->getAllPersons($cursor);
             foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
                 $documents = [];
                 foreach ($persons as $person) {

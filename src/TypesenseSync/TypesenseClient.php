@@ -22,14 +22,12 @@ class TypesenseClient implements LoggerAwareInterface
 
     private ConfigurationService $config;
     private TypesenseConnection $connection;
-    private array $schema;
 
     public function __construct(ConfigurationService $config)
     {
         $this->config = $config;
         $this->connection = new TypesenseConnection($config->getTypesenseApiUrl(), $config->getTypesenseApiKey());
         $this->logger = new NullLogger();
-        $this->schema = [];
     }
 
     private function getClient(): Client
@@ -47,14 +45,8 @@ class TypesenseClient implements LoggerAwareInterface
         return $this->getAliasName().'-';
     }
 
-    public function setSchema(array $schema): void
+    public function createNewCollection(array $schema): string
     {
-        $this->schema = $schema;
-    }
-
-    public function createNewCollection(): string
-    {
-        $schema = $this->schema;
         // We are using a new collection name based on the alias name with the current date
         $collectionName = $this->getCollectionPrefix().date('YmdHis').'-'.(new Ulid())->toBase32();
         // We are overwriting the collection name in the schema, so we can later create the alias with the correct name
@@ -64,6 +56,13 @@ class TypesenseClient implements LoggerAwareInterface
         $this->getClient()->collections->create($schema);
 
         return $collectionName;
+    }
+
+    public function getSchemaMetadata(string $collectionName): array
+    {
+        $schema = $this->getClient()->collections[$collectionName]->retrieve();
+
+        return $schema['metadata'] ?? [];
     }
 
     public function getCollectionName(): string
@@ -150,7 +149,7 @@ class TypesenseClient implements LoggerAwareInterface
      */
     public function purgeAll(): void
     {
-        $newName = $this->createNewCollection();
+        $newName = $this->createNewCollection([]);
         $this->updateAlias($newName);
         $this->deleteOldCollections();
     }

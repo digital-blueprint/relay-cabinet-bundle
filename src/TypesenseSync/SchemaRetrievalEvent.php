@@ -10,9 +10,12 @@ class SchemaRetrievalEvent extends Event
 {
     private ?array $schema;
 
+    private string $version;
+
     public function __construct()
     {
         $this->schema = null;
+        $this->version = '';
     }
 
     public function setSchema(array $schema): void
@@ -23,5 +26,15 @@ class SchemaRetrievalEvent extends Event
     public function getSchema(): ?array
     {
         return $this->schema;
+    }
+
+    public function setSchemaVersion(string $version): void
+    {
+        $this->version = $version;
+    }
+
+    public function getSchemaVersion(): string
+    {
+        return $this->version;
     }
 }

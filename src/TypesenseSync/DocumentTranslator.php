@@ -32,7 +32,25 @@ class DocumentTranslator
         $event = new SchemaRetrievalEvent();
         $event = $this->eventDispatcher->dispatch($event);
 
-        return $event->getSchema() ?? self::DEFAULT_SCHEMA;
+        $schema = $event->getSchema() ?? self::DEFAULT_SCHEMA;
+        $now = (new \DateTimeImmutable(timezone: new \DateTimeZone('UTC')))->format(\DateTime::ATOM);
+        $metadata['cabinet:createdAt'] = $now;
+        $metadata['cabinet:schemaVersion'] = $event->getSchemaVersion();
+        $schema['metadata'] = $metadata;
+
+        return $schema;
+    }
+
+    /**
+     * Given an existing schema, returns if the schema is still current, or if the collection has to be re-created
+     * with a new schema.
+     */
+    public function isSchemaOutdated(array $metadata): bool
+    {
+        $event = new SchemaRetrievalEvent();
+        $event = $this->eventDispatcher->dispatch($event);
+
+        return ($metadata['cabinet:schemaVersion'] ?? null) !== $event->getSchemaVersion();
     }
 
     /**
