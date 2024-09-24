@@ -20,6 +20,8 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
 
     public function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
+        $this->addResourceClassDirectory($container, __DIR__.'/../Blob');
+
         $pathsToHide = [
             '/cabinet/typesense',
         ];
@@ -73,8 +75,8 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
                         'mappings' => [
                             'dbp_relay_cabinet' => [
                                 'type' => 'attribute',
-                                'dir' => __DIR__.'/../Entity',
-                                'prefix' => 'Dbp\Relay\CabinetBundle\Entity',
+                                'dir' => __DIR__.'/../Blob',
+                                'prefix' => 'Dbp\Relay\CabinetBundle\Blob',
                             ],
                         ],
                     ],
