@@ -70,7 +70,7 @@ class CabinetService implements LoggerAwareInterface
 
     public function checkConnection()
     {
-        $this->em->getConnection()->connect();
+        $this->em->getConnection()->getNativeConnection();
     }
 
     protected function log($level, string $message, array $context = [])
