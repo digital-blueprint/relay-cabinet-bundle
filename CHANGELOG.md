@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.17
+
+- Sync blob file deletions to Typesense
+- Add support for schema versioning via the SchemaRetrievalEvent
+- Fix partial person sync always doing a full sync due to wrongly configured caching
+
 ## 0.2.16
 
 - Fix some API regressions
