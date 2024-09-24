@@ -2,10 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Dbp\Relay\CabinetBundle\Service;
+namespace Dbp\Relay\CabinetBundle\Blob;
 
 use Dbp\Relay\BlobLibrary\Api\BlobApi;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
+use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;

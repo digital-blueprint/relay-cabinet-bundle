@@ -11,7 +11,7 @@ resources:
       signature:
         class: ApiPlatform\Metadata\Get
         method: GET
-        controller: Dbp\Relay\CabinetBundle\Controller\BlobSignatureController
+        controller: Dbp\Relay\CabinetBundle\Blob\BlobSignatureController
         uriTemplate: "/signature"
         normalizationContext:
           groups: [ "Cabinet:output" ]

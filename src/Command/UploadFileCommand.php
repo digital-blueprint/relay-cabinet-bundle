@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\Command;
 
 use Dbp\Relay\BlobLibrary\Api\BlobApiError;
-use Dbp\Relay\CabinetBundle\Service\BlobService;
+use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Input\InputArgument;
 use Symfony\Component\Console\Input\InputInterface;

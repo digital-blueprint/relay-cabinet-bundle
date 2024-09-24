@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Command;
 
-use Dbp\Relay\CabinetBundle\Service\BlobService;
+use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\Service\CabinetService;
 use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseClient;
 use Symfony\Component\Console\Command\Command;

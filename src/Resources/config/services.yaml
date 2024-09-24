@@ -9,12 +9,6 @@ services:
     autowire: true
     autoconfigure: true
 
-  Dbp\Relay\CabinetBundle\Controller\:
-    tags: [ 'controller.service_arguments' ]
-    resource: '../../Controller'
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\Service\ConfigurationService:
     autowire: true
     autoconfigure: true

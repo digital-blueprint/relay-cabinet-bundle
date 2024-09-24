@@ -6,6 +6,7 @@ namespace Dbp\Relay\CabinetBundle\Service;
 
 use Dbp\Relay\BasePersonBundle\API\PersonProviderInterface;
 use Dbp\Relay\BasePersonBundle\Entity\Person;
+use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerAwareInterface;

@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
+use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
-use Dbp\Relay\CabinetBundle\Service\BlobService;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;

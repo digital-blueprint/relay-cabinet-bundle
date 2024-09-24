@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Service;
 
+use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseClient;
 use Dbp\Relay\CoreBundle\HealthCheck\CheckInterface;
 use Dbp\Relay\CoreBundle\HealthCheck\CheckOptions;

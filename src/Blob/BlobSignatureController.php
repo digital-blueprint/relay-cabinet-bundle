@@ -2,10 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Dbp\Relay\CabinetBundle\Controller;
+namespace Dbp\Relay\CabinetBundle\Blob;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
-use Dbp\Relay\CabinetBundle\Service\BlobService;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
