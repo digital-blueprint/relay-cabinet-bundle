@@ -7,6 +7,8 @@
 
 [![Test](https://github.com/digital-blueprint/relay-cabinet-bundle/actions/workflows/test.yml/badge.svg)](https://github.com/digital-blueprint/relay-cabinet-bundle/actions/workflows/test.yml)
 
+This bundle provides an API for managing student records.
+
 There is a corresponding frontend application that uses this API at
 [Cabinet Frontend Application](https://github.com/digital-blueprint/cabinet-frontend).
 
