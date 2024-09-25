@@ -245,6 +245,9 @@ class TypesenseSync implements LoggerAwareInterface
             'id' => $fileData['identifier'],
             'fileSource' => $bucketId,
             'fileName' => $fileData['fileName'],
+            'mimeType' => $fileData['mimeType'],
+            'dateCreated' => $fileData['dateCreated'],
+            'dateModified' => $fileData['dateModified'],
             'metadata' => $metadata,
         ];
 
