@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.18
+
+- Add support for newer doctrine dbal/orm
+- DocumentTranslationEvent: added mimeType/dateCreated/dateModified fields
+  for blob documents
+
 ## 0.2.17
 
 - Sync blob file deletions to Typesense
