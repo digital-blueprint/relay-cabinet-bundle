@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.20
+
+- Fix initial typesense setup in case no collection alias exists yet
+
 ## 0.2.19
 
 - The confirmation in the command `dbp:relay:cabinet:delete-all-files` now shows the Blob API URL
