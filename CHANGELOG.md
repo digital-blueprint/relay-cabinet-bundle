@@ -1,6 +1,7 @@
 # Changelog
 
 ## 0.2.19
+
 - The confirmation in the command `dbp:relay:cabinet:delete-all-files` now shows the Blob API URL
   to make sure the user knows which files are going to be deleted
 - Add optional `--ask` flag to `dbp:relay:cabinet:sync` command to ask for confirmation before syncing
