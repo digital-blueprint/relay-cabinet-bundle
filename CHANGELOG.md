@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.21
+
+- Add PersonSyncResultInterface::isFullSyncResult() for the connector to communicate
+  if the result is a full sync result.
+
 ## 0.2.20
 
 - Fix initial typesense setup in case no collection alias exists yet
