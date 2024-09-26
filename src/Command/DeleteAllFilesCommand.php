@@ -38,7 +38,8 @@ class DeleteAllFilesCommand extends Command
 
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
-        $question = new ConfirmationQuestion('About to delete '.count($fileIds).' files. Are you sure you want to continue? (y/N) ', false);
+        $blobApiUrl = $this->blobService->getBlobApiUrl();
+        $question = new ConfirmationQuestion('About to delete '.count($fileIds).' files from '.$blobApiUrl.'. Are you sure you want to continue? (y/N) ', false);
         if (!$helper->ask($input, $output, $question)) {
             $output->writeln('Action cancelled.');
 

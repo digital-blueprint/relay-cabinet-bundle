@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.19
+- The confirmation in the command `dbp:relay:cabinet:delete-all-files` now shows the Blob API URL
+  to make sure the user knows which files are going to be deleted
+- Add optional `--ask` flag to `dbp:relay:cabinet:sync` command to ask for confirmation before syncing
+  - This confirmation includes the connection base URL to make sure the user knows to which server
+    the data is going to be sent
+
 ## 0.2.18
 
 - Add support for newer doctrine dbal/orm

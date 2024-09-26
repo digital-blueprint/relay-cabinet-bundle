@@ -41,6 +41,11 @@ class TypesenseConnection implements LoggerAwareInterface
         $this->logger = new NullLogger();
     }
 
+    public function getBaseUrl(): string
+    {
+        return $this->baseUrl;
+    }
+
     public function getClient(int $numRetries = self::TYPESENSE_CLIENT_RETRY_COUNT): Client
     {
         $parsedUrl = parse_url($this->baseUrl);

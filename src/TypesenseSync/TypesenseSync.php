@@ -35,6 +35,11 @@ class TypesenseSync implements LoggerAwareInterface
         $this->blobService = $blobService;
     }
 
+    public function getConnectionBaseUrl(): string
+    {
+        return $this->searchIndex->getConnectionBaseUrl();
+    }
+
     public function setCache(?CacheItemPoolInterface $cachePool)
     {
         $this->cachePool = $cachePool;

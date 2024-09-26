@@ -49,6 +49,11 @@ class BlobService implements LoggerAwareInterface
         $blobApi->getFileDataByPrefix(Uuid::v4()->toRfc4122(), 0);
     }
 
+    public function getBlobApiUrl(): string
+    {
+        return $this->config->getBlobApiUrl();
+    }
+
     public function uploadFile(string $filename, string $payload, ?string $type = null, ?string $metadata = null): string
     {
         $blobApi = $this->getInternalBlobApi();

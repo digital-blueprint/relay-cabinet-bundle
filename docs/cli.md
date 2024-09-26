@@ -7,7 +7,7 @@ For development purposes, the following CLI commands are available:
 ./console dbp:relay:cabinet:delete-all-files
 
 # Generate typesense collection
-./console dbp:relay:cabinet:sync --full
+./console dbp:relay:cabinet:sync --full --ask
 
 # Generate files for the typesense documents
 ./console tugraz:relay:tugraz:cabinet:add-file-fixtures --number 50

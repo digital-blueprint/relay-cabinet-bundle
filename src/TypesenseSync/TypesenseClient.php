@@ -40,6 +40,11 @@ class TypesenseClient implements LoggerAwareInterface
         return self::COLLECTION_PREFIX;
     }
 
+    public function getConnectionBaseUrl(): string
+    {
+        return $this->connection->getBaseUrl();
+    }
+
     private function getCollectionPrefix(): string
     {
         return $this->getAliasName().'-';
