@@ -6,6 +6,7 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
+use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncResultInterface;
 use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -136,16 +137,15 @@ class TypesenseSync implements LoggerAwareInterface
         $this->cachePool->save($item);
     }
 
-    public function syncFull()
+    public function syncFull(PersonSyncResultInterface $res)
     {
+        assert($res->isFullSyncResult());
+
         $this->logger->info('Starting a full sync');
         $schema = $this->translator->getSchema();
 
-        $this->searchIndex->ensureSetup();
         $this->searchIndex->deleteOldCollections();
         $collectionName = $this->searchIndex->createNewCollection($schema);
-
-        $res = $this->personSync->getAllPersons();
         foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
             $documents = [];
             foreach ($persons as $person) {
@@ -162,39 +162,44 @@ class TypesenseSync implements LoggerAwareInterface
         $this->saveCursor($collectionName, $res->getCursor());
     }
 
+    public function syncPartial(string $collectionName, PersonSyncResultInterface $res)
+    {
+        assert(!$res->isFullSyncResult());
+
+        foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
+            $documents = [];
+            foreach ($persons as $person) {
+                $documents[] = $this->personToDocument($person);
+            }
+            $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+
+            // Also update the base data of all related DocumentFiles
+            $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
+            $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
+        }
+
+        $this->saveCursor($collectionName, $res->getCursor());
+    }
+
     public function sync(bool $full = false)
     {
+        $this->searchIndex->ensureSetup();
         $collectionName = $this->searchIndex->getCollectionName();
-        $cursor = $this->getCursor($collectionName);
+        $metadata = $this->searchIndex->getSchemaMetadata($collectionName);
+        if ($this->translator->isSchemaOutdated($metadata)) {
+            $this->logger->info('Schema is outdated, falling back to a full sync');
+            $full = true;
+        }
 
-        if ($full || $cursor === null) {
-            $this->syncFull();
+        $cursor = $full ? null : $this->getCursor($collectionName);
+        $this->logger->info('Starting a sync');
+        $res = $this->personSync->getAllPersons($cursor);
+        if ($res->isFullSyncResult()) {
+            $this->logger->info('Starting a full sync');
+            $this->syncFull($res);
         } else {
             $this->logger->info('Starting a partial sync');
-
-            $metadata = $this->searchIndex->getSchemaMetadata($collectionName);
-            $outdated = $this->translator->isSchemaOutdated($metadata);
-            if ($outdated) {
-                $this->logger->info('Schema is outdated, falling back to a full sync');
-                $this->syncFull();
-
-                return;
-            }
-
-            $res = $this->personSync->getAllPersons($cursor);
-            foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
-                $documents = [];
-                foreach ($persons as $person) {
-                    $documents[] = $this->personToDocument($person);
-                }
-                $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
-
-                // Also update the base data of all related DocumentFiles
-                $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
-                $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
-            }
-
-            $this->saveCursor($collectionName, $res->getCursor());
+            $this->syncPartial($collectionName, $res);
         }
     }
 
