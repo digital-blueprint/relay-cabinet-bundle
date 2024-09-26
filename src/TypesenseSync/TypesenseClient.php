@@ -50,10 +50,14 @@ class TypesenseClient implements LoggerAwareInterface
         return $this->getAliasName().'-';
     }
 
-    public function createNewCollection(array $schema): string
+    public function createNewCollection(?array $schema = null): string
     {
         // We are using a new collection name based on the alias name with the current date
         $collectionName = $this->getCollectionPrefix().date('YmdHis').'-'.(new Ulid())->toBase32();
+        // Typesense requires a non-empty schema, so create one that auto-detects all fields
+        if ($schema === null) {
+            $schema = ['fields' => [['name' => '.*', 'type' => 'auto']]];
+        }
         // We are overwriting the collection name in the schema, so we can later create the alias with the correct name
         $schema['name'] = $collectionName;
 
@@ -154,7 +158,7 @@ class TypesenseClient implements LoggerAwareInterface
      */
     public function purgeAll(): void
     {
-        $newName = $this->createNewCollection([]);
+        $newName = $this->createNewCollection();
         $this->updateAlias($newName);
         $this->deleteOldCollections();
     }
