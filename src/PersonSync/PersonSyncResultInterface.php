@@ -12,6 +12,11 @@ interface PersonSyncResultInterface
     public function getPersons(): array;
 
     /**
+     * If the result represents a full sync including all items, or only a partial update of some items.
+     */
+    public function isFullSyncResult(): bool;
+
+    /**
      * An opaque string which can be used to continue syncing.
      */
     public function getCursor(): string;

@@ -15,4 +15,9 @@ class DummyPersonSyncResult implements PersonSyncResultInterface
     {
         return '';
     }
+
+    public function isFullSyncResult(): bool
+    {
+        return true;
+    }
 }
