@@ -409,27 +409,27 @@
         },
         {
             "name": "dbp/relay-blob-bundle",
-            "version": "v0.1.52",
+            "version": "v0.1.53",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-blob-bundle.git",
-                "reference": "da50fe74b9c6a74f04bd3420cd8178264aaeabe5"
+                "reference": "3fcc985c9bbbc8b1f4f4b41979035c959f23b007"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/da50fe74b9c6a74f04bd3420cd8178264aaeabe5",
-                "reference": "da50fe74b9c6a74f04bd3420cd8178264aaeabe5",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/3fcc985c9bbbc8b1f4f4b41979035c959f23b007",
+                "reference": "3fcc985c9bbbc8b1f4f4b41979035c959f23b007",
                 "shasum": ""
             },
             "require": {
                 "api-platform/core": "^3.2",
                 "dbp/relay-blob-library": "^0.2.0",
                 "dbp/relay-core-bundle": "^0.1.173",
-                "doctrine/dbal": "^3.3",
+                "doctrine/dbal": "^3.3 || ^4.0",
                 "doctrine/doctrine-bundle": "^2.11",
                 "doctrine/doctrine-migrations-bundle": "^3.3",
                 "doctrine/migrations": "^3.5",
-                "doctrine/orm": "^2.18",
+                "doctrine/orm": "^2.18 || ^3.2",
                 "ext-json": "*",
                 "justinrainbow/json-schema": "^5.3 || ^6.0",
                 "kekos/multipart-form-data-parser": "^1.1",
@@ -480,9 +480,9 @@
             "description": "A bundle for file-serving, persisting and managing",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-blob-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.52"
+                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.53"
             },
-            "time": "2024-09-10T13:11:21+00:00"
+            "time": "2024-09-24T14:08:12+00:00"
         },
         {
             "name": "dbp/relay-blob-library",
@@ -540,16 +540,16 @@
         },
         {
             "name": "dbp/relay-core-bundle",
-            "version": "v0.1.181",
+            "version": "v0.1.182",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-core-bundle.git",
-                "reference": "28f148c034b89384f9ba2a1af204131085b86cf5"
+                "reference": "0809b2ca9293b2562c1719b11edf4960a172ac09"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-core-bundle/zipball/28f148c034b89384f9ba2a1af204131085b86cf5",
-                "reference": "28f148c034b89384f9ba2a1af204131085b86cf5",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-core-bundle/zipball/0809b2ca9293b2562c1719b11edf4960a172ac09",
+                "reference": "0809b2ca9293b2562c1719b11edf4960a172ac09",
                 "shasum": ""
             },
             "require": {
@@ -635,9 +635,9 @@
             "description": "The core bundle of the Relay API gateway",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-core-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-core-bundle/tree/v0.1.181"
+                "source": "https://github.com/digital-blueprint/relay-core-bundle/tree/v0.1.182"
             },
-            "time": "2024-09-05T14:40:47+00:00"
+            "time": "2024-09-26T10:16:12+00:00"
         },
         {
             "name": "doctrine/cache",
@@ -11025,16 +11025,16 @@
         },
         {
             "name": "phpstan/phpdoc-parser",
-            "version": "1.31.0",
+            "version": "1.32.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phpstan/phpdoc-parser.git",
-                "reference": "249f15fb843bf240cf058372dad29e100cee6c17"
+                "reference": "6ca22b154efdd9e3c68c56f5d94670920a1c19a4"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/249f15fb843bf240cf058372dad29e100cee6c17",
-                "reference": "249f15fb843bf240cf058372dad29e100cee6c17",
+                "url": "https://api.github.com/repos/phpstan/phpdoc-parser/zipball/6ca22b154efdd9e3c68c56f5d94670920a1c19a4",
+                "reference": "6ca22b154efdd9e3c68c56f5d94670920a1c19a4",
                 "shasum": ""
             },
             "require": {
@@ -11066,9 +11066,9 @@
             "description": "PHPDoc parser with support for nullable, intersection and generic types",
             "support": {
                 "issues": "https://github.com/phpstan/phpdoc-parser/issues",
-                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.31.0"
+                "source": "https://github.com/phpstan/phpdoc-parser/tree/1.32.0"
             },
-            "time": "2024-09-22T11:32:18+00:00"
+            "time": "2024-09-26T07:23:32+00:00"
         },
         {
             "name": "phpstan/phpstan",
