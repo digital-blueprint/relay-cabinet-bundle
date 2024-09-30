@@ -45,9 +45,9 @@ class TypesenseSync implements LoggerAwareInterface
         $this->cachePool = $cachePool;
     }
 
-    private function getCursor(): ?string
+    private function getCursor(string $collectionName): ?string
     {
-        $item = $this->cachePool->getItem('cursor');
+        $item = $this->cachePool->getItem($collectionName.'.cursor');
         $cursor = null;
         if ($item->isHit()) {
             $cursor = $item->get();
@@ -128,9 +128,9 @@ class TypesenseSync implements LoggerAwareInterface
         }
     }
 
-    private function saveCursor(?string $cursor): void
+    private function saveCursor(string $collectionName, ?string $cursor): void
     {
-        $item = $this->cachePool->getItem('cursor');
+        $item = $this->cachePool->getItem($collectionName.'.cursor');
         $item->set($cursor);
         $item->expiresAfter(3600 * 24);
         $this->cachePool->save($item);
@@ -159,22 +159,19 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->updateAlias($collectionName);
         $this->searchIndex->deleteOldCollections();
 
-        $this->saveCursor($res->getCursor());
+        $this->saveCursor($collectionName, $res->getCursor());
     }
 
     public function sync(bool $full = false)
     {
-        if ($full) {
-            $this->saveCursor(null);
-        }
-        $cursor = $this->getCursor();
+        $collectionName = $this->searchIndex->getCollectionName();
+        $cursor = $this->getCursor($collectionName);
 
-        if ($cursor === null) {
+        if ($full || $cursor === null) {
             $this->syncFull();
         } else {
             $this->logger->info('Starting a partial sync');
 
-            $collectionName = $this->searchIndex->getCollectionName();
             $metadata = $this->searchIndex->getSchemaMetadata($collectionName);
             $outdated = $this->translator->isSchemaOutdated($metadata);
             if ($outdated) {
@@ -197,7 +194,7 @@ class TypesenseSync implements LoggerAwareInterface
                 $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
             }
 
-            $this->saveCursor($res->getCursor());
+            $this->saveCursor($collectionName, $res->getCursor());
         }
     }
 
@@ -220,20 +217,20 @@ class TypesenseSync implements LoggerAwareInterface
     public function syncOne(string $id)
     {
         $this->logger->info('Syncing one person: '.$id);
-        $cursor = $this->getCursor();
+        $collectionName = $this->searchIndex->getCollectionName();
+        $cursor = $this->getCursor($collectionName);
         $res = $this->personSync->getPersons([$id], $cursor);
         $documents = [];
         foreach ($res->getPersons() as $person) {
             $documents[] = $this->personToDocument($person);
         }
-        $collectionName = $this->searchIndex->getCollectionName();
         $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
 
         // Also update the base data of all related DocumentFiles
         $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
         $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
 
-        $this->saveCursor($res->getCursor());
+        $this->saveCursor($collectionName, $res->getCursor());
     }
 
     public function personToDocument(array $person): array
