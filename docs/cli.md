@@ -12,3 +12,9 @@ For development purposes, the following CLI commands are available:
 # Generate files for the typesense documents
 ./console tugraz:relay:tugraz:cabinet:add-file-fixtures --number 50
 ```
+
+If you have [just](https://github.com/casey/just) installed, you can also use the following command:
+
+```bash
+just cabinet-dev-setup
+```
