@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.22
+
+- typesense proxy: only allow read-only access, even for authorized users
+- typesense proxy: forward query parameters to typesense to allow for more complex queries
+
 ## 0.2.21
 
 - Add PersonSyncResultInterface::isFullSyncResult() for the connector to communicate
