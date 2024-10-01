@@ -12,6 +12,9 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Symfony\Component\Cache\Adapter\ArrayAdapter;
+use Symfony\Component\Lock\Key;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\LockInterface;
 
 class TypesenseSync implements LoggerAwareInterface
 {
@@ -25,8 +28,9 @@ class TypesenseSync implements LoggerAwareInterface
 
     // Chunk processing to reduce memory consumption
     private const CHUNK_SIZE = 10000;
+    private LockFactory $lockFactory;
 
-    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTranslator $translator, BlobService $blobService)
+    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTranslator $translator, BlobService $blobService, LockFactory $lockFactory)
     {
         $this->cachePool = new ArrayAdapter();
         $this->searchIndex = $searchIndex;
@@ -34,11 +38,17 @@ class TypesenseSync implements LoggerAwareInterface
         $this->logger = new NullLogger();
         $this->translator = $translator;
         $this->blobService = $blobService;
+        $this->lockFactory = $lockFactory;
     }
 
     public function getConnectionBaseUrl(): string
     {
         return $this->searchIndex->getConnectionBaseUrl();
+    }
+
+    public function getSyncLockKey(): Key
+    {
+        return new Key('cabinet-sync');
     }
 
     public function setCache(?CacheItemPoolInterface $cachePool)
@@ -236,6 +246,16 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
 
         $this->saveCursor($collectionName, $res->getCursor());
+    }
+
+    public function queueSync()
+    {
+        $lock = $this->lockFactory->createLockFromKey($this->getSyncLockKey(), 3600, false);
+        if ($lock->acquire(false)) {
+
+        } else {
+
+        }
     }
 
     public function personToDocument(array $person): array
