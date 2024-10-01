@@ -182,6 +182,52 @@ class TypesenseClient implements LoggerAwareInterface
             $this->logger->info('No alias found, creating empty collection and alias');
             $this->purgeAll();
         }
+        $this->updateProxyApiKey();
+    }
+
+    /**
+     * Ensures the proxy API key for the alias is registered and deletes outdated keys.
+     */
+    private function updateProxyApiKey(): void
+    {
+        $aliasName = $this->getAliasName();
+        $schema = [
+            'description' => 'cabinet read only proxy key',
+            'actions' => [
+                // allow all read-only operations
+                'documents:search',
+                'documents:get',
+                'documents:export',
+            ],
+            'collections' => [$aliasName],
+            'value' => $this->config->getTypesenseProxyApiKey(),
+        ];
+
+        $this->logger->info('Re-creating read-only key if needed');
+        $client = $this->getClient();
+        $keys = $client->keys->retrieve();
+        $foundId = null;
+        foreach ($keys['keys'] as $key) {
+            if (in_array($aliasName, $key['collections'], true)) {
+                if ($key['description'] === $schema['description']
+                    && $key['actions'] === $schema['actions']
+                    && $key['collections'] === $schema['collections']
+                    && str_starts_with($schema['value'], $key['value_prefix'])) {
+                    $this->logger->info('Found existing matching key '.$key['id']);
+                    $foundId = $key['id'];
+                    break;
+                } else {
+                    $this->logger->info('Deleting outdated key '.$key['id']);
+                    $client->keys[$key['id']]->delete();
+                }
+            }
+        }
+
+        if ($foundId === null) {
+            $this->logger->info('No existing key found, creating a new one');
+            $key = $client->keys->create($schema);
+            $this->logger->info('Created new key '.$key['id']);
+        }
     }
 
     /**

@@ -140,8 +140,6 @@ class TypesenseSync implements LoggerAwareInterface
     {
         $this->logger->info('Starting a full sync');
         $schema = $this->translator->getSchema();
-
-        $this->searchIndex->ensureSetup();
         $this->searchIndex->deleteOldCollections();
         $collectionName = $this->searchIndex->createNewCollection($schema);
 
@@ -164,6 +162,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function sync(bool $full = false)
     {
+        $this->searchIndex->ensureSetup();
         $collectionName = $this->searchIndex->getCollectionName();
         $cursor = $this->getCursor($collectionName);
 

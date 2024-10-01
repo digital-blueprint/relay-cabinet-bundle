@@ -63,7 +63,7 @@ class TypesenseService implements LoggerAwareInterface
         try {
             $response = $this->client->request($method, $url, [
                 'headers' => [
-                    'X-TYPESENSE-API-KEY' => $this->config->getTypesenseApiKey(),
+                    'X-TYPESENSE-API-KEY' => $this->config->getTypesenseProxyApiKey(),
                 ],
                 'body' => $request->getContent(),
             ]);

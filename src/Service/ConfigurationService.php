@@ -23,6 +23,15 @@ class ConfigurationService
         return $this->config['typesense']['api_key'];
     }
 
+    /**
+     * Returns the typesense API key used when talking to typesense via the proxy. It is read-only, and is limited
+     * to a specific collection and actions on that collection.
+     */
+    public function getTypesenseProxyApiKey(): string
+    {
+        return 'cabinet:proxy-key';
+    }
+
     public function getBlobApiUrl(): string
     {
         return $this->config['blob']['api_url'];
