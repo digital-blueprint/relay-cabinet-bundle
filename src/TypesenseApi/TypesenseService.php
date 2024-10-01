@@ -58,6 +58,10 @@ class TypesenseService implements LoggerAwareInterface
 
         $url = $this->config->getTypesenseApiUrl().'/'.$path;
         $method = $request->getMethod();
+        $queryParams = $request->query->all();
+        // The header key wins over this in my testing, but just to be safe don't allow users to set
+        // the api key by always overriding it here.
+        $queryParams['x-typesense-api-key'] = $this->config->getTypesenseProxyApiKey();
 
         // Forward the request to Typesense server and return the response
         try {
@@ -66,6 +70,7 @@ class TypesenseService implements LoggerAwareInterface
                     'X-TYPESENSE-API-KEY' => $this->config->getTypesenseProxyApiKey(),
                 ],
                 'body' => $request->getContent(),
+                'query' => $queryParams,
             ]);
 
             // We must not send all headers back to the client!
