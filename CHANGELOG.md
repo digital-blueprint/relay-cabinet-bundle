@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.23
+
+- Adjust for recent ApiError changes in the core bundle
+
 ## 0.2.22
 
 - typesense proxy: only allow read-only access, even for authorized users
