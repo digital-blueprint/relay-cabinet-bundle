@@ -11,6 +11,7 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
@@ -46,15 +47,14 @@ class TypesenseService implements LoggerAwareInterface
     public function doProxyRequest(string $path, Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
+            throw new HttpException(Response::HTTP_UNAUTHORIZED, 'access denied');
         }
 
-        // Do basic authorization checks for the provided bearer token
-        // TODO: Check permissions
-        $this->auth->checkCanUse();
-
-        // return new Response('Try later', Response::HTTP_UNAUTHORIZED);
-        // var_dump($request->get('x-typesense-api-key'));
+        try {
+            $this->auth->checkCanUse();
+        } catch (ApiError) {
+            throw new HttpException(Response::HTTP_FORBIDDEN, 'access denied');
+        }
 
         $url = $this->config->getTypesenseApiUrl().'/'.$path;
         $method = $request->getMethod();
