@@ -409,22 +409,22 @@
         },
         {
             "name": "dbp/relay-blob-bundle",
-            "version": "v0.1.53",
+            "version": "v0.1.54",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-blob-bundle.git",
-                "reference": "3fcc985c9bbbc8b1f4f4b41979035c959f23b007"
+                "reference": "298000e993c7a78a18d42d7d41db11dcec250741"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/3fcc985c9bbbc8b1f4f4b41979035c959f23b007",
-                "reference": "3fcc985c9bbbc8b1f4f4b41979035c959f23b007",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/298000e993c7a78a18d42d7d41db11dcec250741",
+                "reference": "298000e993c7a78a18d42d7d41db11dcec250741",
                 "shasum": ""
             },
             "require": {
                 "api-platform/core": "^3.2",
                 "dbp/relay-blob-library": "^0.2.0",
-                "dbp/relay-core-bundle": "^0.1.173",
+                "dbp/relay-core-bundle": "^0.1.182",
                 "doctrine/dbal": "^3.3 || ^4.0",
                 "doctrine/doctrine-bundle": "^2.11",
                 "doctrine/doctrine-migrations-bundle": "^3.3",
@@ -480,9 +480,9 @@
             "description": "A bundle for file-serving, persisting and managing",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-blob-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.53"
+                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.54"
             },
-            "time": "2024-09-24T14:08:12+00:00"
+            "time": "2024-10-02T07:42:10+00:00"
         },
         {
             "name": "dbp/relay-blob-library",
@@ -540,20 +540,20 @@
         },
         {
             "name": "dbp/relay-core-bundle",
-            "version": "v0.1.182",
+            "version": "v0.1.183",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-core-bundle.git",
-                "reference": "0809b2ca9293b2562c1719b11edf4960a172ac09"
+                "reference": "d7d803578a3b4a2bef1114d1cbbe245e98708995"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-core-bundle/zipball/0809b2ca9293b2562c1719b11edf4960a172ac09",
-                "reference": "0809b2ca9293b2562c1719b11edf4960a172ac09",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-core-bundle/zipball/d7d803578a3b4a2bef1114d1cbbe245e98708995",
+                "reference": "d7d803578a3b4a2bef1114d1cbbe245e98708995",
                 "shasum": ""
             },
             "require": {
-                "api-platform/core": "^2.7.18 || ^3.2.21",
+                "api-platform/core": "^3.2.21",
                 "dragonmantank/cron-expression": "^3.3.3",
                 "ext-fileinfo": "*",
                 "ext-intl": "*",
@@ -573,11 +573,11 @@
                 "symfony/dependency-injection": "^5.4 || ^6.4",
                 "symfony/error-handler": "^5.4 || ^6.4",
                 "symfony/event-dispatcher": "^5.4 || ^6.4.8",
-                "symfony/event-dispatcher-contracts": "^2.5 || ^3.5",
+                "symfony/event-dispatcher-contracts": "^3.5",
                 "symfony/expression-language": "^5.4 || ^6.4",
                 "symfony/filesystem": "^5.4 || ^6.4",
                 "symfony/framework-bundle": "^5.4 || ^6.4",
-                "symfony/http-client-contracts": "^2.5 || ^3.5",
+                "symfony/http-client-contracts": "^3.5",
                 "symfony/http-foundation": "^5.4 || ^6.4",
                 "symfony/http-kernel": "^5.4 || ^6.4",
                 "symfony/lock": "^5.4 || ^6.4",
@@ -635,9 +635,9 @@
             "description": "The core bundle of the Relay API gateway",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-core-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-core-bundle/tree/v0.1.182"
+                "source": "https://github.com/digital-blueprint/relay-core-bundle/tree/v0.1.183"
             },
-            "time": "2024-09-26T10:16:12+00:00"
+            "time": "2024-10-02T11:39:19+00:00"
         },
         {
             "name": "doctrine/cache",
@@ -1809,16 +1809,16 @@
         },
         {
             "name": "doctrine/sql-formatter",
-            "version": "1.4.1",
+            "version": "1.5.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/sql-formatter.git",
-                "reference": "7f83911cc5eba870de7ebb11283972483f7e2891"
+                "reference": "16ca9e39877369d664f06dacde468548298bdc40"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/sql-formatter/zipball/7f83911cc5eba870de7ebb11283972483f7e2891",
-                "reference": "7f83911cc5eba870de7ebb11283972483f7e2891",
+                "url": "https://api.github.com/repos/doctrine/sql-formatter/zipball/16ca9e39877369d664f06dacde468548298bdc40",
+                "reference": "16ca9e39877369d664f06dacde468548298bdc40",
                 "shasum": ""
             },
             "require": {
@@ -1826,6 +1826,7 @@
             },
             "require-dev": {
                 "doctrine/coding-standard": "^12",
+                "ergebnis/phpunit-slow-test-detector": "^2.14",
                 "phpstan/phpstan": "^1.10",
                 "phpunit/phpunit": "^10.5",
                 "vimeo/psalm": "^5.24"
@@ -1858,9 +1859,9 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/sql-formatter/issues",
-                "source": "https://github.com/doctrine/sql-formatter/tree/1.4.1"
+                "source": "https://github.com/doctrine/sql-formatter/tree/1.5.0"
             },
-            "time": "2024-08-05T20:32:22+00:00"
+            "time": "2024-09-11T07:29:40+00:00"
         },
         {
             "name": "dragonmantank/cron-expression",
@@ -13399,7 +13400,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -13410,7 +13411,7 @@
         "ext-simplexml": "*",
         "ext-soap": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1"
     },
