@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.24
+- Change `/cabinet/signature` endpoint to `/cabinet/blob-urls` and change the response format from a raw string to json
+
 ## 0.2.23
 
 - Adjust for recent ApiError changes in the core bundle
