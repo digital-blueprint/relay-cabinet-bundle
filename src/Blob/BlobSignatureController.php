@@ -27,7 +27,7 @@ class BlobSignatureController extends AbstractController
         return $this->proxy($request);
     }
 
-    #[Route(path: '/cabinet/signature', name: 'cabinet_blob_signature', requirements: ['path' => '.+'])]
+    #[Route(path: '/cabinet/blob-urls', name: 'cabinet_blob_signature', requirements: ['path' => '.+'], methods: ['POST'])]
     public function proxy(Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {

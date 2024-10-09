@@ -135,7 +135,7 @@ class BlobService implements LoggerAwareInterface
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params);
 
-            return new Response($responseUrl, 200);
+            return new Response($this->getJsonEncodedBlobUrl($responseUrl), 200);
         } catch (\Exception $e) {
             throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
         }
@@ -187,7 +187,7 @@ class BlobService implements LoggerAwareInterface
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
 
-            return new Response($responseUrl, 200);
+            return new Response($this->getJsonEncodedBlobUrl($responseUrl), 200);
         } catch (\Exception $e) {
             throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
         }
@@ -225,7 +225,7 @@ class BlobService implements LoggerAwareInterface
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
 
-            return new Response($responseUrl, 200);
+            return new Response($this->getJsonEncodedBlobUrl($responseUrl), 200);
         } catch (\Exception $e) {
             throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
         }
@@ -262,7 +262,7 @@ class BlobService implements LoggerAwareInterface
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
 
-            return new Response($responseUrl, 200);
+            return new Response($this->getJsonEncodedBlobUrl($responseUrl), 200);
         } catch (\Exception $e) {
             throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
         }
@@ -309,9 +309,18 @@ class BlobService implements LoggerAwareInterface
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
 
-            return new Response($responseUrl, 200);
+            return new Response($this->getJsonEncodedBlobUrl($responseUrl), 200);
         } catch (\Exception $e) {
             throw ApiError::withDetails(Response::HTTP_INTERNAL_SERVER_ERROR, 'The blob url could not be generated! Please check your parameters.', 'cabinet:cannot-generate-signed-blob-url');
         }
+    }
+
+    private function getJsonEncodedBlobUrl(string $blobUrl)
+    {
+        $payload = [
+            'blobUrl' => $blobUrl,
+        ];
+
+        return json_encode($payload);
     }
 }

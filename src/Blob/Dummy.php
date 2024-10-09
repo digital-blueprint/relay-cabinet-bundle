@@ -5,14 +5,14 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\Blob;
 
 use ApiPlatform\Metadata\ApiResource;
-use ApiPlatform\Metadata\Get;
+use ApiPlatform\Metadata\Post;
 
 #[ApiResource(
     shortName: 'cabinet',
     types: ['https://schema.org/DigitalDocument'],
     operations: [
-        new Get(
-            uriTemplate: '/signature',
+        new Post(
+            uriTemplate: '/blob-urls',
             controller: BlobSignatureController::class,
             openapiContext: [
                 'tags' => ['Cabinet'],
