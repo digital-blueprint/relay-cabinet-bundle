@@ -65,7 +65,7 @@ class TypesenseSync implements LoggerAwareInterface
 
         $this->logger->info('Fetch mapping for base data');
         // First we get a mapping of the base ID to the base content for all Persons in typesense
-        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'identNrObfuscated', 'base');
+        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'identNrObfuscated', 'person');
         $this->logger->debug('Base entries found: '.count($baseMapping));
 
         // Then we fetch all files from the blob bucket, translate it to the typsensese schema, and enrich it
@@ -77,7 +77,7 @@ class TypesenseSync implements LoggerAwareInterface
         $documentCount = 0;
         foreach ($this->blobService->getAllFiles() as $fileData) {
             $translated = $this->fileDataToPartialDocument($fileData);
-            $id = $translated['base']['identNrObfuscated'];
+            $id = $translated['person']['identNrObfuscated'];
             // XXX: If the related person isn't in typesense, we just ignore the file
             if (!array_key_exists($id, $baseMapping)) {
                 if (!array_key_exists($id, $notFound)) {
@@ -86,7 +86,7 @@ class TypesenseSync implements LoggerAwareInterface
                 }
                 continue;
             }
-            $translated['base'] = $baseMapping[$id];
+            $translated['person'] = $baseMapping[$id];
             $newDocuments[] = $translated;
             ++$documentCount;
             if (count($newDocuments) > self::CHUNK_SIZE) {
@@ -104,10 +104,10 @@ class TypesenseSync implements LoggerAwareInterface
         $fileData = $this->blobService->getFile($blobFileId);
         $partialFileDocument = $this->fileDataToPartialDocument($fileData);
 
-        $blobFileId = $partialFileDocument['base']['identNrObfuscated'];
-        $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'base.identNrObfuscated', $blobFileId);
+        $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
+        $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);
         if ($results) {
-            $partialFileDocument['base'] = $results[0]['base'];
+            $partialFileDocument['person'] = $results[0]['person'];
         } else {
             // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
             // atm the schema needs those fields, so just skip for now
@@ -201,11 +201,11 @@ class TypesenseSync implements LoggerAwareInterface
     {
         $updateDocuments = [];
         foreach ($personDocuments as $personDocument) {
-            $base = $personDocument['base'];
+            $base = $personDocument['person'];
             $id = $base['identNrObfuscated'];
-            $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', 'base.identNrObfuscated', $id);
+            $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', 'person.identNrObfuscated', $id);
             foreach ($relatedDocs as &$relatedDoc) {
-                $relatedDoc['base'] = $base;
+                $relatedDoc['person'] = $base;
             }
             $updateDocuments = array_merge($updateDocuments, $relatedDocs);
         }

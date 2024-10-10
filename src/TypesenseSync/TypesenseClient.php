@@ -111,7 +111,7 @@ class TypesenseClient implements LoggerAwareInterface
         foreach ($lines as $line) {
             $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
             $id = $decoded[$include][$key];
-            $mapping[$id] = $decoded['base'];
+            $mapping[$id] = $decoded[$include];
         }
 
         return $mapping;
