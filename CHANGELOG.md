@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.25
+
+- typesense: all documents now share the "person" field instead of the "base" one
+
 ## 0.2.24
 - Change `/cabinet/signature` endpoint to `/cabinet/blob-urls` and change the response format from a raw string to json
 
