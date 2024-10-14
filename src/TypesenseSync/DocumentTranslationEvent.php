@@ -8,11 +8,11 @@ use Symfony\Contracts\EventDispatcher\Event;
 
 class DocumentTranslationEvent extends Event
 {
-    private ?array $translatedDocument;
+    private ?array $translatedDocuments;
 
     public function __construct(private string $objectType, private array $document)
     {
-        $this->translatedDocument = null;
+        $this->translatedDocuments = null;
     }
 
     public function getDocument(): array
@@ -22,12 +22,17 @@ class DocumentTranslationEvent extends Event
 
     public function setTranslatedDocument(array $translatedDocument): void
     {
-        $this->translatedDocument = $translatedDocument;
+        $this->translatedDocuments = [$translatedDocument];
     }
 
-    public function getTranslatedDocument(): ?array
+    public function setTranslatedDocuments(array $translatedDocuments): void
     {
-        return $this->translatedDocument;
+        $this->translatedDocuments = $translatedDocuments;
+    }
+
+    public function getTranslatedDocuments(): ?array
+    {
+        return $this->translatedDocuments;
     }
 
     public function getObjectType(): string

@@ -54,13 +54,13 @@ class DocumentTranslator
     }
 
     /**
-     * Translates a document to a document matching typesense schema.
+     * Translates a document to zero or more documents matching the typesense schema.
      */
     public function translateDocument(string $objectType, array $document): array
     {
         $event = new DocumentTranslationEvent($objectType, $document);
         $event = $this->eventDispatcher->dispatch($event);
 
-        return $event->getTranslatedDocument() ?? $document;
+        return $event->getTranslatedDocuments() ?? [$document];
     }
 }

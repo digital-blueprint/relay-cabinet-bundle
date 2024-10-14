@@ -76,22 +76,23 @@ class TypesenseSync implements LoggerAwareInterface
         $notFound = [];
         $documentCount = 0;
         foreach ($this->blobService->getAllFiles() as $fileData) {
-            $translated = $this->fileDataToPartialDocument($fileData);
-            $id = $translated['person']['identNrObfuscated'];
-            // XXX: If the related person isn't in typesense, we just ignore the file
-            if (!array_key_exists($id, $baseMapping)) {
-                if (!array_key_exists($id, $notFound)) {
-                    $this->logger->warning('For file '.$fileData['identifier'].' (and possibly more) with baseId "'.$id.'" no matching base data found, skipping');
-                    $notFound[$id] = null;
+            foreach ($this->fileDataToPartialDocuments($fileData) as $translated) {
+                $id = $translated['person']['identNrObfuscated'];
+                // XXX: If the related person isn't in typesense, we just ignore the file
+                if (!array_key_exists($id, $baseMapping)) {
+                    if (!array_key_exists($id, $notFound)) {
+                        $this->logger->warning('For file '.$fileData['identifier'].' (and possibly more) with baseId "'.$id.'" no matching base data found, skipping');
+                        $notFound[$id] = null;
+                    }
+                    continue;
                 }
-                continue;
-            }
-            $translated['person'] = $baseMapping[$id];
-            $newDocuments[] = $translated;
-            ++$documentCount;
-            if (count($newDocuments) > self::CHUNK_SIZE) {
-                $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
-                $newDocuments = [];
+                $translated['person'] = $baseMapping[$id];
+                $newDocuments[] = $translated;
+                ++$documentCount;
+                if (count($newDocuments) > self::CHUNK_SIZE) {
+                    $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
+                    $newDocuments = [];
+                }
             }
         }
         $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
@@ -102,20 +103,20 @@ class TypesenseSync implements LoggerAwareInterface
     {
         $collectionName = $this->searchIndex->getCollectionName();
         $fileData = $this->blobService->getFile($blobFileId);
-        $partialFileDocument = $this->fileDataToPartialDocument($fileData);
+        foreach ($this->fileDataToPartialDocuments($fileData) as $partialFileDocument) {
+            $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
+            $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);
+            if ($results) {
+                $partialFileDocument['person'] = $results[0]['person'];
+            } else {
+                // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
+                // atm the schema needs those fields, so just skip for now
+                $this->logger->warning('No person found in typesense matching '.$blobFileId.'. Skipping blob file');
 
-        $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
-        $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);
-        if ($results) {
-            $partialFileDocument['person'] = $results[0]['person'];
-        } else {
-            // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
-            // atm the schema needs those fields, so just skip for now
-            $this->logger->warning('No person found in typesense matching '.$blobFileId.'. Skipping blob file');
-
-            return;
+                return;
+            }
+            $this->searchIndex->addDocumentsToCollection($collectionName, [$partialFileDocument]);
         }
-        $this->searchIndex->addDocumentsToCollection($collectionName, [$partialFileDocument]);
     }
 
     public function deleteFile(string $blobFileId): void
@@ -147,7 +148,9 @@ class TypesenseSync implements LoggerAwareInterface
         foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
             $documents = [];
             foreach ($persons as $person) {
-                $documents[] = $this->personToDocument($person);
+                foreach ($this->personToDocuments($person) as $document) {
+                    $documents[] = $document;
+                }
             }
             $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
         }
@@ -184,7 +187,9 @@ class TypesenseSync implements LoggerAwareInterface
             foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
                 $documents = [];
                 foreach ($persons as $person) {
-                    $documents[] = $this->personToDocument($person);
+                    foreach ($this->personToDocuments($person) as $document) {
+                        $documents[] = $document;
+                    }
                 }
                 $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
 
@@ -221,7 +226,9 @@ class TypesenseSync implements LoggerAwareInterface
         $res = $this->personSync->getPersons([$id], $cursor);
         $documents = [];
         foreach ($res->getPersons() as $person) {
-            $documents[] = $this->personToDocument($person);
+            foreach ($this->personToDocuments($person) as $document) {
+                $documents[] = $document;
+            }
         }
         $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
 
@@ -232,12 +239,12 @@ class TypesenseSync implements LoggerAwareInterface
         $this->saveCursor($collectionName, $res->getCursor());
     }
 
-    public function personToDocument(array $person): array
+    public function personToDocuments(array $person): array
     {
         return $this->translator->translateDocument('person', $person);
     }
 
-    public function fileDataToPartialDocument(array $fileData): array
+    public function fileDataToPartialDocuments(array $fileData): array
     {
         $bucketId = $this->blobService->getBucketId();
         $metadata = json_decode($fileData['metadata'], associative: true, flags: JSON_THROW_ON_ERROR);
