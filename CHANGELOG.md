@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.26
+
+- php api: translate -> transform everywhere, for better clarity
+- transform: allow creating multiple documents from one source, or none at all
+
 ## 0.2.25
 
 - typesense: all documents now share the "person" field instead of the "base" one
