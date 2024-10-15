@@ -13,7 +13,9 @@ For development purposes, the following CLI commands are available:
 ./console tugraz:relay:tugraz:cabinet:add-file-fixtures --number 50
 ```
 
-If you have [just](https://github.com/casey/just) installed, you can also use the following command:
+## MiddlewareAPI specific
+
+If you have [just](https://github.com/casey/just) installed, you can also use the following command in the `docker` folder:
 
 ```bash
 just cabinet-dev-setup
