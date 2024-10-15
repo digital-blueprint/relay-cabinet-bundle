@@ -19,19 +19,19 @@ class TypesenseSync implements LoggerAwareInterface
     private CacheItemPoolInterface $cachePool;
     private TypesenseClient $searchIndex;
     private PersonSyncInterface $personSync;
-    private DocumentTranslator $translator;
+    private DocumentTransformer $transformer;
     private BlobService $blobService;
 
     // Chunk processing to reduce memory consumption
     private const CHUNK_SIZE = 10000;
 
-    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTranslator $translator, BlobService $blobService)
+    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService)
     {
         $this->cachePool = new ArrayAdapter();
         $this->searchIndex = $searchIndex;
         $this->personSync = $personSync;
         $this->logger = new NullLogger();
-        $this->translator = $translator;
+        $this->transformer = $transformer;
         $this->blobService = $blobService;
     }
 
@@ -68,7 +68,7 @@ class TypesenseSync implements LoggerAwareInterface
         $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'identNrObfuscated', 'person');
         $this->logger->debug('Base entries found: '.count($baseMapping));
 
-        // Then we fetch all files from the blob bucket, translate it to the typsensese schema, and enrich it
+        // Then we fetch all files from the blob bucket, transform it to the typsensese schema, and enrich it
         // with the base data of the persons from the mapping above.
         // In case there is no corresponding person in typesense we simply drop the file atm.
         // In the end we upsert everything to typesense.
@@ -76,8 +76,8 @@ class TypesenseSync implements LoggerAwareInterface
         $notFound = [];
         $documentCount = 0;
         foreach ($this->blobService->getAllFiles() as $fileData) {
-            foreach ($this->fileDataToPartialDocuments($fileData) as $translated) {
-                $id = $translated['person']['identNrObfuscated'];
+            foreach ($this->fileDataToPartialDocuments($fileData) as $transformed) {
+                $id = $transformed['person']['identNrObfuscated'];
                 // XXX: If the related person isn't in typesense, we just ignore the file
                 if (!array_key_exists($id, $baseMapping)) {
                     if (!array_key_exists($id, $notFound)) {
@@ -86,8 +86,8 @@ class TypesenseSync implements LoggerAwareInterface
                     }
                     continue;
                 }
-                $translated['person'] = $baseMapping[$id];
-                $newDocuments[] = $translated;
+                $transformed['person'] = $baseMapping[$id];
+                $newDocuments[] = $transformed;
                 ++$documentCount;
                 if (count($newDocuments) > self::CHUNK_SIZE) {
                     $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
@@ -140,7 +140,7 @@ class TypesenseSync implements LoggerAwareInterface
     public function syncFull()
     {
         $this->logger->info('Starting a full sync');
-        $schema = $this->translator->getSchema();
+        $schema = $this->transformer->getSchema();
         $this->searchIndex->deleteOldCollections();
         $collectionName = $this->searchIndex->createNewCollection($schema);
 
@@ -175,7 +175,7 @@ class TypesenseSync implements LoggerAwareInterface
             $this->logger->info('Starting a partial sync');
 
             $metadata = $this->searchIndex->getSchemaMetadata($collectionName);
-            $outdated = $this->translator->isSchemaOutdated($metadata);
+            $outdated = $this->transformer->isSchemaOutdated($metadata);
             if ($outdated) {
                 $this->logger->info('Schema is outdated, falling back to a full sync');
                 $this->syncFull();
@@ -241,7 +241,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function personToDocuments(array $person): array
     {
-        return $this->translator->translateDocument('person', $person);
+        return $this->transformer->transformDocument('person', $person);
     }
 
     public function fileDataToPartialDocuments(array $fileData): array
@@ -259,6 +259,6 @@ class TypesenseSync implements LoggerAwareInterface
             'metadata' => $metadata,
         ];
 
-        return $this->translator->translateDocument($objectType, $input);
+        return $this->transformer->transformDocument($objectType, $input);
     }
 }

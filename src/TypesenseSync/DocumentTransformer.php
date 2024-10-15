@@ -6,7 +6,7 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Symfony\Contracts\EventDispatcher\EventDispatcherInterface;
 
-class DocumentTranslator
+class DocumentTransformer
 {
     private EventDispatcherInterface $eventDispatcher;
 
@@ -54,13 +54,13 @@ class DocumentTranslator
     }
 
     /**
-     * Translates a document to zero or more documents matching the typesense schema.
+     * Transform a document to zero or more documents matching the typesense schema.
      */
-    public function translateDocument(string $objectType, array $document): array
+    public function transformDocument(string $objectType, array $document): array
     {
-        $event = new DocumentTranslationEvent($objectType, $document);
+        $event = new DocumentTransformEvent($objectType, $document);
         $event = $this->eventDispatcher->dispatch($event);
 
-        return $event->getTranslatedDocuments() ?? [$document];
+        return $event->getTransformedDocuments() ?? [$document];
     }
 }
