@@ -41,6 +41,8 @@ class BlobSignatureController extends AbstractController
             return $this->blobService->getSignatureForGivenPostRequest($request);
         } elseif ($method === 'GET') {
             return $this->blobService->getSignatureForGivenGetRequest($request);
+        } elseif ($method === 'DOWNLOAD') {
+            return $this->blobService->getSignatureForGivenDownloadRequest($request);
         } elseif ($method === 'DELETE') {
             return $this->blobService->getSignatureForGivenDeleteRequest($request);
         } elseif ($method === 'PATCH') {

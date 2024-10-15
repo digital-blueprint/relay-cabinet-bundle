@@ -223,7 +223,7 @@ class BlobService implements LoggerAwareInterface
                 'method' => $method,
             ];
 
-            $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
+            $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id, 'download');
 
             return new Response($this->getJsonEncodedBlobUrl($responseUrl), 200);
         } catch (\Exception $e) {
