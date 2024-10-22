@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.27
+
+- add config option to switch to using the PHP blob API instead of the HTTP one
+- also provide binary download URLs via /blob-urls
+
 ## 0.2.26
 
 - php api: translate -> transform everywhere, for better clarity
