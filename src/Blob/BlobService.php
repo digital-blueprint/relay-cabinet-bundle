@@ -4,12 +4,16 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Blob;
 
+use Dbp\Relay\BlobBundle\Api\FileApi;
+use Dbp\Relay\BlobBundle\Entity\FileData;
 use Dbp\Relay\BlobLibrary\Api\BlobApi;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\Filesystem\Filesystem;
+use Symfony\Component\HttpFoundation\File\File;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Uid\Uuid;
@@ -23,16 +27,22 @@ class BlobService implements LoggerAwareInterface
     private ConfigurationService $config;
 
     private ?BlobApi $internalBlobApi;
+    private FileApi $fileApi;
 
-    public function __construct(AuthorizationService $auth, ConfigurationService $config)
+    public function __construct(AuthorizationService $auth, ConfigurationService $config, FileApi $fileApi)
     {
         $this->auth = $auth;
         $this->config = $config;
         $this->internalBlobApi = null;
+        $this->fileApi = $fileApi;
     }
 
     private function getInternalBlobApi(): BlobApi
     {
+        if (!$this->config->getUseBlobApi()) {
+            throw new \RuntimeException('Internal blob api is disabled');
+        }
+
         if ($this->internalBlobApi === null) {
             $config = $this->config;
             $blobApi = new BlobApi($config->getBlobApiUrlInternal(), $config->getBlobBucketId(), $config->getBlobBucketKey());
@@ -45,8 +55,10 @@ class BlobService implements LoggerAwareInterface
 
     public function checkConnection(): void
     {
-        $blobApi = $this->getInternalBlobApi();
-        $blobApi->getFileDataByPrefix(Uuid::v4()->toRfc4122(), 0);
+        if ($this->config->getUseBlobApi()) {
+            $blobApi = $this->getInternalBlobApi();
+            $blobApi->getFileDataByPrefix(Uuid::v4()->toRfc4122(), 0);
+        }
     }
 
     public function getBlobApiUrl(): string
@@ -56,9 +68,31 @@ class BlobService implements LoggerAwareInterface
 
     public function uploadFile(string $filename, string $payload, ?string $type = null, ?string $metadata = null): string
     {
-        $blobApi = $this->getInternalBlobApi();
+        if (!$this->config->getUseBlobApi()) {
+            $filesystem = new Filesystem();
+            $tempFile = $filesystem->tempnam(sys_get_temp_dir(), 'cabinet_');
 
-        return $blobApi->uploadFile($this->config->getBlobBucketPrefix(), $filename, $payload, $metadata ?? '', $type ?? '');
+            try {
+                if (file_put_contents($tempFile, $payload) === false) {
+                    throw new \RuntimeException();
+                }
+                $file = new File($tempFile, true);
+                $fileData = new FileData();
+                $fileData->setFilename($filename);
+                $fileData->setFile($file);
+                $fileData->setPrefix($this->config->getBlobBucketPrefix());
+                $fileData->setType($type);
+                $fileData->setMetadata($metadata ?? '');
+
+                return $this->fileApi->addFile($fileData, $this->config->getBlobBucketId())->getIdentifier();
+            } finally {
+                @unlink($tempFile);
+            }
+        } else {
+            $blobApi = $this->getInternalBlobApi();
+
+            return $blobApi->uploadFile($this->config->getBlobBucketPrefix(), $filename, $payload, $metadata ?? '', $type ?? '');
+        }
     }
 
     public function getBucketId(): string
@@ -68,9 +102,12 @@ class BlobService implements LoggerAwareInterface
 
     public function deleteFile(string $id): void
     {
-        $blobApi = $this->getInternalBlobApi();
-
-        $blobApi->deleteFileByIdentifier($id);
+        if (!$this->config->getUseBlobApi()) {
+            $this->fileApi->removeFile($id);
+        } else {
+            $blobApi = $this->getInternalBlobApi();
+            $blobApi->deleteFileByIdentifier($id);
+        }
     }
 
     /**
@@ -78,26 +115,60 @@ class BlobService implements LoggerAwareInterface
      */
     public function getAllFiles(int $perPage = 1000): iterable
     {
-        $blobApi = $this->getInternalBlobApi();
-        $bucketPrefix = $this->config->getBlobBucketPrefix();
-        $page = 1;
-        while (true) {
-            $entries = $blobApi->getFileDataByPrefix($bucketPrefix, 0, page: $page, perPage: $perPage)['hydra:member'];
-            foreach ($entries as $entry) {
-                yield $entry;
+        if (!$this->config->getUseBlobApi()) {
+            $bucketId = $this->config->getBlobBucketId();
+            $bucketPrefix = $this->config->getBlobBucketPrefix();
+            $page = 1;
+            while (true) {
+                $entries = $this->fileApi->getFiles($bucketId, [FileApi::PREFIX_OPTION => $bucketPrefix], $page, $perPage);
+                foreach ($entries as $entry) {
+                    yield self::fileDataToJson($entry);
+                }
+                if (count($entries) === 0) {
+                    break;
+                }
+                ++$page;
             }
-            if (count($entries) < $perPage) {
-                break;
+        } else {
+            $blobApi = $this->getInternalBlobApi();
+            $bucketPrefix = $this->config->getBlobBucketPrefix();
+            $page = 1;
+            while (true) {
+                $entries = $blobApi->getFileDataByPrefix($bucketPrefix, 0, page: $page, perPage: $perPage)['hydra:member'];
+                foreach ($entries as $entry) {
+                    yield $entry;
+                }
+                if (count($entries) === 0) {
+                    break;
+                }
+                ++$page;
             }
-            ++$page;
         }
+    }
+
+    private static function fileDataToJson(FileData $fileData): array
+    {
+        return [
+            'identifier' => $fileData->getIdentifier(),
+            'fileName' => $fileData->getFilename(),
+            'mimeType' => $fileData->getMimeType(),
+            'dateCreated' => $fileData->getDateCreated()->format(\DateTime::ATOM),
+            'dateModified' => $fileData->getDateModified()->format(\DateTime::ATOM),
+            'metadata' => $fileData->getMetadata(),
+        ];
     }
 
     public function getFile(string $id): array
     {
-        $blobApi = $this->getInternalBlobApi();
+        if (!$this->config->getUseBlobApi()) {
+            $fileData = $this->fileApi->getFile($id);
 
-        return $blobApi->getFileDataByIdentifier($id, 0);
+            return self::fileDataToJson($fileData);
+        } else {
+            $blobApi = $this->getInternalBlobApi();
+
+            return $blobApi->getFileDataByIdentifier($id, 0);
+        }
     }
 
     public function getSignatureForGivenPostRequest(Request $request): Response

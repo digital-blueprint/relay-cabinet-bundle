@@ -37,6 +37,11 @@ class ConfigurationService
         return $this->config['blob']['api_url'];
     }
 
+    public function getUseBlobApi(): bool
+    {
+        return $this->config['blob']['use_api'];
+    }
+
     public function getBlobApiUrlInternal(): string
     {
         return $this->config['blob']['api_url_internal'] ?? $this->getBlobApiUrl();

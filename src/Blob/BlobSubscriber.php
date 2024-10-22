@@ -29,8 +29,7 @@ class BlobSubscriber implements EventSubscriberInterface
 
     private function isForCabinet(FileData $fileData): bool
     {
-        $bucket = $fileData->getBucket();
-        if ($bucket->getBucketID() !== $this->config->getBlobBucketId()) {
+        if ($fileData->getBucketId() !== $this->config->getBlobBucketId()) {
             return false;
         }
 
@@ -53,7 +52,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->messageBus->dispatch(new BlobEventTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
+        $this->messageBus->dispatch(new BlobEventTask('upsert', $fileData->getBucketID(), $fileData->getIdentifier()));
     }
 
     public function onFileChanged(ChangeFileDataByPatchSuccessEvent $event)
@@ -63,7 +62,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->messageBus->dispatch(new BlobEventTask('upsert', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
+        $this->messageBus->dispatch(new BlobEventTask('upsert', $fileData->getBucketId(), $fileData->getIdentifier()));
     }
 
     public function onFileRemoved(DeleteFileDataByDeleteSuccessEvent $event)
@@ -73,7 +72,7 @@ class BlobSubscriber implements EventSubscriberInterface
             return;
         }
 
-        $this->messageBus->dispatch(new BlobEventTask('delete', $fileData->getBucket()->getBucketID(), $fileData->getIdentifier()));
+        $this->messageBus->dispatch(new BlobEventTask('delete', $fileData->getBucketID(), $fileData->getIdentifier()));
     }
 
     #[AsMessageHandler]
