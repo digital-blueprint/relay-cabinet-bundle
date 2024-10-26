@@ -409,16 +409,16 @@
         },
         {
             "name": "dbp/relay-blob-bundle",
-            "version": "v0.1.58",
+            "version": "v0.1.61",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-blob-bundle.git",
-                "reference": "d0a119be66a4d5d740d802ee11cb03b19ed2fb60"
+                "reference": "d943ddde971710d6290342c6cca890aeff5e60f5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/d0a119be66a4d5d740d802ee11cb03b19ed2fb60",
-                "reference": "d0a119be66a4d5d740d802ee11cb03b19ed2fb60",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/d943ddde971710d6290342c6cca890aeff5e60f5",
+                "reference": "d943ddde971710d6290342c6cca890aeff5e60f5",
                 "shasum": ""
             },
             "require": {
@@ -480,9 +480,9 @@
             "description": "A bundle for file-serving, persisting and managing",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-blob-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.58"
+                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.61"
             },
-            "time": "2024-10-22T12:03:05+00:00"
+            "time": "2024-10-24T13:00:55+00:00"
         },
         {
             "name": "dbp/relay-blob-library",
@@ -1812,16 +1812,16 @@
         },
         {
             "name": "doctrine/sql-formatter",
-            "version": "1.5.0",
+            "version": "1.5.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/doctrine/sql-formatter.git",
-                "reference": "16ca9e39877369d664f06dacde468548298bdc40"
+                "reference": "b784cbde727cf806721451dde40eff4fec3bbe86"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/doctrine/sql-formatter/zipball/16ca9e39877369d664f06dacde468548298bdc40",
-                "reference": "16ca9e39877369d664f06dacde468548298bdc40",
+                "url": "https://api.github.com/repos/doctrine/sql-formatter/zipball/b784cbde727cf806721451dde40eff4fec3bbe86",
+                "reference": "b784cbde727cf806721451dde40eff4fec3bbe86",
                 "shasum": ""
             },
             "require": {
@@ -1862,9 +1862,9 @@
             ],
             "support": {
                 "issues": "https://github.com/doctrine/sql-formatter/issues",
-                "source": "https://github.com/doctrine/sql-formatter/tree/1.5.0"
+                "source": "https://github.com/doctrine/sql-formatter/tree/1.5.1"
             },
-            "time": "2024-09-11T07:29:40+00:00"
+            "time": "2024-10-21T18:21:57+00:00"
         },
         {
             "name": "dragonmantank/cron-expression",
