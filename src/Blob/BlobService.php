@@ -154,6 +154,7 @@ class BlobService implements LoggerAwareInterface
             'mimeType' => $fileData->getMimeType(),
             'dateCreated' => $fileData->getDateCreated()->format(\DateTime::ATOM),
             'dateModified' => $fileData->getDateModified()->format(\DateTime::ATOM),
+            'deleteAt' => $fileData->getDeleteAt()?->format(\DateTime::ATOM),
             'metadata' => $fileData->getMetadata(),
         ];
     }
