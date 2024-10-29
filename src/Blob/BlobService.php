@@ -120,7 +120,7 @@ class BlobService implements LoggerAwareInterface
             $bucketPrefix = $this->config->getBlobBucketPrefix();
             $page = 1;
             while (true) {
-                $entries = $this->fileApi->getFiles($bucketId, [FileApi::PREFIX_OPTION => $bucketPrefix], $page, $perPage);
+                $entries = $this->fileApi->getFiles($bucketId, [FileApi::PREFIX_OPTION => $bucketPrefix, FileApi::INCLUDE_DELETE_AT_OPTION => true], $page, $perPage);
                 foreach ($entries as $entry) {
                     yield self::fileDataToJson($entry);
                 }
@@ -134,7 +134,7 @@ class BlobService implements LoggerAwareInterface
             $bucketPrefix = $this->config->getBlobBucketPrefix();
             $page = 1;
             while (true) {
-                $entries = $blobApi->getFileDataByPrefix($bucketPrefix, 0, page: $page, perPage: $perPage)['hydra:member'];
+                $entries = $blobApi->getFileDataByPrefix($bucketPrefix, 0, page: $page, perPage: $perPage, includeDeleteAt: true)['hydra:member'];
                 foreach ($entries as $entry) {
                     yield $entry;
                 }
@@ -162,13 +162,13 @@ class BlobService implements LoggerAwareInterface
     public function getFile(string $id): array
     {
         if (!$this->config->getUseBlobApi()) {
-            $fileData = $this->fileApi->getFile($id);
+            $fileData = $this->fileApi->getFile($id, [FileApi::INCLUDE_DELETE_AT_OPTION => true]);
 
             return self::fileDataToJson($fileData);
         } else {
             $blobApi = $this->getInternalBlobApi();
 
-            return $blobApi->getFileDataByIdentifier($id, 0);
+            return $blobApi->getFileDataByIdentifier($id, 0, includeDeleteAt: true);
         }
     }
 
@@ -203,6 +203,7 @@ class BlobService implements LoggerAwareInterface
                 'method' => $method,
                 'prefix' => $prefix,
                 'type' => $type,
+                'includeDeleteAt' => '1',
             ];
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params);
@@ -248,12 +249,14 @@ class BlobService implements LoggerAwareInterface
                     'creationTime' => $creationTime,
                     'includeData' => $includeData,
                     'method' => $method,
+                    'includeDeleteAt' => '1',
                 ];
             } else {
                 $params = [
                     'bucketIdentifier' => $config->getBlobBucketId(),
                     'creationTime' => $creationTime,
                     'method' => $method,
+                    'includeDeleteAt' => '1',
                 ];
             }
 
@@ -293,6 +296,7 @@ class BlobService implements LoggerAwareInterface
                 'bucketIdentifier' => $config->getBlobBucketId(),
                 'creationTime' => $creationTime,
                 'method' => $method,
+                'includeDeleteAt' => '1',
             ];
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id, 'download');
@@ -330,6 +334,7 @@ class BlobService implements LoggerAwareInterface
                 'bucketIdentifier' => $config->getBlobBucketId(),
                 'creationTime' => $creationTime,
                 'method' => $method,
+                'includeDeleteAt' => '1',
             ];
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
@@ -370,6 +375,7 @@ class BlobService implements LoggerAwareInterface
                 'bucketIdentifier' => $config->getBlobBucketId(),
                 'creationTime' => $creationTime,
                 'method' => $method,
+                'includeDeleteAt' => '1',
             ];
 
             if ($prefix) {
