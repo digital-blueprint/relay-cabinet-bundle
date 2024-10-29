@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.29
+
+- blob: include files that are scheduled for deletion
+
 ## 0.2.28
 
 - DocumentTransformEvent: expose nullable "deleteAt" field for files
