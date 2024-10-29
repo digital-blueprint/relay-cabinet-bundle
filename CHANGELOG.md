@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.28
+
+- DocumentTransformEvent: expose nullable "deleteAt" field for files
+
 ## 0.2.27
 
 - add config option to switch to using the PHP blob API instead of the HTTP one
