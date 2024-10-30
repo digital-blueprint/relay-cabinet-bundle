@@ -1,5 +1,8 @@
 # Changelog
 
+## 0.2.30
+- blob: add `deleteIn` parameter to signed blob PATCH requests
+
 ## 0.2.29
 
 - blob: include files that are scheduled for deletion
