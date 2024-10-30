@@ -37,6 +37,7 @@ class BlobSignatureController extends AbstractController
 
         $method = $request->query->get('method');
 
+        // authorization will probably affect who can do what, thats why everything is split up
         if ($method === 'POST') {
             return $this->blobService->getSignatureForGivenPostRequest($request);
         } elseif ($method === 'GET') {

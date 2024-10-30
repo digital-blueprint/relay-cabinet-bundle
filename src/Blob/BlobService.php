@@ -362,6 +362,7 @@ class BlobService implements LoggerAwareInterface
         // get stuff from body
         $prefix = $request->query->get('prefix', '');
         $type = $request->query->get('type', '');
+        $deleteIn = $request->query->get('deleteIn', '');
         $id = $request->query->get('identifier', '');
 
         if (!$id) {
@@ -374,8 +375,8 @@ class BlobService implements LoggerAwareInterface
             $params = [
                 'bucketIdentifier' => $config->getBlobBucketId(),
                 'creationTime' => $creationTime,
-                'method' => $method,
                 'includeDeleteAt' => '1',
+                'method' => $method,
             ];
 
             if ($prefix) {
@@ -383,6 +384,10 @@ class BlobService implements LoggerAwareInterface
             }
             if ($type) {
                 $params['type'] = $type;
+            }
+
+            if ($deleteIn) {
+                $params['deleteIn'] = $deleteIn;
             }
 
             $responseUrl = $blobApi->getSignedBlobFilesUrl($params, $id);
