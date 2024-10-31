@@ -58,6 +58,14 @@ use ApiPlatform\Metadata\Post;
                         'required' => false,
                         'example' => '',
                     ],
+                    [
+                        'name' => 'deleteIn',
+                        'in' => 'query',
+                        'description' => 'Iso8601 duration in which the file should be deleted',
+                        'type' => 'string',
+                        'required' => false,
+                        'example' => 'P1D',
+                    ],
                 ],
             ],
             normalizationContext: [
