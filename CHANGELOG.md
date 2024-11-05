@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.31
+
+- api-docs: document deleteIn parameter
+- store sync cursor in the respective typesense collections instead of the cache
+
 ## 0.2.30
 - blob: add `deleteIn` parameter to signed blob PATCH requests
 
