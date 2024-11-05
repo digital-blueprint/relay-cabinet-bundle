@@ -6,17 +6,14 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
-use Psr\Cache\CacheItemPoolInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
-use Symfony\Component\Cache\Adapter\ArrayAdapter;
 
 class TypesenseSync implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    private CacheItemPoolInterface $cachePool;
     private TypesenseClient $searchIndex;
     private PersonSyncInterface $personSync;
     private DocumentTransformer $transformer;
@@ -27,7 +24,6 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService)
     {
-        $this->cachePool = new ArrayAdapter();
         $this->searchIndex = $searchIndex;
         $this->personSync = $personSync;
         $this->logger = new NullLogger();
@@ -40,20 +36,11 @@ class TypesenseSync implements LoggerAwareInterface
         return $this->searchIndex->getConnectionBaseUrl();
     }
 
-    public function setCache(?CacheItemPoolInterface $cachePool)
-    {
-        $this->cachePool = $cachePool;
-    }
-
     private function getCursor(string $collectionName): ?string
     {
-        $item = $this->cachePool->getItem($collectionName.'.cursor');
-        $cursor = null;
-        if ($item->isHit()) {
-            $cursor = $item->get();
-        }
+        $metadata = $this->searchIndex->getCollectionMetadata($collectionName);
 
-        return $cursor;
+        return $metadata['cabinet:syncCursor'] ?? null;
     }
 
     /**
@@ -131,10 +118,11 @@ class TypesenseSync implements LoggerAwareInterface
 
     private function saveCursor(string $collectionName, ?string $cursor): void
     {
-        $item = $this->cachePool->getItem($collectionName.'.cursor');
-        $item->set($cursor);
-        $item->expiresAfter(3600 * 24);
-        $this->cachePool->save($item);
+        $metadata = $this->searchIndex->getCollectionMetadata($collectionName);
+        $metadata['cabinet:syncCursor'] = $cursor;
+        $now = (new \DateTimeImmutable(timezone: new \DateTimeZone('UTC')))->format(\DateTime::ATOM);
+        $metadata['cabinet:updatedAt'] = $now;
+        $this->searchIndex->setCollectionMetadata($collectionName, $metadata);
     }
 
     public function syncFull()
@@ -174,7 +162,7 @@ class TypesenseSync implements LoggerAwareInterface
         } else {
             $this->logger->info('Starting a partial sync');
 
-            $metadata = $this->searchIndex->getSchemaMetadata($collectionName);
+            $metadata = $this->searchIndex->getCollectionMetadata($collectionName);
             $outdated = $this->transformer->isSchemaOutdated($metadata);
             if ($outdated) {
                 $this->logger->info('Schema is outdated, falling back to a full sync');

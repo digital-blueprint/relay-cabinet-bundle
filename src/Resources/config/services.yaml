@@ -13,11 +13,6 @@ services:
     autowire: true
     autoconfigure: true
 
-  dbp.relay.cabinet.cache.sync:
-    parent: cache.app
-    tags:
-      - { name: 'cache.pool', default_lifetime: 60 }
-
   Dbp\Relay\CabinetBundle\Command\SyncCommand:
     autowire: true
     autoconfigure: true
@@ -62,8 +57,6 @@ services:
   Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseSync:
     autowire: true
     autoconfigure: true
-    calls:
-      - setCache: [ '@dbp.relay.cabinet.cache.sync' ]
 
   Dbp\Relay\CabinetBundle\TypesenseApi\:
     resource: '../../TypesenseApi'

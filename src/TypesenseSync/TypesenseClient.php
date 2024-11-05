@@ -67,11 +67,17 @@ class TypesenseClient implements LoggerAwareInterface
         return $collectionName;
     }
 
-    public function getSchemaMetadata(string $collectionName): array
+    public function getCollectionMetadata(string $collectionName): array
     {
         $schema = $this->getClient()->collections[$collectionName]->retrieve();
 
         return $schema['metadata'] ?? [];
+    }
+
+    public function setCollectionMetadata(string $collectionName, array $metadata): void
+    {
+        $collection = $this->getClient()->collections[$collectionName];
+        $collection->update(['metadata' => $metadata]);
     }
 
     public function getCollectionName(): string
