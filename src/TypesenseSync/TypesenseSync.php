@@ -88,8 +88,13 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function upsertFile(string $blobFileId): void
     {
-        $collectionName = $this->searchIndex->getCollectionName();
         $fileData = $this->blobService->getFile($blobFileId);
+        $this->upsertFileData($fileData);
+    }
+
+    public function upsertFileData(array $fileData): void
+    {
+        $collectionName = $this->searchIndex->getCollectionName();
         foreach ($this->fileDataToPartialDocuments($fileData) as $partialFileDocument) {
             $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
             $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);

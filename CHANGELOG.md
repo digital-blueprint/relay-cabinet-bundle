@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.32
+
+- Expose some functions for adding dummy documents for performance testing more easily
+
 ## 0.2.31
 
 - api-docs: document deleteIn parameter
