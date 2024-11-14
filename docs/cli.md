@@ -10,7 +10,7 @@ For development purposes, the following CLI commands are available:
 ./console dbp:relay:cabinet:sync --full --ask
 
 # Generate files for the typesense documents
-./console tugraz:relay:tugraz:cabinet:add-file-fixtures --number 50
+./console dbp:relay:cabinet:add-fake-files --count 50
 ```
 
 ## MiddlewareAPI specific

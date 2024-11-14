@@ -74,3 +74,12 @@ services:
 
   Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface:
       '@Dbp\Relay\CabinetBundle\PersonSync\DummyPersonSync'
+
+  Dbp\Relay\CabinetBundle\FakeData\:
+    resource: '../../FakeData'
+    autowire: true
+    autoconfigure: true
+
+  Dbp\Relay\CabinetBundle\FakeData\FakeFileEvent:
+    autowire: true
+    autoconfigure: true
