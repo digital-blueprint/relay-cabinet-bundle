@@ -49,6 +49,20 @@ class TypesenseSync implements LoggerAwareInterface
     public function upsertAllFiles(string $collectionName): void
     {
         $this->logger->info('Syncing all blob files');
+        $fileDataIterable = $this->blobService->getAllFiles();
+        $this->upsertMultipleFileData($collectionName, $fileDataIterable);
+    }
+
+    public function upsertFile(string $blobFileId): void
+    {
+        $fileData = $this->blobService->getFile($blobFileId);
+        $collectionName = $this->searchIndex->getCollectionName();
+        $this->upsertFileData($collectionName, $fileData);
+    }
+
+    public function upsertMultipleFileData(string $collectionName, iterable $fileDataList): void
+    {
+        $this->logger->info('Syncing all blob files');
 
         $this->logger->info('Fetch mapping for base data');
         // First we get a mapping of the base ID to the base content for all Persons in typesense
@@ -62,7 +76,7 @@ class TypesenseSync implements LoggerAwareInterface
         $newDocuments = [];
         $notFound = [];
         $documentCount = 0;
-        foreach ($this->blobService->getAllFiles() as $fileData) {
+        foreach ($fileDataList as $fileData) {
             foreach ($this->fileDataToPartialDocuments($fileData) as $transformed) {
                 $id = $transformed['person']['identNrObfuscated'];
                 // XXX: If the related person isn't in typesense, we just ignore the file
@@ -86,15 +100,8 @@ class TypesenseSync implements LoggerAwareInterface
         $this->logger->info('Upserted '.$documentCount.' file documents into typesense');
     }
 
-    public function upsertFile(string $blobFileId): void
+    public function upsertFileData(string $collectionName, array $fileData): void
     {
-        $fileData = $this->blobService->getFile($blobFileId);
-        $this->upsertFileData($fileData);
-    }
-
-    public function upsertFileData(array $fileData): void
-    {
-        $collectionName = $this->searchIndex->getCollectionName();
         foreach ($this->fileDataToPartialDocuments($fileData) as $partialFileDocument) {
             $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
             $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);

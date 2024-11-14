@@ -81,6 +81,7 @@ class AddFakeFilesCommand extends Command
 
         $typesenseOnly = (bool) $input->getOption('no-blob');
         if ($typesenseOnly) {
+            $entries = [];
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
                 $event = $this->eventDispatcher->dispatch($event);
@@ -99,8 +100,10 @@ class AddFakeFilesCommand extends Command
                     'deleteAt' => null,
                     'metadata' => $event->getMetadata(),
                 ];
-                $this->typesenseSync->upsertFileData($fileData);
+                $entries[] = $fileData;
             }
+            $collectionName = $this->searchIndex->getCollectionName();
+            $this->typesenseSync->upsertMultipleFileData($collectionName, $entries);
         } else {
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
