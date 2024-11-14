@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.33
+
+- Add "dbp:relay:cabinet:add-fake-files" command to add dummy files to the blob bucket
+
 ## 0.2.32
 
 - Expose some functions for adding dummy documents for performance testing more easily
