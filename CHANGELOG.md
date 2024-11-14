@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.34
+
+- Speed up "dbp:relay:cabinet:add-fake-files" if "--no-blob" is passed with many files
+
 ## 0.2.33
 
 - Add "dbp:relay:cabinet:add-fake-files" command to add dummy files to the blob bucket
