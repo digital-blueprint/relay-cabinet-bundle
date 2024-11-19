@@ -105,19 +105,30 @@ class TypesenseClient implements LoggerAwareInterface
         }
     }
 
-    public function getBaseMapping(string $collectionName, string $type, string $key, string $include)
+    public function getBaseMapping(string $collectionName, string $type, string $groupBy, string $include)
     {
-        if (preg_match('/\s/', $include) || preg_match('/\s/', $type) || preg_match('/\s/', $key)) {
+        if (preg_match('/\s/', $include) || preg_match('/\s/', $type) || preg_match('/\s/', $groupBy)) {
             throw new \RuntimeException('no whitespace supported');
         }
         $filterBy = '@type := '.$type;
         $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy, 'include_fields' => $include]);
         $lines = explode("\n", $lines);
+
+        $getByPath = function ($array, $path) {
+            $keys = explode('.', $path);
+            $current = $array;
+            foreach ($keys as $key) {
+                $current = $current[$key];
+            }
+
+            return $current;
+        };
+
         $mapping = [];
         foreach ($lines as $line) {
             $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
-            $id = $decoded[$include][$key];
-            $mapping[$id] = $decoded[$include];
+            $id = $getByPath($decoded, $groupBy);
+            $mapping[$id] = $getByPath($decoded, $include);
         }
 
         return $mapping;

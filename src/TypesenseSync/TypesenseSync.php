@@ -66,7 +66,7 @@ class TypesenseSync implements LoggerAwareInterface
 
         $this->logger->info('Fetch mapping for base data');
         // First we get a mapping of the base ID to the base content for all Persons in typesense
-        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'identNrObfuscated', 'person');
+        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'person.identNrObfuscated', 'person');
         $this->logger->debug('Base entries found: '.count($baseMapping));
 
         // Then we fetch all files from the blob bucket, transform it to the typsensese schema, and enrich it
