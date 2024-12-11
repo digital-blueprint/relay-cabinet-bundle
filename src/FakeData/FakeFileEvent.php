@@ -12,13 +12,13 @@ use Symfony\Contracts\EventDispatcher\Event;
  */
 class FakeFileEvent extends Event
 {
-    private ?string $metadata;
+    private ?string $metadata = null;
 
-    private ?string $filePath;
+    private ?string $filePath = null;
 
-    private ?string $blobType;
+    private ?string $blobType = null;
 
-    private ?string $fileName;
+    private ?string $fileName = null;
 
     public function __construct(private readonly int $number, private readonly int $totalNumber, private string $personId)
     {
@@ -39,7 +39,7 @@ class FakeFileEvent extends Event
         return $this->personId;
     }
 
-    public function getFilePath(): string
+    public function getFilePath(): ?string
     {
         return $this->filePath;
     }
@@ -49,7 +49,7 @@ class FakeFileEvent extends Event
         $this->filePath = $filePath;
     }
 
-    public function getBlobType(): string
+    public function getBlobType(): ?string
     {
         return $this->blobType;
     }
@@ -59,7 +59,7 @@ class FakeFileEvent extends Event
         $this->blobType = $blobType;
     }
 
-    public function getMetadata(): string
+    public function getMetadata(): ?string
     {
         return $this->metadata;
     }
@@ -69,7 +69,7 @@ class FakeFileEvent extends Event
         $this->metadata = $metadata;
     }
 
-    public function getFileName(): string
+    public function getFileName(): ?string
     {
         return $this->fileName;
     }

@@ -16,7 +16,7 @@ class ApiTest extends ApiTestCase
 
     public function test()
     {
-        $this->assertTrue(true);
+        $this->expectNotToPerformAssertions();
     }
 
     //    public function testGetGroupAuthenticated()

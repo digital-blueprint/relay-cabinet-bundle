@@ -6,7 +6,6 @@ namespace Dbp\Relay\CabinetBundle\Service;
 
 use Dbp\Relay\BasePersonBundle\API\PersonProviderInterface;
 use Dbp\Relay\BasePersonBundle\Entity\Person;
-use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Doctrine\ORM\EntityManagerInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -14,7 +13,6 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LogLevel;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Messenger\MessageBusInterface;
 
 class CabinetService implements LoggerAwareInterface
 {
@@ -30,27 +28,13 @@ class CabinetService implements LoggerAwareInterface
      */
     private $em;
 
-    /**
-     * @var MessageBusInterface
-     */
-    private $bus;
-
-    /**
-     * @var BlobService
-     */
-    private $blobService;
-
     public function __construct(
         PersonProviderInterface $personProvider,
-        EntityManagerInterface $em,
-        MessageBusInterface $bus,
-        BlobService $blobService
+        EntityManagerInterface $em
     ) {
         $this->personProvider = $personProvider;
         $this->em = $em;
-        $this->bus = $bus;
         $this->logger = new NullLogger();
-        $this->blobService = $blobService;
     }
 
     public function setConfig(array $config)

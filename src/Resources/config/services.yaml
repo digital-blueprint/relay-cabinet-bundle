@@ -21,10 +21,6 @@ services:
     autowire: true
     autoconfigure: true
 
-  Dbp\Relay\CabinetBundle\Command\DebugCommand:
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\Command\UploadFileCommand:
     autowire: true
     autoconfigure: true
