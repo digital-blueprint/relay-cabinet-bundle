@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.35
+
+* Test with PHP 8.4
+* Port to phpstan v2
+
 ## 0.2.34
 
 - Speed up "dbp:relay:cabinet:add-fake-files" if "--no-blob" is passed with many files
