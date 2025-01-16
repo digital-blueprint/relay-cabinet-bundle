@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.36
+
+* Add new DocumentFinalizeEvent which is dispatched right before the typesense document
+  is sent to typesense, allowing users to modify the document one last time.
+
 ## 0.2.35
 
 * Test with PHP 8.4
