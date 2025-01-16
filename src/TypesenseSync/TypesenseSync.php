@@ -43,6 +43,15 @@ class TypesenseSync implements LoggerAwareInterface
         return $metadata['cabinet:syncCursor'] ?? null;
     }
 
+    public function addDocumentsToCollection(string $collectionName, array $documents): void
+    {
+        foreach ($documents as &$document) {
+            $document = $this->transformer->finalizeDocument($document);
+        }
+
+        $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+    }
+
     /**
      * Sync all files from blob into typesense. Needs to be called after all persons have already been synced.
      */
@@ -91,12 +100,12 @@ class TypesenseSync implements LoggerAwareInterface
                 $newDocuments[] = $transformed;
                 ++$documentCount;
                 if (count($newDocuments) > self::CHUNK_SIZE) {
-                    $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
+                    $this->addDocumentsToCollection($collectionName, $newDocuments);
                     $newDocuments = [];
                 }
             }
         }
-        $this->searchIndex->addDocumentsToCollection($collectionName, $newDocuments);
+        $this->addDocumentsToCollection($collectionName, $newDocuments);
         $this->logger->info('Upserted '.$documentCount.' file documents into typesense');
     }
 
@@ -114,7 +123,7 @@ class TypesenseSync implements LoggerAwareInterface
 
                 return;
             }
-            $this->searchIndex->addDocumentsToCollection($collectionName, [$partialFileDocument]);
+            $this->addDocumentsToCollection($collectionName, [$partialFileDocument]);
         }
     }
 
@@ -152,7 +161,7 @@ class TypesenseSync implements LoggerAwareInterface
                     $documents[] = $document;
                 }
             }
-            $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+            $this->addDocumentsToCollection($collectionName, $documents);
         }
 
         $this->upsertAllFiles($collectionName);
@@ -191,11 +200,11 @@ class TypesenseSync implements LoggerAwareInterface
                         $documents[] = $document;
                     }
                 }
-                $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+                $this->addDocumentsToCollection($collectionName, $documents);
 
                 // Also update the base data of all related DocumentFiles
                 $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
-                $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
+                $this->addDocumentsToCollection($collectionName, $relatedDocs);
             }
 
             $this->saveCursor($collectionName, $res->getCursor());
@@ -230,11 +239,11 @@ class TypesenseSync implements LoggerAwareInterface
                 $documents[] = $document;
             }
         }
-        $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+        $this->addDocumentsToCollection($collectionName, $documents);
 
         // Also update the base data of all related DocumentFiles
         $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
-        $this->searchIndex->addDocumentsToCollection($collectionName, $relatedDocs);
+        $this->addDocumentsToCollection($collectionName, $relatedDocs);
 
         $this->saveCursor($collectionName, $res->getCursor());
     }

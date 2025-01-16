@@ -63,4 +63,17 @@ class DocumentTransformer
 
         return $event->getTransformedDocuments() ?? [$document];
     }
+
+    /**
+     * Called with the complete/updated/merged document right before sending it to typesense.
+     *
+     * Allows users to modify/update fields one last time.
+     */
+    public function finalizeDocument(array $document): array
+    {
+        $event = new DocumentFinalizeEvent($document);
+        $event = $this->eventDispatcher->dispatch($event);
+
+        return $event->getDocument();
+    }
 }
