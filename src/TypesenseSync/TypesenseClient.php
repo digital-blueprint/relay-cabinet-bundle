@@ -5,7 +5,7 @@ declare(strict_types=1);
 namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
-use Http\Client\Exception;
+use Psr\Http\Client\ClientExceptionInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
@@ -190,7 +190,7 @@ class TypesenseClient implements LoggerAwareInterface
     {
         try {
             $this->getClient()->aliases[$aliasName]->retrieve();
-        } catch (Exception|TypesenseClientErrorAlias) {
+        } catch (ClientExceptionInterface|TypesenseClientErrorAlias) {
             return false;
         }
 
