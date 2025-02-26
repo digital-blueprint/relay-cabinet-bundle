@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.37
+
+* Add suppor for typesense/typesense-php v5
+* Drop support for Psalm
+
 ## 0.2.36
 
 * Add new DocumentFinalizeEvent which is dispatched right before the typesense document
