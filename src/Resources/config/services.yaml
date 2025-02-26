@@ -54,8 +54,8 @@ services:
     autowire: true
     autoconfigure: true
 
-  Dbp\Relay\CabinetBundle\TypesenseApi\:
-    resource: '../../TypesenseApi'
+  Dbp\Relay\CabinetBundle\TypesenseProxy\:
+    resource: '../../TypesenseProxy'
     autowire: true
     autoconfigure: true
 

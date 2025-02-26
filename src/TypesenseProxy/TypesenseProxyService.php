@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dbp\Relay\CabinetBundle\TypesenseApi;
+namespace Dbp\Relay\CabinetBundle\TypesenseProxy;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
@@ -18,7 +18,7 @@ use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
-class TypesenseService implements LoggerAwareInterface
+class TypesenseProxyService implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 

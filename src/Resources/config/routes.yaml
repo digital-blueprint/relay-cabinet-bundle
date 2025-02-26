@@ -1,5 +1,5 @@
-typesense_api:
-  resource: ../../TypesenseApi/
+typesense_proxy:
+  resource: ../../TypesenseProxy/
   type: annotation
 
 blob_api:

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Dbp\Relay\CabinetBundle\TypesenseApi;
+namespace Dbp\Relay\CabinetBundle\TypesenseProxy;
 
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -13,7 +13,7 @@ class TypesenseProxyController extends AbstractController
 {
     private $typesenseService;
 
-    public function __construct(TypesenseService $typesenseService)
+    public function __construct(TypesenseProxyService $typesenseService)
     {
         $this->typesenseService = $typesenseService;
     }
