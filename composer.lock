@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "ad8c005515db825b585c513b837ccb80",
+    "content-hash": "a0bd812d50b9333d736dba006388f138",
     "packages": [
         {
             "name": "api-platform/core",
@@ -229,16 +229,16 @@
         },
         {
             "name": "brick/math",
-            "version": "0.12.1",
+            "version": "0.12.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/brick/math.git",
-                "reference": "f510c0a40911935b77b86859eb5223d58d660df1"
+                "reference": "901eddb1e45a8e0f689302e40af871c181ecbe40"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/brick/math/zipball/f510c0a40911935b77b86859eb5223d58d660df1",
-                "reference": "f510c0a40911935b77b86859eb5223d58d660df1",
+                "url": "https://api.github.com/repos/brick/math/zipball/901eddb1e45a8e0f689302e40af871c181ecbe40",
+                "reference": "901eddb1e45a8e0f689302e40af871c181ecbe40",
                 "shasum": ""
             },
             "require": {
@@ -247,7 +247,7 @@
             "require-dev": {
                 "php-coveralls/php-coveralls": "^2.2",
                 "phpunit/phpunit": "^10.1",
-                "vimeo/psalm": "5.16.0"
+                "vimeo/psalm": "6.8.8"
             },
             "type": "library",
             "autoload": {
@@ -277,7 +277,7 @@
             ],
             "support": {
                 "issues": "https://github.com/brick/math/issues",
-                "source": "https://github.com/brick/math/tree/0.12.1"
+                "source": "https://github.com/brick/math/tree/0.12.2"
             },
             "funding": [
                 {
@@ -285,7 +285,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-11-29T23:19:16+00:00"
+            "time": "2025-02-26T10:21:45+00:00"
         },
         {
             "name": "clue/stream-filter",
@@ -9169,16 +9169,16 @@
         },
         {
             "name": "typesense/typesense-php",
-            "version": "v4.9.3",
+            "version": "v5.0.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/typesense/typesense-php.git",
-                "reference": "50fc2089ff4829c8e0e11d8c674e9da085b49998"
+                "reference": "513270e6a124101c25b03ee27598efd6b87fbec0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/typesense/typesense-php/zipball/50fc2089ff4829c8e0e11d8c674e9da085b49998",
-                "reference": "50fc2089ff4829c8e0e11d8c674e9da085b49998",
+                "url": "https://api.github.com/repos/typesense/typesense-php/zipball/513270e6a124101c25b03ee27598efd6b87fbec0",
+                "reference": "513270e6a124101c25b03ee27598efd6b87fbec0",
                 "shasum": ""
             },
             "require": {
@@ -9194,6 +9194,8 @@
                 "psr/http-message": "^1.0 || ^2.0"
             },
             "require-dev": {
+                "mockery/mockery": "^1.6",
+                "phpunit/phpunit": "^11.2",
                 "squizlabs/php_codesniffer": "3.*",
                 "symfony/http-client": "^5.2"
             },
@@ -9234,7 +9236,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-04-29T15:34:34+00:00"
+            "time": "2025-02-24T21:13:28+00:00"
         },
         {
             "name": "web-token/jwt-library",
@@ -13391,7 +13393,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": [],
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -13402,7 +13404,7 @@
         "ext-simplexml": "*",
         "ext-soap": "*"
     },
-    "platform-dev": {},
+    "platform-dev": [],
     "platform-overrides": {
         "php": "8.1"
     },
