@@ -11,6 +11,7 @@ use Psr\Log\LoggerAwareTrait;
 use Psr\Log\LoggerInterface;
 use Psr\Log\NullLogger;
 use Symfony\Component\Uid\Ulid;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Typesense\Client;
 use Typesense\Exceptions\TypesenseClientError as TypesenseClientErrorAlias;
 
@@ -28,6 +29,11 @@ class TypesenseClient implements LoggerAwareInterface
         $this->config = $config;
         $this->connection = new TypesenseConnection($config->getTypesenseApiUrl(), $config->getTypesenseApiKey());
         $this->logger = new NullLogger();
+    }
+
+    public function setHttpClient(HttpClientInterface $client): void
+    {
+        $this->connection->setHttpClient($client);
     }
 
     private function getClient(): Client

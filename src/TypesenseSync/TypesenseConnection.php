@@ -12,6 +12,7 @@ use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpClient\HttplugClient;
 use Symfony\Component\HttpClient\RetryableHttpClient;
 use Symfony\Component\HttpClient\TraceableHttpClient;
+use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Typesense\Client;
 
 class TypesenseConnection implements LoggerAwareInterface
@@ -33,17 +34,24 @@ class TypesenseConnection implements LoggerAwareInterface
 
     private string $baseUrl;
     private string $apikey;
+    private HttpClientInterface $client;
 
     public function __construct(string $baseUrl, string $apikey)
     {
         $this->baseUrl = $baseUrl;
         $this->apikey = $apikey;
         $this->logger = new NullLogger();
+        $this->client = HttpClient::create();
     }
 
     public function getBaseUrl(): string
     {
         return $this->baseUrl;
+    }
+
+    public function setHttpClient(HttpClientInterface $client): void
+    {
+        $this->client = $client;
     }
 
     public function getClient(int $numRetries = self::TYPESENSE_CLIENT_RETRY_COUNT): Client
@@ -63,7 +71,7 @@ class TypesenseConnection implements LoggerAwareInterface
         ];
 
         // We disabled the typesense internal retry logic and just use the symfony one instead
-        $symfonyClient = new TraceableHttpClient(HttpClient::create());
+        $symfonyClient = new TraceableHttpClient($this->client);
         $symfonyClient->setLogger($this->logger);
         $symfonyClient = new RetryableHttpClient(
             $symfonyClient, null, $numRetries,
