@@ -541,16 +541,16 @@
         },
         {
             "name": "dbp/relay-core-bundle",
-            "version": "v0.1.199",
+            "version": "v0.1.201",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-core-bundle.git",
-                "reference": "d315d229157f9bd9b45427c78079cc7130fcf1dd"
+                "reference": "58e2fcd4be2bd98dfbaf13fb16706f0e8e792496"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-core-bundle/zipball/d315d229157f9bd9b45427c78079cc7130fcf1dd",
-                "reference": "d315d229157f9bd9b45427c78079cc7130fcf1dd",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-core-bundle/zipball/58e2fcd4be2bd98dfbaf13fb16706f0e8e792496",
+                "reference": "58e2fcd4be2bd98dfbaf13fb16706f0e8e792496",
                 "shasum": ""
             },
             "require": {
@@ -636,9 +636,9 @@
             "description": "The core bundle of the Relay API gateway",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-core-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-core-bundle/tree/v0.1.199"
+                "source": "https://github.com/digital-blueprint/relay-core-bundle/tree/v0.1.201"
             },
-            "time": "2025-02-06T09:08:13+00:00"
+            "time": "2025-02-27T11:59:07+00:00"
         },
         {
             "name": "doctrine/cache",
@@ -12646,7 +12646,7 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {},
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
@@ -12657,7 +12657,7 @@
         "ext-simplexml": "*",
         "ext-soap": "*"
     },
-    "platform-dev": [],
+    "platform-dev": {},
     "platform-overrides": {
         "php": "8.1"
     },
