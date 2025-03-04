@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.38
+
+* (breaking) bundle config: Move from authorization.policies to authorization.roles
+* Drop support for api-platform 3.2 and 3.3
+
 ## 0.2.37
 
 * Add suppor for typesense/typesense-php v5
