@@ -14,7 +14,7 @@ class AuthorizationService extends AbstractAuthorizationService
      */
     public function checkCanUse(): void
     {
-        $this->denyAccessUnlessIsGranted(Configuration::ROLE_USER);
+        $this->denyAccessUnlessIsGrantedRole(Configuration::ROLE_USER);
     }
 
     /**
@@ -22,7 +22,7 @@ class AuthorizationService extends AbstractAuthorizationService
      */
     public function getCanUse(): bool
     {
-        return $this->isGranted(Configuration::ROLE_USER);
+        return $this->isGrantedRole(Configuration::ROLE_USER);
     }
 
     public function validateConfiguration()

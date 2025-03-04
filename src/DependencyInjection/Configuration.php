@@ -17,7 +17,7 @@ class Configuration implements ConfigurationInterface
     private function getAuthNode(): NodeDefinition
     {
         return AuthorizationConfigDefinition::create()
-        ->addPolicy(self::ROLE_USER, 'false', 'Returns true if the user is allowed to use the cabinet API.')
+        ->addRole(self::ROLE_USER, 'false', 'Returns true if the user is allowed to use the cabinet API.')
         ->getNodeDefinition();
     }
 

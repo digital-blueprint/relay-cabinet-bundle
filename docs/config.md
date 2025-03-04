@@ -31,10 +31,9 @@ dbp_relay_cabinet:
         # API key for the Typesense server
         api_key:              ~ # Required
     authorization:
-        policies:
+        roles:
             # Returns true if the user is allowed to use the cabinet API.
             ROLE_USER:            'false'
-        roles:                []
         resource_permissions: []
         attributes:           []
 ```
