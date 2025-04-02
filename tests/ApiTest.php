@@ -11,8 +11,10 @@ class ApiTest extends ApiTestCase
 {
     use UserAuthTrait;
 
-    public function test()
+    public function testKernel()
     {
-        $this->expectNotToPerformAssertions();
+        self::bootKernel();
+        $container = static::getContainer();
+        $this->assertNotNull($container);
     }
 }

@@ -6,6 +6,8 @@ namespace Dbp\Relay\CabinetBundle\Tests;
 
 use ApiPlatform\Symfony\Bundle\ApiPlatformBundle;
 use Dbp\Relay\BasePersonBundle\DbpRelayBasePersonBundle;
+use Dbp\Relay\BlobBundle\DbpRelayBlobBundle;
+use Dbp\Relay\BlobBundle\TestUtils\BlobTestUtils;
 use Dbp\Relay\CabinetBundle\DbpRelayCabinetBundle;
 use Dbp\Relay\CoreBundle\DbpRelayCoreBundle;
 use Doctrine\Bundle\DoctrineBundle\DoctrineBundle;
@@ -37,6 +39,7 @@ class Kernel extends BaseKernel
         yield new ApiPlatformBundle();
         yield new DbpRelayBasePersonBundle();
         yield new DbpRelayCabinetBundle();
+        yield new DbpRelayBlobBundle();
         yield new DbpRelayCoreBundle();
     }
 
@@ -57,5 +60,7 @@ class Kernel extends BaseKernel
         $container->extension('dbp_relay_cabinet', [
             'database_url' => 'mysql://dummy:dummy@dummy',
         ]);
+
+        $container->extension('dbp_relay_blob', BlobTestUtils::getTestConfig());
     }
 }
