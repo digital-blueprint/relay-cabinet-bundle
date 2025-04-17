@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.39
+
+* Drop support for PHP 8.1
+* Add support for api-platform 4.1
+
 ## 0.2.38
 
 * (breaking) bundle config: Move from authorization.policies to authorization.roles
