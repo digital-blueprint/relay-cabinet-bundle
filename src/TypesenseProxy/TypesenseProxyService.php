@@ -63,7 +63,7 @@ class TypesenseProxyService implements LoggerAwareInterface
         // the api key by always overriding it here.
         $queryParams['x-typesense-api-key'] = $this->config->getTypesenseProxyApiKey();
 
-        // Forward the request to Typesense server and return the response
+        // Forward the request to the Typesense server and return the response
         try {
             $response = $this->client->request($method, $url, [
                 'headers' => [
