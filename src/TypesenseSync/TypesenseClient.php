@@ -205,49 +205,105 @@ class TypesenseClient implements LoggerAwareInterface
             $this->logger->info('No alias found, creating empty collection and alias');
             $this->purgeAll();
         }
-        $this->updateProxyApiKey();
+        $this->updateProxyApiKeys();
+    }
+
+    public function clearSearchCache(): void
+    {
+        $this->logger->info('Clearing search cache');
+        $client = $this->getClient();
+        $client->operations->perform('cache/clear');
     }
 
     /**
-     * Ensures the proxy API key for the alias is registered and deletes outdated keys.
+     * Ensures the proxy API keys for the alias are registered and deletes outdated keys.
      */
-    private function updateProxyApiKey(): void
+    private function updateProxyApiKeys(): void
     {
         $aliasName = $this->getAliasName();
-        $schema = [
-            'description' => 'cabinet read only proxy key',
-            'actions' => [
-                // allow all read-only operations
-                'documents:search',
-                'documents:get',
-                'documents:export',
+        $schemas = [
+            [
+                'description' => $this->config->getTypesenseProxyApiKey(),
+                'actions' => [
+                    'documents:get',
+                    'documents:export',
+                    'documents:search',
+                ],
+                'collections' => [$aliasName],
+                'value' => $this->config->getTypesenseProxyApiKey(),
             ],
-            'collections' => [$aliasName],
-            'value' => $this->config->getTypesenseProxyApiKey(),
+            [
+                'description' => $this->config->getTypesenseProxyApiSearchKey(),
+                'actions' => [
+                    'documents:search',
+                ],
+                'collections' => [$aliasName],
+                'value' => $this->config->getTypesenseProxyApiSearchKey(),
+            ],
         ];
 
-        $this->logger->info('Re-creating read-only key if needed');
+        $keyNeedsUpdate = function (array $key, array $schema): bool {
+            if ($key['description'] !== $schema['description']
+                || $key['collections'] !== $schema['collections']
+                || $key['actions'] !== $schema['actions']
+                || !str_starts_with($schema['value'], $key['value_prefix'])) {
+                return true;
+            }
+
+            return false;
+        };
+
+        $this->logger->info('Re-creating keys if needed');
         $client = $this->getClient();
         $keys = $client->keys->retrieve();
-        $foundId = null;
+
+        // All keys that are for our alias
+        $aliasKeys = [];
         foreach ($keys['keys'] as $key) {
             if (in_array($aliasName, $key['collections'], true)) {
-                if ($key['description'] === $schema['description']
-                    && $key['actions'] === $schema['actions']
-                    && $key['collections'] === $schema['collections']
-                    && str_starts_with($schema['value'], $key['value_prefix'])) {
-                    $this->logger->info('Found existing matching key '.$key['id']);
-                    $foundId = $key['id'];
-                    break;
-                } else {
-                    $this->logger->info('Deleting outdated key '.$key['id']);
-                    $client->keys[$key['id']]->delete();
-                }
+                $aliasKeys[] = $key;
             }
         }
 
-        if ($foundId === null) {
-            $this->logger->info('No existing key found, creating a new one');
+        // See which keys are outdated
+        $toDelete = [];
+        $toAdd = [];
+        foreach ($aliasKeys as $aliasKey) {
+            $found = false;
+            foreach ($schemas as $schema) {
+                if ($schema['description'] === $aliasKey['description']) {
+                    $found = true;
+                    break;
+                }
+            }
+            if (!$found) {
+                $toDelete[] = $aliasKey;
+            }
+        }
+
+        foreach ($schemas as $schema) {
+            $found = false;
+            foreach ($aliasKeys as $aliasKey) {
+                if ($schema['description'] === $aliasKey['description']) {
+                    if ($keyNeedsUpdate($aliasKey, $schema)) {
+                        $toDelete[] = $aliasKey;
+                        $toAdd[] = $schema;
+                    }
+                    $found = true;
+                }
+            }
+            if (!$found) {
+                $toAdd[] = $schema;
+            }
+        }
+
+        // Delete and add keys if needed
+        foreach ($toDelete as $aliasKey) {
+            $this->logger->info('Deleting outdated key: id='.$aliasKey['id']);
+            $client->keys[$aliasKey['id']]->delete();
+        }
+        foreach ($toAdd as $schema) {
+            $this->logger->info('Creating a new key: description='.$schema['description']);
             $key = $client->keys->create($schema);
             $this->logger->info('Created new key '.$key['id']);
         }

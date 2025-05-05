@@ -43,7 +43,7 @@ class TypesenseSync implements LoggerAwareInterface
         return $metadata['cabinet:syncCursor'] ?? null;
     }
 
-    public function addDocumentsToCollection(string $collectionName, array $documents): void
+    private function addDocumentsToCollection(string $collectionName, array $documents): void
     {
         foreach ($documents as &$document) {
             $document = $this->transformer->finalizeDocument($document);
@@ -60,6 +60,7 @@ class TypesenseSync implements LoggerAwareInterface
         $this->logger->info('Syncing all blob files');
         $fileDataIterable = $this->blobService->getAllFiles();
         $this->upsertMultipleFileData($collectionName, $fileDataIterable);
+        $this->searchIndex->clearSearchCache();
     }
 
     public function upsertFile(string $blobFileId): void
@@ -67,6 +68,7 @@ class TypesenseSync implements LoggerAwareInterface
         $fileData = $this->blobService->getFile($blobFileId);
         $collectionName = $this->searchIndex->getCollectionName();
         $this->upsertFileData($collectionName, $fileData);
+        $this->searchIndex->clearSearchCache();
     }
 
     public function upsertMultipleFileData(string $collectionName, iterable $fileDataList): void
@@ -107,6 +109,7 @@ class TypesenseSync implements LoggerAwareInterface
         }
         $this->addDocumentsToCollection($collectionName, $newDocuments);
         $this->logger->info('Upserted '.$documentCount.' file documents into typesense');
+        $this->searchIndex->clearSearchCache();
     }
 
     public function upsertFileData(string $collectionName, array $fileData): void
@@ -125,6 +128,7 @@ class TypesenseSync implements LoggerAwareInterface
             }
             $this->addDocumentsToCollection($collectionName, [$partialFileDocument]);
         }
+        $this->searchIndex->clearSearchCache();
     }
 
     public function deleteFile(string $blobFileId): void
@@ -135,6 +139,7 @@ class TypesenseSync implements LoggerAwareInterface
             $typesenseId = $result['id'];
             $this->searchIndex->deleteDocument($collectionName, $typesenseId);
         }
+        $this->searchIndex->clearSearchCache();
     }
 
     private function saveCursor(string $collectionName, ?string $cursor): void
@@ -170,6 +175,7 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->deleteOldCollections();
 
         $this->saveCursor($collectionName, $res->getCursor());
+        $this->searchIndex->clearSearchCache();
     }
 
     public function sync(bool $full = false)
@@ -208,6 +214,7 @@ class TypesenseSync implements LoggerAwareInterface
             }
 
             $this->saveCursor($collectionName, $res->getCursor());
+            $this->searchIndex->clearSearchCache();
         }
     }
 
@@ -246,6 +253,7 @@ class TypesenseSync implements LoggerAwareInterface
         $this->addDocumentsToCollection($collectionName, $relatedDocs);
 
         $this->saveCursor($collectionName, $res->getCursor());
+        $this->searchIndex->clearSearchCache();
     }
 
     public function personToDocuments(array $person): array

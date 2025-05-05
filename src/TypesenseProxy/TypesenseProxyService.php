@@ -6,6 +6,7 @@ namespace Dbp\Relay\CabinetBundle\TypesenseProxy;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
+use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseConnection;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
@@ -17,6 +18,7 @@ use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
+use Typesense\Client;
 
 class TypesenseProxyService implements LoggerAwareInterface
 {
@@ -56,18 +58,28 @@ class TypesenseProxyService implements LoggerAwareInterface
             throw new HttpException(Response::HTTP_FORBIDDEN, 'access denied');
         }
 
+        // Scoped keys only work for search endpoints, and only with keys that only allow searching, so we use a scoped
+        // key for searches, and another key for everything else.
+        if ($path === 'multi_search' || $path === 'search') {
+            $connection = new TypesenseConnection($this->config->getTypesenseApiUrl(), $this->config->getTypesenseApiKey());
+            $proxyKey = $connection->getClient()->keys->generateScopedSearchKey(
+                $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => 3600]);
+        } else {
+            $proxyKey = $this->config->getTypesenseProxyApiKey();
+        }
+
         $url = $this->config->getTypesenseApiUrl().'/'.$path;
         $method = $request->getMethod();
         $queryParams = $request->query->all();
         // The header key wins over this in my testing, but just to be safe don't allow users to set
         // the api key by always overriding it here.
-        $queryParams['x-typesense-api-key'] = $this->config->getTypesenseProxyApiKey();
+        $queryParams['x-typesense-api-key'] = $proxyKey;
 
         // Forward the request to the Typesense server and return the response
         try {
             $response = $this->client->request($method, $url, [
                 'headers' => [
-                    'X-TYPESENSE-API-KEY' => $this->config->getTypesenseProxyApiKey(),
+                    'X-TYPESENSE-API-KEY' => $proxyKey,
                 ],
                 'body' => $request->getContent(),
                 'query' => $queryParams,

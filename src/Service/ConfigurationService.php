@@ -32,6 +32,11 @@ class ConfigurationService
         return 'cabinet:proxy-key';
     }
 
+    public function getTypesenseProxyApiSearchKey(): string
+    {
+        return 'cabinet:proxy-search-key';
+    }
+
     public function getBlobApiUrl(): string
     {
         return $this->config['blob']['api_url'];
