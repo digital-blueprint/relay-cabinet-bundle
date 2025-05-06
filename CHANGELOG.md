@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.2.40
+
+* Implement up to one hour server side caching for typesense queries
+* Add `/sync-person-actions` endpoint for triggering a person sync
+
 ## 0.2.39
 
 * Drop support for PHP 8.1
