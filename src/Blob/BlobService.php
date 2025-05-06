@@ -174,12 +174,6 @@ class BlobService implements LoggerAwareInterface
 
     public function getSignatureForGivenPostRequest(Request $request): Response
     {
-        if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
-        }
-
-        // Do basic authorization checks for the provided bearer token
-        // TODO: Check permissions
         $this->auth->checkCanUse();
 
         $config = $this->config;
@@ -216,12 +210,6 @@ class BlobService implements LoggerAwareInterface
 
     public function getSignatureForGivenGetRequest(Request $request): Response
     {
-        if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
-        }
-
-        // Do basic authorization checks for the provided bearer token
-        // TODO: Check permissions
         $this->auth->checkCanUse();
 
         $config = $this->config;
@@ -270,12 +258,6 @@ class BlobService implements LoggerAwareInterface
 
     public function getSignatureForGivenDownloadRequest(Request $request): Response
     {
-        if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
-        }
-
-        // Do basic authorization checks for the provided bearer token
-        // TODO: Check permissions
         $this->auth->checkCanUse();
 
         $config = $this->config;
@@ -309,12 +291,6 @@ class BlobService implements LoggerAwareInterface
 
     public function getSignatureForGivenDeleteRequest(Request $request): Response
     {
-        if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
-        }
-
-        // Do basic authorization checks for the provided bearer token
-        // TODO: Check permissions
         $this->auth->checkCanUse();
 
         $config = $this->config;
@@ -347,12 +323,6 @@ class BlobService implements LoggerAwareInterface
 
     public function getSignatureForGivenPatchRequest(Request $request): Response
     {
-        if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
-        }
-
-        // Do basic authorization checks for the provided bearer token
-        // TODO: Check permissions
         $this->auth->checkCanUse();
 
         $config = $this->config;

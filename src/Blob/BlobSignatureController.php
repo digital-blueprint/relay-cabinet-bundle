@@ -30,9 +30,6 @@ class BlobSignatureController extends AbstractController
     #[Route(path: '/cabinet/blob-urls', name: 'cabinet_blob_signature', requirements: ['path' => '.+'], methods: ['POST'])]
     public function proxy(Request $request): Response
     {
-        if (!$this->auth->isAuthenticated()) {
-            throw new ApiError(Response::HTTP_UNAUTHORIZED, 'access denied');
-        }
         $this->auth->checkCanUse();
 
         $method = $request->query->get('method');
