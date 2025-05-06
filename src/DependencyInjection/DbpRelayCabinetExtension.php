@@ -21,14 +21,7 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
     public function loadInternal(array $mergedConfig, ContainerBuilder $container): void
     {
         $this->addResourceClassDirectory($container, __DIR__.'/../Blob');
-
-        $pathsToHide = [
-            '/cabinet/typesense',
-        ];
-
-        foreach ($pathsToHide as $path) {
-            $this->addPathToHide($container, $path);
-        }
+        $this->addResourceClassDirectory($container, __DIR__.'/../TypesenseSync');
 
         $this->addRouteResource($container, __DIR__.'/../Resources/config/routes.yaml', 'yaml');
 

@@ -8,7 +8,7 @@ interface PersonSyncInterface
 {
     /**
      * Returns a result containing all the requested person items. If an ID isn't found
-     * an error is thrown.
+     * the result will be missing.
      *
      * @param string[] $ids
      */

@@ -9,6 +9,7 @@ use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 class TypesenseSync implements LoggerAwareInterface
 {
@@ -240,6 +241,9 @@ class TypesenseSync implements LoggerAwareInterface
         $collectionName = $this->searchIndex->getCollectionName();
         $cursor = $this->getCursor($collectionName);
         $res = $this->personSync->getPersons([$id], $cursor);
+        if ($res->getPersons() === []) {
+            throw new NotFoundHttpException('Unkown person: '.$id);
+        }
         $documents = [];
         foreach ($res->getPersons() as $person) {
             foreach ($this->personToDocuments($person) as $document) {

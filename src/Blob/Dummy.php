@@ -10,7 +10,7 @@ use ApiPlatform\OpenApi\Model\Operation;
 use ApiPlatform\OpenApi\Model\Parameter;
 
 #[ApiResource(
-    shortName: 'cabinet',
+    shortName: 'CabinetSyncBlobUrl',
     types: ['https://schema.org/DigitalDocument'],
     operations: [
         new Post(
@@ -74,8 +74,7 @@ use ApiPlatform\OpenApi\Model\Parameter;
                 'groups' => ['Cabinet:output'],
                 'jsonld_embed_context' => true,
             ],
-            read: false,
-            name: 'signature'
+            read: false
         ),
     ],
     routePrefix: '/cabinet',
