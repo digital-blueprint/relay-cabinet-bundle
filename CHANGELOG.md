@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.41
+
+* Sync: share more fields between person and document types
+
 ## 0.2.40
 
 * Implement up to one hour server side caching for typesense queries
