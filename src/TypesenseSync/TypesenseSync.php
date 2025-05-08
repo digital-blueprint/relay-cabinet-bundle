@@ -23,6 +23,8 @@ class TypesenseSync implements LoggerAwareInterface
     // Chunk processing to reduce memory consumption
     private const CHUNK_SIZE = 10000;
 
+    private const SHARED_FIELDS = ['person', 'studies', 'applications'];
+
     public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService)
     {
         $this->searchIndex = $searchIndex;
@@ -78,7 +80,7 @@ class TypesenseSync implements LoggerAwareInterface
 
         $this->logger->info('Fetch mapping for base data');
         // First we get a mapping of the base ID to the base content for all Persons in typesense
-        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'person.identNrObfuscated', 'person');
+        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'person.identNrObfuscated', self::SHARED_FIELDS);
         $this->logger->debug('Base entries found: '.count($baseMapping));
 
         // Then we fetch all files from the blob bucket, transform it to the typsensese schema, and enrich it
@@ -99,7 +101,7 @@ class TypesenseSync implements LoggerAwareInterface
                     }
                     continue;
                 }
-                $transformed['person'] = $baseMapping[$id];
+                $transformed = array_merge($transformed, $baseMapping[$id]);
                 $newDocuments[] = $transformed;
                 ++$documentCount;
                 if (count($newDocuments) > self::CHUNK_SIZE) {
@@ -119,7 +121,9 @@ class TypesenseSync implements LoggerAwareInterface
             $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
             $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);
             if ($results) {
-                $partialFileDocument['person'] = $results[0]['person'];
+                foreach (self::SHARED_FIELDS as $field) {
+                    $partialFileDocument[$field] = $results[0][$field];
+                }
             } else {
                 // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
                 // atm the schema needs those fields, so just skip for now
@@ -223,11 +227,12 @@ class TypesenseSync implements LoggerAwareInterface
     {
         $updateDocuments = [];
         foreach ($personDocuments as $personDocument) {
-            $base = $personDocument['person'];
-            $id = $base['identNrObfuscated'];
+            $id = $personDocument['person']['identNrObfuscated'];
             $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', 'person.identNrObfuscated', $id);
             foreach ($relatedDocs as &$relatedDoc) {
-                $relatedDoc['person'] = $base;
+                foreach (self::SHARED_FIELDS as $field) {
+                    $relatedDoc[$field] = $personDocument[$field];
+                }
             }
             $updateDocuments = array_merge($updateDocuments, $relatedDocs);
         }

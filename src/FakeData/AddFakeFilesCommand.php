@@ -62,7 +62,7 @@ class AddFakeFilesCommand extends Command
         }
 
         $collectionName = $this->searchIndex->getCollectionName();
-        $personIds = array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', 'person.identNrObfuscated', 'person.identNrObfuscated')));
+        $personIds = array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', 'person.identNrObfuscated', ['person.identNrObfuscated'])));
         $personId = $input->getOption('person-id');
         if ($personId !== null) {
             if (!in_array($personId, $personIds, true)) {

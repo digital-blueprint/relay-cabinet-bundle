@@ -111,20 +111,26 @@ class TypesenseClient implements LoggerAwareInterface
         }
     }
 
-    public function getBaseMapping(string $collectionName, string $type, string $groupBy, string $include)
+    public function getBaseMapping(string $collectionName, string $type, string $groupBy, array $includeFields)
     {
-        if (preg_match('/\s/', $include) || preg_match('/\s/', $type) || preg_match('/\s/', $groupBy)) {
+        if (preg_match('/\s/', $type) || preg_match('/\s/', $groupBy)) {
             throw new \RuntimeException('no whitespace supported');
         }
+        foreach ($includeFields as $include) {
+            if (preg_match('/\s/', $include)) {
+                throw new \RuntimeException('no whitespace supported');
+            }
+        }
         $filterBy = '@type := '.$type;
-        $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy, 'include_fields' => $include]);
+        $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy, 'include_fields' => implode(',', $includeFields)]);
         $lines = explode("\n", $lines);
 
         $getByPath = function ($array, $path) {
             $keys = explode('.', $path);
             $current = $array;
             foreach ($keys as $key) {
-                $current = $current[$key];
+                // XXX: why is studies missing in case it is empty sometimes?
+                $current = $current[$key] ?? [];
             }
 
             return $current;
@@ -134,7 +140,10 @@ class TypesenseClient implements LoggerAwareInterface
         foreach ($lines as $line) {
             $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
             $id = $getByPath($decoded, $groupBy);
-            $mapping[$id] = $getByPath($decoded, $include);
+            $mapping[$id] = [];
+            foreach ($includeFields as $include) {
+                $mapping[$id][$include] = $getByPath($decoded, $include);
+            }
         }
 
         return $mapping;
