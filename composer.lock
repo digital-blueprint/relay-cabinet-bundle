@@ -8865,16 +8865,16 @@
         },
         {
             "name": "typesense/typesense-php",
-            "version": "v5.0.2",
+            "version": "v5.1.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/typesense/typesense-php.git",
-                "reference": "513270e6a124101c25b03ee27598efd6b87fbec0"
+                "reference": "0e8dee542c05b201becf4734319075e6c4d540b3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/typesense/typesense-php/zipball/513270e6a124101c25b03ee27598efd6b87fbec0",
-                "reference": "513270e6a124101c25b03ee27598efd6b87fbec0",
+                "url": "https://api.github.com/repos/typesense/typesense-php/zipball/0e8dee542c05b201becf4734319075e6c4d540b3",
+                "reference": "0e8dee542c05b201becf4734319075e6c4d540b3",
                 "shasum": ""
             },
             "require": {
@@ -8932,7 +8932,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-02-24T21:13:28+00:00"
+            "time": "2025-05-05T17:35:26+00:00"
         },
         {
             "name": "web-token/jwt-library",
