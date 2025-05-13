@@ -23,7 +23,7 @@ class TypesenseSync implements LoggerAwareInterface
     // Chunk processing to reduce memory consumption
     private const CHUNK_SIZE = 10000;
 
-    private const SHARED_FIELDS = ['person', 'studies', 'applications'];
+    private const SHARED_FIELDS = ['person'];
 
     public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService)
     {
