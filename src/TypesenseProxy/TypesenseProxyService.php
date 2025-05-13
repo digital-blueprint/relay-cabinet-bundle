@@ -13,12 +13,7 @@ use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Typesense\Client;
 
 class TypesenseProxyService implements LoggerAwareInterface
 {
@@ -40,12 +35,6 @@ class TypesenseProxyService implements LoggerAwareInterface
         $this->config = $config;
     }
 
-    /**
-     * @throws ClientExceptionInterface
-     * @throws RedirectionExceptionInterface
-     * @throws ServerExceptionInterface
-     * @throws TransportExceptionInterface
-     */
     public function doProxyRequest(string $path, Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {
@@ -58,12 +47,14 @@ class TypesenseProxyService implements LoggerAwareInterface
             throw new HttpException(Response::HTTP_FORBIDDEN, 'access denied');
         }
 
+        $isSearch = ($path === 'multi_search' || $path === 'search');
+
         // Scoped keys only work for search endpoints, and only with keys that only allow searching, so we use a scoped
         // key for searches, and another key for everything else.
-        if ($path === 'multi_search' || $path === 'search') {
+        if ($isSearch) {
             $connection = new TypesenseConnection($this->config->getTypesenseApiUrl(), $this->config->getTypesenseApiKey());
             $proxyKey = $connection->getClient()->keys->generateScopedSearchKey(
-                $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => 3600]);
+                $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => $this->config->getTypesenseSearchCacheTtl()]);
         } else {
             $proxyKey = $this->config->getTypesenseProxyApiKey();
         }
@@ -75,27 +66,66 @@ class TypesenseProxyService implements LoggerAwareInterface
         // the api key by always overriding it here.
         $queryParams['x-typesense-api-key'] = $proxyKey;
 
-        // Forward the request to the Typesense server and return the response
-        try {
+        $requestContent = $request->getContent();
+
+        if ($isSearch) {
+            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $this->config->getTypesenseSearchPartitions());
+            $responses = [];
+            foreach ($partitionRequestContents as $partitionRequestContent) {
+                $responses[] = $this->client->request($method, $url, [
+                    'headers' => [
+                        'X-TYPESENSE-API-KEY' => $proxyKey,
+                    ],
+                    'body' => $partitionRequestContent,
+                    'query' => $queryParams,
+                ]);
+            }
+
+            $responseContents = [];
+            $status = null;
+            $failContent = null;
+            $headers = [];
+            foreach ($responses as $response) {
+                $status = $response->getStatusCode();
+                $headers = $response->getHeaders(false);
+                if ($status !== 200) {
+                    $failContent = $response->getContent(false);
+                    $responseContents = [];
+                    // Something is wrong, cancel all
+                    foreach ($responses as $r) {
+                        $r->getStatusCode(); // docs say this is needed to stop throw on destruction
+                        $r->cancel();
+                    }
+                    break;
+                }
+                $responseContents[] = $response->getContent(false);
+            }
+            $headers = [
+                'Content-Type' => $headers['content-type'],
+            ];
+
+            dump($responseContents);
+
+            if ($failContent !== null) {
+                return new Response($failContent, $status, $headers);
+            } else {
+                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents), $status, $headers);
+            }
+        } else {
+            // not a search, just pass through
             $response = $this->client->request($method, $url, [
                 'headers' => [
                     'X-TYPESENSE-API-KEY' => $proxyKey,
                 ],
-                'body' => $request->getContent(),
+                'body' => $requestContent,
                 'query' => $queryParams,
             ]);
-
-            // We must not send all headers back to the client!
-            // The request will be broken if we do, and we will get a "Network Error" in the browser
+            $headers = $response->getHeaders(false);
             $headers = [
-                // Disallow throwing of exceptions for getHeaders, so we can output the response as we get it
-                'Content-Type' => $response->getHeaders(false)['content-type'],
+                'Content-Type' => $headers['content-type'],
             ];
 
-            // Disallow throwing of exceptions for getContent, so we can output the response as we get it
             return new Response($response->getContent(false), $response->getStatusCode(), $headers);
-        } catch (\Exception $e) {
-            return new Response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
