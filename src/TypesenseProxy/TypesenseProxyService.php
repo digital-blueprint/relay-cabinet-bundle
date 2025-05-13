@@ -18,7 +18,6 @@ use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
 use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
-use Typesense\Client;
 
 class TypesenseProxyService implements LoggerAwareInterface
 {
@@ -58,9 +57,12 @@ class TypesenseProxyService implements LoggerAwareInterface
             throw new HttpException(Response::HTTP_FORBIDDEN, 'access denied');
         }
 
+        $isSearch = ($path === 'multi_search' || $path === 'search');
+        $isMultisearch = $path === 'multi_search';
+
         // Scoped keys only work for search endpoints, and only with keys that only allow searching, so we use a scoped
         // key for searches, and another key for everything else.
-        if ($path === 'multi_search' || $path === 'search') {
+        if ($isSearch) {
             $connection = new TypesenseConnection($this->config->getTypesenseApiUrl(), $this->config->getTypesenseApiKey());
             $proxyKey = $connection->getClient()->keys->generateScopedSearchKey(
                 $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => 3600]);
@@ -75,27 +77,63 @@ class TypesenseProxyService implements LoggerAwareInterface
         // the api key by always overriding it here.
         $queryParams['x-typesense-api-key'] = $proxyKey;
 
-        // Forward the request to the Typesense server and return the response
-        try {
+        $requestContent = $request->getContent();
+
+        if ($isSearch) {
+            $requestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $isMultisearch);
+            $responses = [];
+            foreach ($requestContents as $requestContent) {
+                $responses[] = $this->client->request($method, $url, [
+                    'headers' => [
+                        'X-TYPESENSE-API-KEY' => $proxyKey,
+                    ],
+                    'body' => $requestContent,
+                    'query' => $queryParams,
+                ]);
+            }
+
+            $responseContents = [];
+            $status = null;
+            $failContent = null;
+            $headers = [];
+            foreach ($responses as $response) {
+                $status = $response->getStatusCode();
+                $headers = $response->getHeaders(false);
+                if ($status !== 200) {
+                    $failContent = $response->getContent(false);
+                    $responseContents = [];
+                    // Something is wrong, cancel all others
+                    foreach ($responses as $r) {
+                        $response->cancel();
+                    }
+                    break;
+                }
+                $responseContents[] = $response->getContent(false);
+            }
+            $headers = [
+                'Content-Type' => $headers['content-type'],
+            ];
+
+            if ($failContent !== null) {
+                return new Response($failContent, $status, $headers);
+            } else {
+                return new Response(TypesensePartitionedSearch::mergeJsonResponses($responseContents, $isMultisearch), $status, $headers);
+            }
+        } else {
+            // not a search, just pass through
             $response = $this->client->request($method, $url, [
                 'headers' => [
                     'X-TYPESENSE-API-KEY' => $proxyKey,
                 ],
-                'body' => $request->getContent(),
+                'body' => $requestContent,
                 'query' => $queryParams,
             ]);
-
-            // We must not send all headers back to the client!
-            // The request will be broken if we do, and we will get a "Network Error" in the browser
+            $headers = $response->getHeaders(false);
             $headers = [
-                // Disallow throwing of exceptions for getHeaders, so we can output the response as we get it
-                'Content-Type' => $response->getHeaders(false)['content-type'],
+                'Content-Type' => $headers['content-type'],
             ];
 
-            // Disallow throwing of exceptions for getContent, so we can output the response as we get it
             return new Response($response->getContent(false), $response->getStatusCode(), $headers);
-        } catch (\Exception $e) {
-            return new Response($e->getMessage(), Response::HTTP_INTERNAL_SERVER_ERROR);
         }
     }
 }
