@@ -74,13 +74,21 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
+    public function getAllPersonIds(string $collectionName): array
+    {
+        [, $personIdField] = $this->transformer->getSchemaFields();
+
+        return array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField])));
+    }
+
     public function upsertMultipleFileData(string $collectionName, iterable $fileDataList): void
     {
         $this->logger->info('Syncing all blob files');
 
         $this->logger->info('Fetch mapping for base data');
+        [$sharedField, $personIdField] = $this->transformer->getSchemaFields();
         // First we get a mapping of the base ID to the base content for all Persons in typesense
-        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', 'person.identNrObfuscated', self::SHARED_FIELDS);
+        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, $sharedField);
         $this->logger->debug('Base entries found: '.count($baseMapping));
 
         // Then we fetch all files from the blob bucket, transform it to the typsensese schema, and enrich it
@@ -92,7 +100,7 @@ class TypesenseSync implements LoggerAwareInterface
         $documentCount = 0;
         foreach ($fileDataList as $fileData) {
             foreach ($this->fileDataToPartialDocuments($fileData) as $transformed) {
-                $id = $transformed['person']['identNrObfuscated'];
+                $id = $this->searchIndex->getField($transformed, $personIdField);
                 // XXX: If the related person isn't in typesense, we just ignore the file
                 if (!array_key_exists($id, $baseMapping)) {
                     if (!array_key_exists($id, $notFound)) {
@@ -117,17 +125,18 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function upsertFileData(string $collectionName, array $fileData): void
     {
+        [$sharedField, $personIdField] = $this->transformer->getSchemaFields();
         foreach ($this->fileDataToPartialDocuments($fileData) as $partialFileDocument) {
-            $blobFileId = $partialFileDocument['person']['identNrObfuscated'];
-            $results = $this->searchIndex->findDocuments($collectionName, 'Person', 'person.identNrObfuscated', $blobFileId);
+            $blobFilePersonId = $this->searchIndex->getField($partialFileDocument, $personIdField);
+            $results = $this->searchIndex->findDocuments($collectionName, 'Person', $personIdField, $blobFilePersonId);
             if ($results) {
-                foreach (self::SHARED_FIELDS as $field) {
+                foreach ($sharedField as $field) {
                     $partialFileDocument[$field] = $results[0][$field];
                 }
             } else {
                 // FIXME: what if the person is missing? Just ignore the document until the next full sync, or poll later?
                 // atm the schema needs those fields, so just skip for now
-                $this->logger->warning('No person found in typesense matching '.$blobFileId.'. Skipping blob file');
+                $this->logger->warning('No person found in typesense matching '.$blobFilePersonId.'. Skipping blob file');
 
                 return;
             }
@@ -138,8 +147,9 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function deleteFile(string $blobFileId): void
     {
+        [, , $documentIdField] = $this->transformer->getSchemaFields();
         $collectionName = $this->searchIndex->getCollectionName();
-        $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', 'file.base.fileId', $blobFileId);
+        $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $documentIdField, $blobFileId);
         foreach ($results as $result) {
             $typesenseId = $result['id'];
             $this->searchIndex->deleteDocument($collectionName, $typesenseId);
@@ -225,10 +235,11 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function getUpdatedRelatedDocumentFiles(string $collectionName, array $personDocuments): array
     {
+        [, $personIdField] = $this->transformer->getSchemaFields();
         $updateDocuments = [];
         foreach ($personDocuments as $personDocument) {
-            $id = $personDocument['person']['identNrObfuscated'];
-            $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', 'person.identNrObfuscated', $id);
+            $id = $this->searchIndex->getField($personDocument, $personIdField);
+            $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $personIdField, $id);
             foreach ($relatedDocs as &$relatedDoc) {
                 foreach (self::SHARED_FIELDS as $field) {
                     $relatedDoc[$field] = $personDocument[$field];

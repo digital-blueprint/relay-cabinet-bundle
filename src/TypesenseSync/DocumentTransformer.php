@@ -41,6 +41,14 @@ class DocumentTransformer
         return $schema;
     }
 
+    public function getSchemaFields(): array
+    {
+        $event = new SchemaRetrievalEvent();
+        $event = $this->eventDispatcher->dispatch($event);
+
+        return [$event->getSharedFields(), $event->getPersonIdField() ?? 'person.id', $event->getDocumentIdField() ?? 'document.id'];
+    }
+
     /**
      * Given an existing schema, returns if the schema is still current, or if the collection has to be re-created
      * with a new schema.

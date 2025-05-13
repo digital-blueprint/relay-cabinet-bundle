@@ -111,6 +111,19 @@ class TypesenseClient implements LoggerAwareInterface
         }
     }
 
+    /**
+     * Given the syntax "foo.bar" will retrieve $document["foo"]["bar"].
+     */
+    public static function getField(array $document, string $field): string|array|null
+    {
+        $current = $document;
+        foreach (explode('.', $field) as $key) {
+            $current = $current[$key] ?? null;
+        }
+
+        return $current;
+    }
+
     public function getBaseMapping(string $collectionName, string $type, string $groupBy, array $includeFields)
     {
         if (preg_match('/\s/', $type) || preg_match('/\s/', $groupBy)) {
@@ -125,24 +138,13 @@ class TypesenseClient implements LoggerAwareInterface
         $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy, 'include_fields' => implode(',', $includeFields)]);
         $lines = explode("\n", $lines);
 
-        $getByPath = function ($array, $path) {
-            $keys = explode('.', $path);
-            $current = $array;
-            foreach ($keys as $key) {
-                // XXX: why is studies missing in case it is empty sometimes?
-                $current = $current[$key] ?? [];
-            }
-
-            return $current;
-        };
-
         $mapping = [];
         foreach ($lines as $line) {
             $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
-            $id = $getByPath($decoded, $groupBy);
+            $id = self::getField($decoded, $groupBy);
             $mapping[$id] = [];
             foreach ($includeFields as $include) {
-                $mapping[$id][$include] = $getByPath($decoded, $include);
+                $mapping[$id][$include] = self::getField($decoded, $include);
             }
         }
 
