@@ -13,10 +13,6 @@ use Psr\Log\LoggerAwareTrait;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Symfony\Contracts\HttpClient\Exception\ClientExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\RedirectionExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\ServerExceptionInterface;
-use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 
 class TypesenseProxyService implements LoggerAwareInterface
@@ -39,12 +35,6 @@ class TypesenseProxyService implements LoggerAwareInterface
         $this->config = $config;
     }
 
-    /**
-     * @throws ClientExceptionInterface
-     * @throws RedirectionExceptionInterface
-     * @throws ServerExceptionInterface
-     * @throws TransportExceptionInterface
-     */
     public function doProxyRequest(string $path, Request $request): Response
     {
         if (!$this->auth->isAuthenticated()) {
@@ -58,7 +48,6 @@ class TypesenseProxyService implements LoggerAwareInterface
         }
 
         $isSearch = ($path === 'multi_search' || $path === 'search');
-        $isMultisearch = $path === 'multi_search';
 
         // Scoped keys only work for search endpoints, and only with keys that only allow searching, so we use a scoped
         // key for searches, and another key for everything else.
@@ -80,16 +69,21 @@ class TypesenseProxyService implements LoggerAwareInterface
         $requestContent = $request->getContent();
 
         if ($isSearch) {
-            $requestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $isMultisearch);
+            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, 2);
             $responses = [];
-            foreach ($requestContents as $requestContent) {
+            foreach ($partitionRequestContents as $partitionRequestContent) {
                 $responses[] = $this->client->request($method, $url, [
                     'headers' => [
                         'X-TYPESENSE-API-KEY' => $proxyKey,
                     ],
-                    'body' => $requestContent,
+                    'body' => $partitionRequestContent,
                     'query' => $queryParams,
                 ]);
+            }
+
+            // Calling getStatusCode() makes it not throw on destruction
+            foreach ($responses as $response) {
+                $response->getStatusCode();
             }
 
             $responseContents = [];
@@ -117,7 +111,7 @@ class TypesenseProxyService implements LoggerAwareInterface
             if ($failContent !== null) {
                 return new Response($failContent, $status, $headers);
             } else {
-                return new Response(TypesensePartitionedSearch::mergeJsonResponses($responseContents, $isMultisearch), $status, $headers);
+                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents), $status, $headers);
             }
         } else {
             // not a search, just pass through
