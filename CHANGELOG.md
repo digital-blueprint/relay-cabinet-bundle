@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.42
+
+* Make special fields configurable via the SchemaRetrievalEvent
+
 ## 0.2.41
 
 * Sync: share more fields between person and document types
