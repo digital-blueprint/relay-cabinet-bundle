@@ -37,6 +37,16 @@ class ConfigurationService
         return 'cabinet:proxy-search-key';
     }
 
+    public function getTypesenseSearchPartitions(): int
+    {
+        return $this->config['typesense']['search_partitions'];
+    }
+
+    public function getTypesenseSearchCacheTtl(): int
+    {
+        return $this->config['typesense']['search_cache_ttl'];
+    }
+
     public function getBlobApiUrl(): string
     {
         return $this->config['blob']['api_url'];

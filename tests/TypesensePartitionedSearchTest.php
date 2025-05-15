@@ -34,12 +34,12 @@ class TypesensePartitionedSearchTest extends TestCase
         $this->assertSame(1234, $merged->counts[0]->count);
         $this->assertSame('Person', $merged->counts[0]->highlighted);
         $this->assertSame('Person', $merged->counts[0]->value);
-        $this->assertSame(48, $merged->counts[1]->count);
-        $this->assertSame('DocumentFile', $merged->counts[1]->highlighted);
-        $this->assertSame('DocumentFile', $merged->counts[1]->value);
-        $this->assertSame(234, $merged->counts[2]->count);
-        $this->assertSame('Person2', $merged->counts[2]->highlighted);
-        $this->assertSame('Person2', $merged->counts[2]->value);
+        $this->assertSame(234, $merged->counts[1]->count);
+        $this->assertSame('Person2', $merged->counts[1]->highlighted);
+        $this->assertSame('Person2', $merged->counts[1]->value);
+        $this->assertSame(48, $merged->counts[2]->count);
+        $this->assertSame('DocumentFile', $merged->counts[2]->highlighted);
+        $this->assertSame('DocumentFile', $merged->counts[2]->value);
         $this->assertSame(8, $merged->counts[3]->count);
         $this->assertSame('DocumentFile2', $merged->counts[3]->highlighted);
         $this->assertSame('DocumentFile2', $merged->counts[3]->value);
@@ -224,5 +224,17 @@ class TypesensePartitionedSearchTest extends TestCase
         $this->assertEquals('Alice', $items[0]->document->name);
         $this->assertEquals('Charlie', $items[1]->document->name);
         $this->assertEquals('Bob', $items[2]->document->name);
+    }
+
+    public function testBasicPartitioning(): void
+    {
+        $result = TypesensePartitionedSearch::getPartitions('partition_field', 10, 2);
+        $this->assertCount(2, $result);
+        $this->assertEquals('partition_field: [0..4]', $result[0]);
+        $this->assertEquals('partition_field: [5..9]', $result[1]);
+
+        $result = TypesensePartitionedSearch::getPartitions('partition_field', 10, 1);
+        $this->assertCount(1, $result);
+        $this->assertEquals('partition_field: [0..9]', $result[0]);
     }
 }

@@ -68,6 +68,9 @@ class TypesensePartitionedSearch
         };
     }
 
+    /**
+     * Merges two facet_counts->counts parts of a result.
+     */
     public static function mergeCounts(object $counts1, object $counts2): object
     {
         if ($counts1->field_name !== $counts2->field_name) {
@@ -92,13 +95,34 @@ class TypesensePartitionedSearch
                 $toAdd[] = $count2;
             }
         }
+
+        $sortCounts = function ($a, $b) {
+            if ($a->count !== $b->count) {
+                return $b->count - $a->count;
+            }
+
+            return strcmp($a->value, $b->value);
+        };
+
         $newCounts->counts = array_merge($newCounts->counts, $toAdd);
+        assert(is_array($newCounts->counts));
+        usort($newCounts->counts, $sortCounts);
+
         $newCounts->stats = new \stdClass();
-        $newCounts->stats->total_values = count($newCounts->counts);
+        // We can't know the real value, so just compute a lower limit
+        $newCounts->stats->total_values = max($counts1->stats->total_values, $counts2->stats->total_values, count($newCounts->counts));
 
         return $newCounts;
     }
 
+    /**
+     * Merges two facet_counts parts of a result.
+     *
+     * @param object[] $facetCounts1
+     * @param object[] $facetCounts2
+     *
+     * @return object[]
+     */
     public static function mergeFaceCounts(array $facetCounts1, array $facetCounts2): array
     {
         $newFacetCounts = $facetCounts1;
@@ -121,6 +145,9 @@ class TypesensePartitionedSearch
         return $newFacetCounts;
     }
 
+    /**
+     * Merges two results.
+     */
     public static function mergeResults(object $result1, object $result2): object
     {
         if (isset($result1->error)) {
@@ -151,89 +178,16 @@ class TypesensePartitionedSearch
         return $newResult;
     }
 
-    public static function mergeMultiSearchResponses(object $requestObj, array $responses): object
-    {
-        $newResponse = new \stdClass();
-        $mergedResults = [];
-        $searchCount = count($responses[0]->results);
-        for ($i = 0; $i < $searchCount; ++$i) {
-            $newResult = null;
-            foreach ($responses as $d) {
-                $result = $d->results[$i];
-                if ($newResult === null) {
-                    $newResult = $result;
-                } else {
-                    $newResult = self::mergeResults($newResult, $result);
-                }
-            }
-
-            if (!isset($newResult->error)) {
-                $search = $requestObj->searches[$i];
-                $page = $search->page ?? 1;
-                // Defaults to 10 according to typesense docs
-                $pageSize = $search->per_page ?? 10;
-
-                // XXX: Default is '_text_match:desc,default_sorting_field:desc' but don't know 'default_sorting_field' here
-                $sortBy = $search->sort_by ?? '_text_match:desc';
-
-                // Sort and slice for pagination
-                if (isset($newResult->grouped_hits)) {
-                    $sortFunction = self::createSortFunction($sortBy);
-                    usort($newResult->grouped_hits, fn ($a, $b) => $sortFunction($a->hits[0], $b->hits[0]));
-                    $newResult->grouped_hits = array_slice($newResult->grouped_hits, ($page - 1) * $pageSize, $pageSize);
-                } else {
-                    $sortFunction = self::createSortFunction($sortBy);
-                    usort($newResult->hits, $sortFunction);
-                    $newResult->hits = array_slice($newResult->hits, ($page - 1) * $pageSize, $pageSize);
-                }
-            }
-
-            $mergedResults[] = $newResult;
-        }
-        $newResponse->results = $mergedResults;
-
-        return $newResponse;
-    }
-
-    public static function mergeSearchResponses(object $requestObj, array $responses): object
-    {
-        $newResponse = null;
-        foreach ($responses as $response) {
-            if ($newResponse === null) {
-                $newResponse = $response;
-            } else {
-                $newResponse = self::mergeResults($newResponse, $response);
-            }
-        }
-
-        return $newResponse;
-    }
-
-    public static function mergeJsonResponses(string $request, array $responses): string
-    {
-        if (count($responses) === 1) {
-            return $responses[0];
-        }
-
-        $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
-        $isMulti = is_array($requestObj->searches ?? null);
-
-        $responseObjects = [];
-        foreach ($responses as $response) {
-            $responseObjects[] = json_decode($response, flags: JSON_THROW_ON_ERROR);
-        }
-
-        if ($isMulti) {
-            return json_encode(self::mergeMultiSearchResponses($requestObj, $responseObjects));
-        } else {
-            return json_encode(self::mergeSearchResponses($requestObj, $responseObjects));
-        }
-    }
-
+    /**
+     * Returns typesense range queries for partitioning based ona key that goes from 0 to $totalPartitions.
+     *
+     * @return string[]
+     */
     public static function getPartitions(string $partitionKey, int $totalPartitions, int $numPartitions): array
     {
-        $totalPartitions = max(1, $totalPartitions);
-        $numPartitions = max(1, min($numPartitions, $totalPartitions));
+        if ($totalPartitions < $numPartitions || $totalPartitions < 1 || $numPartitions < 1) {
+            throw new \RuntimeException('Invalid partitioning');
+        }
         $perPartition = ceil($totalPartitions / $numPartitions);
 
         $partitions = [];
@@ -247,6 +201,91 @@ class TypesensePartitionedSearch
         return $partitions;
     }
 
+    /**
+     * Merges one or more partitioned search responses into one.
+     */
+    public static function mergeJsonResponses(string $request, array $jsonResponses): string
+    {
+        if (count($jsonResponses) === 1) {
+            return $jsonResponses[0];
+        }
+
+        $adjustResult = function ($search, &$result) {
+            if (isset($result->error)) {
+                return;
+            }
+
+            $page = $search->page ?? 1;
+            // Defaults to 10 according to typesense docs
+            $pageSize = $search->per_page ?? 10;
+
+            // XXX: Default is '_text_match:desc,default_sorting_field:desc' but don't know 'default_sorting_field' here
+            $sortBy = $search->sort_by ?? '_text_match:desc';
+
+            // Sort and slice for pagination
+            if (isset($result->grouped_hits)) {
+                $sortFunction = self::createSortFunction($sortBy);
+                usort($result->grouped_hits, fn ($a, $b) => $sortFunction($a->hits[0], $b->hits[0]));
+                $result->grouped_hits = array_slice($result->grouped_hits, ($page - 1) * $pageSize, $pageSize);
+            } else {
+                $sortFunction = self::createSortFunction($sortBy);
+                usort($result->hits, $sortFunction);
+                $result->hits = array_slice($result->hits, ($page - 1) * $pageSize, $pageSize);
+            }
+        };
+
+        $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
+        $isMulti = is_array($requestObj->searches ?? null);
+
+        $responseObjects = [];
+        foreach ($jsonResponses as $response) {
+            $responseObjects[] = json_decode($response, flags: JSON_THROW_ON_ERROR);
+        }
+
+        if ($isMulti) {
+            $newResponse = new \stdClass();
+            $mergedResults = [];
+            $searchCount = count($responseObjects[0]->results);
+            for ($i = 0; $i < $searchCount; ++$i) {
+                $newResult = null;
+                foreach ($responseObjects as $d) {
+                    $result = $d->results[$i];
+                    if ($newResult === null) {
+                        $newResult = $result;
+                    } else {
+                        $newResult = self::mergeResults($newResult, $result);
+                    }
+                }
+
+                $search = $requestObj->searches[$i];
+                $adjustResult($search, $newResult);
+
+                $mergedResults[] = $newResult;
+            }
+            $newResponse->results = $mergedResults;
+
+            return json_encode($newResponse);
+        } else {
+            $newResult = null;
+            $search = $requestObj;
+            foreach ($responseObjects as $result) {
+                if ($newResult === null) {
+                    $newResult = $result;
+                } else {
+                    $newResult = self::mergeResults($newResult, $result);
+                }
+            }
+
+            $adjustResult($search, $newResult);
+
+            return json_encode($newResult);
+        }
+    }
+
+    /**
+     * Splits a typesense search request into 1 or more partitioned requests.
+     * The responses of those requests can be merged again using mergeJsonResponses().
+     */
     public static function splitJsonRequest(string $request, int $numPartitions): array
     {
         $adjustSearch = function (&$search, $partition) {
@@ -262,6 +301,10 @@ class TypesensePartitionedSearch
                 $search->page = 1;
             }
         };
+
+        if ($numPartitions === 1) {
+            return [$request];
+        }
 
         $partitions = self::getPartitions('person.partitionKey', 100, $numPartitions);
         $newRequestObjects = [];

@@ -54,7 +54,7 @@ class TypesenseProxyService implements LoggerAwareInterface
         if ($isSearch) {
             $connection = new TypesenseConnection($this->config->getTypesenseApiUrl(), $this->config->getTypesenseApiKey());
             $proxyKey = $connection->getClient()->keys->generateScopedSearchKey(
-                $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => 3600]);
+                $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => $this->config->getTypesenseSearchCacheTtl()]);
         } else {
             $proxyKey = $this->config->getTypesenseProxyApiKey();
         }
@@ -69,7 +69,7 @@ class TypesenseProxyService implements LoggerAwareInterface
         $requestContent = $request->getContent();
 
         if ($isSearch) {
-            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, 2);
+            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, 7);
             $responses = [];
             foreach ($partitionRequestContents as $partitionRequestContent) {
                 $responses[] = $this->client->request($method, $url, [
@@ -79,11 +79,6 @@ class TypesenseProxyService implements LoggerAwareInterface
                     'body' => $partitionRequestContent,
                     'query' => $queryParams,
                 ]);
-            }
-
-            // Calling getStatusCode() makes it not throw on destruction
-            foreach ($responses as $response) {
-                $response->getStatusCode();
             }
 
             $responseContents = [];
@@ -96,9 +91,10 @@ class TypesenseProxyService implements LoggerAwareInterface
                 if ($status !== 200) {
                     $failContent = $response->getContent(false);
                     $responseContents = [];
-                    // Something is wrong, cancel all others
+                    // Something is wrong, cancel all
                     foreach ($responses as $r) {
-                        $response->cancel();
+                        $r->getStatusCode(); // docs say this is needed to stop throw on destruction
+                        $r->cancel();
                     }
                     break;
                 }
