@@ -237,7 +237,6 @@ class TypesenseClient implements LoggerAwareInterface
                 'description' => $this->config->getTypesenseProxyApiKey(),
                 'actions' => [
                     'documents:get',
-                    'documents:export',
                     'documents:search',
                 ],
                 'collections' => [$aliasName],
