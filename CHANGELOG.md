@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.43
+
+* proxy: no longer allows export actions
+* proxy: implement a partitioned search feature for the typesense proxy
+* config: make the cache TTL configurable
+
 ## 0.2.42
 
 * Make special fields configurable via the SchemaRetrievalEvent
