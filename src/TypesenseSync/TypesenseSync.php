@@ -283,7 +283,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function fileDataToPartialDocuments(array $fileData): array
     {
-        $bucketId = $this->blobService->getBucketId();
+        $bucketId = $this->blobService->getBucketIdentifier();
         $metadata = json_decode($fileData['metadata'], associative: true, flags: JSON_THROW_ON_ERROR);
         $objectType = $metadata['objectType'];
         $input = [

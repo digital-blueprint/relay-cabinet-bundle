@@ -6,6 +6,8 @@ namespace Dbp\Relay\CabinetBundle\DependencyInjection;
 
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Blob\BlobEventTask;
+use Dbp\Relay\CabinetBundle\Blob\BlobService;
+use Dbp\Relay\CabinetBundle\Service\CabinetService;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
 use Symfony\Component\Config\FileLocator;
@@ -31,13 +33,16 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
         );
         $loader->load('services.yaml');
 
-        $definition = $container->getDefinition('Dbp\Relay\CabinetBundle\Service\CabinetService');
+        $definition = $container->getDefinition(CabinetService::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
 
         $definition = $container->getDefinition(AuthorizationService::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
 
         $definition = $container->getDefinition(ConfigurationService::class);
+        $definition->addMethodCall('setConfig', [$mergedConfig]);
+
+        $definition = $container->getDefinition(BlobService::class);
         $definition->addMethodCall('setConfig', [$mergedConfig]);
     }
 

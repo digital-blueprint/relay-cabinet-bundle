@@ -14,13 +14,9 @@ use Symfony\Component\Console\Question\ConfirmationQuestion;
 
 class DeleteAllFilesCommand extends Command
 {
-    private BlobService $blobService;
-
-    public function __construct(BlobService $blobService)
+    public function __construct(private readonly BlobService $blobService)
     {
         parent::__construct();
-
-        $this->blobService = $blobService;
     }
 
     protected function configure(): void
@@ -31,15 +27,23 @@ class DeleteAllFilesCommand extends Command
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $fileIds = [];
-        foreach ($this->blobService->getAllFiles() as $file) {
-            $fileIds[] = $file['identifier'];
+        try {
+            $fileIds = [];
+            foreach ($this->blobService->getAllFiles() as $file) {
+                $fileIds[] = $file['identifier'];
+            }
+        } catch (BlobApiError $e) {
+            $output->writeln('<error>Error getting all files: '.$e->getMessage().' </error>');
+            $output->writeln(print_r($e->getErrorId(), true));
+            $output->writeln(print_r($e->getBlobErrorId(), true));
+
+            return Command::FAILURE;
         }
 
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
-        $blobApiUrl = $this->blobService->getBlobApiUrl();
-        $question = new ConfirmationQuestion('About to delete '.count($fileIds).' files from '.$blobApiUrl.'. Are you sure you want to continue? (y/N) ', false);
+        $question = new ConfirmationQuestion('About to delete '.count($fileIds).
+            ' files from Blob storage. Are you sure you want to continue? (y/N) ', false);
         if (!$helper->ask($input, $output, $question)) {
             $output->writeln('Action cancelled.');
 
@@ -57,7 +61,7 @@ class DeleteAllFilesCommand extends Command
         } catch (BlobApiError $e) {
             $output->writeln('<error>Error deleting file: '.$e->getMessage().' </error>');
             $output->writeln(print_r($e->getErrorId(), true));
-            $output->writeln(print_r($e->getErrorDetails(), true));
+            $output->writeln(print_r($e->getBlobErrorId(), true));
 
             return Command::FAILURE;
         }

@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+## 0.3.0
+
+* Update to blob library v0.3, which allows accessing the Blob API via HTTP or directly via PHP
+* Remove blob dependency (except for development)
+* Use the predefined blob library config, which breaks the current config structure
+
 ## 0.2.43
 
 * proxy: no longer allows export actions

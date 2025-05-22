@@ -47,44 +47,9 @@ class ConfigurationService
         return $this->config['typesense']['search_cache_ttl'];
     }
 
-    public function getBlobApiUrl(): string
-    {
-        return $this->config['blob']['api_url'];
-    }
-
-    public function getUseBlobApi(): bool
-    {
-        return $this->config['blob']['use_api'];
-    }
-
-    public function getBlobApiUrlInternal(): string
-    {
-        return $this->config['blob']['api_url_internal'] ?? $this->getBlobApiUrl();
-    }
-
-    public function getBlobIdpUrl(): string
-    {
-        return $this->config['blob']['idp_url'];
-    }
-
-    public function getBlobIdpClientId(): string
-    {
-        return $this->config['blob']['idp_client_id'];
-    }
-
-    public function getBlobIdpClientSecret(): string
-    {
-        return $this->config['blob']['idp_client_secret'];
-    }
-
     public function getBlobBucketId(): string
     {
-        return $this->config['blob']['bucket_id'];
-    }
-
-    public function getBlobBucketKey(): string
-    {
-        return $this->config['blob']['bucket_key'];
+        return $this->config['blob_library']['bucket_identifier'];
     }
 
     public function getBlobBucketPrefix(): string

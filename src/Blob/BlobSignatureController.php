@@ -4,49 +4,29 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Blob;
 
+use Dbp\Relay\BlobLibrary\Api\BlobApiError;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
-use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Routing\Annotation\Route;
 
 class BlobSignatureController extends AbstractController
 {
-    private $blobService;
-    private AuthorizationService $auth;
-
-    public function __construct(BlobService $blobService, AuthorizationService $auth)
+    public function __construct(
+        private readonly BlobService $blobService,
+        private readonly AuthorizationService $authorizationService)
     {
-        $this->blobService = $blobService;
-        $this->auth = $auth;
     }
 
+    /**
+     * @throws BlobApiError
+     */
     public function __invoke(Request $request): Response
     {
-        return $this->proxy($request);
-    }
+        $this->authorizationService->checkCanUse();
 
-    #[Route(path: '/cabinet/blob-urls', name: 'cabinet_blob_signature', requirements: ['path' => '.+'], methods: ['POST'])]
-    public function proxy(Request $request): Response
-    {
-        $this->auth->checkCanUse();
-
-        $method = $request->query->get('method');
-
-        // authorization will probably affect who can do what, thats why everything is split up
-        if ($method === 'POST') {
-            return $this->blobService->getSignatureForGivenPostRequest($request);
-        } elseif ($method === 'GET') {
-            return $this->blobService->getSignatureForGivenGetRequest($request);
-        } elseif ($method === 'DOWNLOAD') {
-            return $this->blobService->getSignatureForGivenDownloadRequest($request);
-        } elseif ($method === 'DELETE') {
-            return $this->blobService->getSignatureForGivenDeleteRequest($request);
-        } elseif ($method === 'PATCH') {
-            return $this->blobService->getSignatureForGivenPatchRequest($request);
-        } else {
-            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST, 'The provided method parameter is not of value POST, GET, DELETE or PATCH.', 'cabinet:signature-invalid-method');
-        }
+        return new Response(json_encode([
+            'blobUrl' => $this->blobService->createSignedUrlForGivenQueryParameters($request->query->all()),
+        ]), 200);
     }
 }

@@ -15,13 +15,9 @@ use Symfony\Component\Filesystem\Filesystem;
 
 class UploadFileCommand extends Command
 {
-    private BlobService $blobService;
-
-    public function __construct(BlobService $blobService)
+    public function __construct(private readonly BlobService $blobService)
     {
         parent::__construct();
-
-        $this->blobService = $blobService;
     }
 
     protected function configure(): void
@@ -67,7 +63,7 @@ class UploadFileCommand extends Command
         } catch (BlobApiError $e) {
             $output->writeln('<error>Error uploading file: '.$e->getMessage().' </error>');
             $output->writeln(print_r($e->getErrorId(), true));
-            $output->writeln(print_r($e->getErrorDetails(), true));
+            $output->writeln(print_r($e->getBlobErrorId(), true));
 
             return Command::FAILURE;
         }
