@@ -104,8 +104,6 @@ class TypesenseProxyService implements LoggerAwareInterface
                 'Content-Type' => $headers['content-type'],
             ];
 
-            dump($responseContents);
-
             if ($failContent !== null) {
                 return new Response($failContent, $status, $headers);
             } else {
