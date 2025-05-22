@@ -7,6 +7,7 @@
         "ext-json": "*",
         "api-platform/core": "^3.4 || ^4.1",
         "dbp/relay-base-person-bundle": "^0.2.30",
+        "dbp/relay-blob-bundle": "^0.1.76",
         "dbp/relay-blob-library": "^0.3.3",
         "dbp/relay-core-bundle": "^0.1.212",
         "doctrine/dbal": "^3.8 || ^4.0",
@@ -38,7 +39,6 @@
     },
     "require-dev": {
         "captainhook/captainhook": "^5.25",
-        "dbp/relay-blob-bundle": "^0.1.76",
         "friendsofphp/php-cs-fixer": "^3.50",
         "phpstan/phpstan": "^2.0.0",
         "phpstan/phpstan-phpunit": "^2.0.0",

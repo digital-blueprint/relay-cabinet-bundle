@@ -29,11 +29,7 @@ class BlobSubscriber implements EventSubscriberInterface
 
     private function isForCabinet(FileData $fileData): bool
     {
-        if ($fileData->getBucketId() !== $this->config->getBlobBucketId()) {
-            return false;
-        }
-
-        return true;
+        return $fileData->getBucketId() === $this->config->getBlobBucketId();
     }
 
     public static function getSubscribedEvents(): array
