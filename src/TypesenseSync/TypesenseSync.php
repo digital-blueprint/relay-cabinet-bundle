@@ -286,6 +286,7 @@ class TypesenseSync implements LoggerAwareInterface
         $bucketId = $this->blobService->getBucketIdentifier();
         $metadata = json_decode($fileData['metadata'], associative: true, flags: JSON_THROW_ON_ERROR);
         $objectType = $metadata['objectType'];
+
         $input = [
             'id' => $fileData['identifier'],
             'fileSource' => $bucketId,
@@ -293,9 +294,11 @@ class TypesenseSync implements LoggerAwareInterface
             'mimeType' => $fileData['mimeType'],
             'dateCreated' => $fileData['dateCreated'],
             'dateModified' => $fileData['dateModified'],
-            'deleteAt' => $fileData['deleteAt'],
             'metadata' => $metadata,
         ];
+        if (isset($fileData['deleteAt'])) {
+            $input['deleteAt'] = $fileData['deleteAt'];
+        }
 
         return $this->transformer->transformDocument($objectType, $input);
     }
