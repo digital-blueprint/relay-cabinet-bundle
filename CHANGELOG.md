@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.1
 * Fix error on typesenseSync when no `deleteAt` was given
 
 ## 0.3.0
