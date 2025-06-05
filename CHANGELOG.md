@@ -1,6 +1,13 @@
 # Changelog
 
+## 0.3.2
+
+* DocumentTransformEvent: `deleteAt` is always set again
+* Partitined search no longer depends on the transformer events
+* Ported to new blob library APIs where possible
+
 ## 0.3.1
+
 * Fix error on typesenseSync when no `deleteAt` was given
 
 ## 0.3.0
