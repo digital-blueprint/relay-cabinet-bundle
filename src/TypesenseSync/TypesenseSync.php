@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
+use Dbp\Relay\BlobLibrary\Api\BlobFile;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
 use Psr\Log\LoggerAwareInterface;
@@ -61,16 +62,16 @@ class TypesenseSync implements LoggerAwareInterface
     public function upsertAllFiles(string $collectionName): void
     {
         $this->logger->info('Syncing all blob files');
-        $fileDataIterable = $this->blobService->getAllFiles();
-        $this->upsertMultipleFileData($collectionName, $fileDataIterable);
+        $blobFileIterable = $this->blobService->getAllFiles();
+        $this->upsertMultipleBlobFiles($collectionName, $blobFileIterable);
         $this->searchIndex->clearSearchCache();
     }
 
     public function upsertFile(string $blobFileId): void
     {
-        $fileData = $this->blobService->getFile($blobFileId);
+        $blobFile = $this->blobService->getFile($blobFileId);
         $collectionName = $this->searchIndex->getCollectionName();
-        $this->upsertFileData($collectionName, $fileData);
+        $this->upsertBlobFile($collectionName, $blobFile);
         $this->searchIndex->clearSearchCache();
     }
 
@@ -81,7 +82,10 @@ class TypesenseSync implements LoggerAwareInterface
         return array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField])));
     }
 
-    public function upsertMultipleFileData(string $collectionName, iterable $fileDataList): void
+    /**
+     * @param iterable<BlobFile> $blobFiles
+     */
+    public function upsertMultipleBlobFiles(string $collectionName, iterable $blobFiles): void
     {
         $this->logger->info('Syncing all blob files');
 
@@ -99,13 +103,13 @@ class TypesenseSync implements LoggerAwareInterface
         $newDocuments = [];
         $notFound = [];
         $documentCount = 0;
-        foreach ($fileDataList as $fileData) {
-            foreach ($this->fileDataToPartialDocuments($fileData) as $transformed) {
+        foreach ($blobFiles as $blobFile) {
+            foreach ($this->blobFileToPartialDocuments($blobFile) as $transformed) {
                 $id = Utils::getField($transformed, $personIdField);
                 // XXX: If the related person isn't in typesense, we just ignore the file
                 if (!array_key_exists($id, $baseMapping)) {
                     if (!array_key_exists($id, $notFound)) {
-                        $this->logger->warning('For file '.$fileData['identifier'].' (and possibly more) with baseId "'.$id.'" no matching base data found, skipping');
+                        $this->logger->warning('For file '.$blobFile->getIdentifier().' (and possibly more) with baseId "'.$id.'" no matching base data found, skipping');
                         $notFound[$id] = null;
                     }
                     continue;
@@ -124,11 +128,11 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
-    public function upsertFileData(string $collectionName, array $fileData): void
+    public function upsertBlobFile(string $collectionName, BlobFile $blobFile): void
     {
         $sharedFields = $this->transformer->getSharedFields();
         $personIdField = $this->transformer->getPersonIdField();
-        foreach ($this->fileDataToPartialDocuments($fileData) as $partialFileDocument) {
+        foreach ($this->blobFileToPartialDocuments($blobFile) as $partialFileDocument) {
             $blobFilePersonId = Utils::getField($partialFileDocument, $personIdField);
             $results = $this->searchIndex->findDocuments($collectionName, 'Person', $personIdField, $blobFilePersonId);
             if ($results) {
@@ -283,24 +287,23 @@ class TypesenseSync implements LoggerAwareInterface
         return $this->transformer->transformDocument('person', $person);
     }
 
-    public function fileDataToPartialDocuments(array $fileData): array
+    public function blobFileToPartialDocuments(BlobFile $blobFile): array
     {
         $bucketId = $this->blobService->getBucketIdentifier();
-        $metadata = json_decode($fileData['metadata'], associative: true, flags: JSON_THROW_ON_ERROR);
+        $metadataJson = $blobFile->getMetadata();
+        $metadata = $metadataJson !== null ? json_decode($metadataJson, associative: true, flags: JSON_THROW_ON_ERROR) : [];
         $objectType = $metadata['objectType'];
 
         $input = [
-            'id' => $fileData['identifier'],
+            'id' => $blobFile->getIdentifier(),
             'fileSource' => $bucketId,
-            'fileName' => $fileData['fileName'],
-            'mimeType' => $fileData['mimeType'],
-            'dateCreated' => $fileData['dateCreated'],
-            'dateModified' => $fileData['dateModified'],
+            'fileName' => $blobFile->getFileName(),
+            'mimeType' => $blobFile->getMimeType(),
+            'dateCreated' => $blobFile->getDateCreated(),
+            'dateModified' => $blobFile->getDateModified(),
+            'deleteAt' => $blobFile->getDeleteAt(),
             'metadata' => $metadata,
         ];
-        if (isset($fileData['deleteAt'])) {
-            $input['deleteAt'] = $fileData['deleteAt'];
-        }
 
         return $this->transformer->transformDocument($objectType, $input);
     }

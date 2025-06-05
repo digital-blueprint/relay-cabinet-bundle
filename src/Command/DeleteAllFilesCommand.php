@@ -30,7 +30,7 @@ class DeleteAllFilesCommand extends Command
         try {
             $fileIds = [];
             foreach ($this->blobService->getAllFiles() as $file) {
-                $fileIds[] = $file['identifier'];
+                $fileIds[] = $file->getIdentifier();
             }
         } catch (BlobApiError $e) {
             $output->writeln('<error>Error getting all files: '.$e->getMessage().' </error>');

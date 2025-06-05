@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\FakeData;
 
+use Dbp\Relay\BlobLibrary\Api\BlobFile;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseClient;
 use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseSync;
@@ -91,19 +92,17 @@ class AddFakeFilesCommand extends Command
                 if (!$mimeType) {
                     throw new \RuntimeException('No mime type guessed');
                 }
-                $fileData = [
-                    'identifier' => Uuid::v7()->toRfc4122(),
-                    'fileName' => $filename,
-                    'mimeType' => $mimeType,
-                    'dateCreated' => (new \DateTimeImmutable())->format(\DateTime::ATOM),
-                    'dateModified' => (new \DateTimeImmutable())->format(\DateTime::ATOM),
-                    'deleteAt' => null,
-                    'metadata' => $event->getMetadata(),
-                ];
-                $entries[] = $fileData;
+                $blobFile = new BlobFile();
+                $blobFile->setIdentifier(Uuid::v7()->toRfc4122());
+                $blobFile->setFilename($filename);
+                $blobFile->setMimeType($mimeType);
+                $blobFile->setDateCreated((new \DateTimeImmutable())->format(\DateTime::ATOM));
+                $blobFile->setDateModified((new \DateTimeImmutable())->format(\DateTime::ATOM));
+                $blobFile->setMetadata($event->getMetadata() ?? '');
+                $entries[] = $blobFile;
             }
             $collectionName = $this->searchIndex->getCollectionName();
-            $this->typesenseSync->upsertMultipleFileData($collectionName, $entries);
+            $this->typesenseSync->upsertMultipleBlobFiles($collectionName, $entries);
         } else {
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));

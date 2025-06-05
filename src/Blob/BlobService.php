@@ -93,6 +93,8 @@ class BlobService implements LoggerAwareInterface
     /**
      * Get all blob files without data as iterable, decoded as an array.
      *
+     * @return iterable<BlobFile>
+     *
      * @throws BlobApiError
      */
     public function getAllFiles(int $perPage = 512): iterable
@@ -105,16 +107,16 @@ class BlobService implements LoggerAwareInterface
                     BlobApi::PREFIX_OPTION => $bucketPrefix,
                     BlobApi::INCLUDE_DELETE_AT_OPTION => true]);
             }, $perPage) as $blobFile) {
-            yield $blobFile->getFileData($blobFile);
+            yield $blobFile;
         }
     }
 
     /**
      * @throws BlobApiError
      */
-    public function getFile(string $id): array
+    public function getFile(string $id): BlobFile
     {
-        return $this->blobApi->getFile($id, [BlobApi::INCLUDE_DELETE_AT_OPTION => true])->getFileData();
+        return $this->blobApi->getFile($id, [BlobApi::INCLUDE_DELETE_AT_OPTION => true]);
     }
 
     /**
