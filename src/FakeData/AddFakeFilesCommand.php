@@ -34,7 +34,7 @@ class AddFakeFilesCommand extends Command
         $this->typesenseSync = $typesenseSync;
     }
 
-    protected function configure()
+    protected function configure(): void
     {
         $this->setName('dbp:relay:cabinet:add-fake-files');
         $this->setDescription('Add fake files to blob and/or cabinet');
