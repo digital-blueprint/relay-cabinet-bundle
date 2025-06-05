@@ -316,10 +316,13 @@ class TypesensePartitionedSearch
             } else {
                 $search = $partition;
             }
+
             // facet only searches don't require responses
             if ($search->per_page > 0) {
                 // fetch as much as we can, so we can emulate pagination for a few pages when merging
-                $search->per_page = 250;
+                // XXX: For some reason if the collection is empty 250 leads to an error (maybe a typesense bug?)
+                // reducing to 249 makes it work again
+                $search->per_page = 249;
                 $search->page = 1;
             }
         };

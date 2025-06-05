@@ -199,9 +199,26 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
+    /**
+     * Puts typesense in a state where the API at least works. i.e. the schema, the alias and the collection are there.
+     */
+    public function ensureSetup(): void
+    {
+        $this->logger->info('Running setup');
+        if ($this->searchIndex->needsSetup()) {
+            $this->logger->info('No alias or collection found, re-creating empty collection and alias');
+            $schema = $this->transformer->getSchema();
+            $newName = $this->searchIndex->createNewCollection($schema);
+            $this->searchIndex->updateAlias($newName);
+            $this->searchIndex->deleteOldCollections();
+        }
+
+        $this->searchIndex->updateProxyApiKeys();
+    }
+
     public function sync(bool $full = false)
     {
-        $this->searchIndex->ensureSetup();
+        $this->ensureSetup();
         $collectionName = $this->searchIndex->getCollectionName();
         $cursor = $this->getCursor($collectionName);
 

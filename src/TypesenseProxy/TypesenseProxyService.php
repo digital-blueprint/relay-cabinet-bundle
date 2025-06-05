@@ -100,6 +100,7 @@ class TypesenseProxyService implements LoggerAwareInterface
                 }
                 $responseContents[] = $response->getContent(false);
             }
+
             $headers = [
                 'Content-Type' => $headers['content-type'],
             ];

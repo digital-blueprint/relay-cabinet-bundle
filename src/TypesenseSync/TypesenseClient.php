@@ -92,6 +92,12 @@ class TypesenseClient implements LoggerAwareInterface
         return $alias['collection_name'];
     }
 
+    public function needsSetup(): bool
+    {
+        // Either the alias doesn't exist, or the collection it references
+        return !$this->getClient()->collections[$this->getAliasName()]->exists();
+    }
+
     public function addDocumentsToCollection(string $collectionName, array $documents): void
     {
         if ($documents === []) {
@@ -172,27 +178,6 @@ class TypesenseClient implements LoggerAwareInterface
         $this->getClient()->aliases->upsert($aliasName, ['collection_name' => $collectionName]);
     }
 
-    /**
-     * Purge all collection data, only leaving an empty collection and an alias pointing to it.
-     */
-    public function purgeAll(): void
-    {
-        $newName = $this->createNewCollection();
-        $this->updateAlias($newName);
-        $this->deleteOldCollections();
-    }
-
-    public function ensureSetup(): void
-    {
-        $this->logger->info('Running setup');
-        $aliasName = $this->getAliasName();
-        if (!$this->getClient()->collections[$aliasName]->exists()) {
-            $this->logger->info('No alias or collection found, re-creating empty collection and alias');
-            $this->purgeAll();
-        }
-        $this->updateProxyApiKeys();
-    }
-
     public function clearSearchCache(): void
     {
         $this->logger->info('Clearing search cache');
@@ -203,7 +188,7 @@ class TypesenseClient implements LoggerAwareInterface
     /**
      * Ensures the proxy API keys for the alias are registered and deletes outdated keys.
      */
-    private function updateProxyApiKeys(): void
+    public function updateProxyApiKeys(): void
     {
         $aliasName = $this->getAliasName();
         $schemas = [

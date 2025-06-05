@@ -33,6 +33,10 @@ services:
     autowire: true
     autoconfigure: true
 
+  Dbp\Relay\CabinetBundle\Command\SetupCommand:
+    autowire: true
+    autoconfigure: true
+
   Dbp\Relay\CabinetBundle\Authorization\AuthorizationService:
     autowire: true
     autoconfigure: true
