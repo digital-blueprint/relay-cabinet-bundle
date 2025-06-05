@@ -19,34 +19,36 @@ class DocumentTransformer
         ],
     ];
 
+    private ?SchemaRetrievalEvent $schemaEvent;
+
     public function __construct(EventDispatcherInterface $eventDispatcher)
     {
         $this->eventDispatcher = $eventDispatcher;
+        $this->schemaEvent = null;
     }
 
-    /**
-     * Returns a typesense schema.
-     */
+    private function ensureSchema(): SchemaRetrievalEvent
+    {
+        if ($this->schemaEvent === null) {
+            $event = new SchemaRetrievalEvent();
+            $event = $this->eventDispatcher->dispatch($event);
+            $this->schemaEvent = $event;
+        }
+
+        return $this->schemaEvent;
+    }
+
     public function getSchema(): array
     {
-        $event = new SchemaRetrievalEvent();
-        $event = $this->eventDispatcher->dispatch($event);
-
+        $event = $this->ensureSchema();
         $schema = $event->getSchema() ?? self::DEFAULT_SCHEMA;
         $now = (new \DateTimeImmutable(timezone: new \DateTimeZone('UTC')))->format(\DateTime::ATOM);
         $metadata['cabinet:createdAt'] = $now;
         $metadata['cabinet:schemaVersion'] = $event->getSchemaVersion();
         $schema['metadata'] = $metadata;
+        $schema['fields'][] = ['name' => 'partitionKey', 'type' => 'int32', 'optional' => false, 'facet' => false, 'sort' => false, 'range_index' => true];
 
         return $schema;
-    }
-
-    public function getSchemaFields(): array
-    {
-        $event = new SchemaRetrievalEvent();
-        $event = $this->eventDispatcher->dispatch($event);
-
-        return [$event->getSharedFields(), $event->getPersonIdField() ?? 'person.id', $event->getDocumentIdField() ?? 'document.id'];
     }
 
     /**
@@ -55,8 +57,7 @@ class DocumentTransformer
      */
     public function isSchemaOutdated(array $metadata): bool
     {
-        $event = new SchemaRetrievalEvent();
-        $event = $this->eventDispatcher->dispatch($event);
+        $event = $this->ensureSchema();
 
         return ($metadata['cabinet:schemaVersion'] ?? null) !== $event->getSchemaVersion();
     }
@@ -73,6 +74,14 @@ class DocumentTransformer
     }
 
     /**
+     * Returns a random number between 0-99 for a given ID.
+     */
+    public static function getPartitionKey(string $id): int
+    {
+        return abs(crc32($id)) % 100;
+    }
+
+    /**
      * Called with the complete/updated/merged document right before sending it to typesense.
      *
      * Allows users to modify/update fields one last time.
@@ -81,7 +90,30 @@ class DocumentTransformer
     {
         $event = new DocumentFinalizeEvent($document);
         $event = $this->eventDispatcher->dispatch($event);
+        $document = $event->getDocument();
+        $document['partitionKey'] = self::getPartitionKey(Utils::getField($document, $this->getPersonIdField()));
 
-        return $event->getDocument();
+        return $document;
+    }
+
+    public function getSharedFields(): array
+    {
+        $event = $this->ensureSchema();
+
+        return $event->getSharedFields();
+    }
+
+    public function getPersonIdField(): string
+    {
+        $event = $this->ensureSchema();
+
+        return $event->getPersonIdField() ?? 'person.id';
+    }
+
+    public function getDocumentIdField(): string
+    {
+        $event = $this->ensureSchema();
+
+        return $event->getDocumentIdField() ?? 'document.id';
     }
 }

@@ -111,19 +111,6 @@ class TypesenseClient implements LoggerAwareInterface
         }
     }
 
-    /**
-     * Given the syntax "foo.bar" will retrieve $document["foo"]["bar"].
-     */
-    public static function getField(array $document, string $field): string|array|null
-    {
-        $current = $document;
-        foreach (explode('.', $field) as $key) {
-            $current = $current[$key] ?? null;
-        }
-
-        return $current;
-    }
-
     public function getBaseMapping(string $collectionName, string $type, string $groupBy, array $includeFields)
     {
         if (preg_match('/\s/', $type) || preg_match('/\s/', $groupBy)) {
@@ -141,10 +128,10 @@ class TypesenseClient implements LoggerAwareInterface
         $mapping = [];
         foreach ($lines as $line) {
             $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
-            $id = self::getField($decoded, $groupBy);
+            $id = Utils::getField($decoded, $groupBy);
             $mapping[$id] = [];
             foreach ($includeFields as $include) {
-                $mapping[$id][$include] = self::getField($decoded, $include);
+                $mapping[$id][$include] = Utils::getField($decoded, $include);
             }
         }
 

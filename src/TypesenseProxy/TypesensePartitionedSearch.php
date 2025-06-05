@@ -328,7 +328,7 @@ class TypesensePartitionedSearch
             return [$request];
         }
 
-        $partitions = self::getPartitions('person.partitionKey', 100, $numPartitions);
+        $partitions = self::getPartitions('partitionKey', 100, $numPartitions);
         $newRequestObjects = [];
         foreach ($partitions as $partition) {
             $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);

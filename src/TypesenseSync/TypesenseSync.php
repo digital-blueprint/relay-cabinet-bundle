@@ -76,7 +76,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function getAllPersonIds(string $collectionName): array
     {
-        [, $personIdField] = $this->transformer->getSchemaFields();
+        $personIdField = $this->transformer->getPersonIdField();
 
         return array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField])));
     }
@@ -86,9 +86,10 @@ class TypesenseSync implements LoggerAwareInterface
         $this->logger->info('Syncing all blob files');
 
         $this->logger->info('Fetch mapping for base data');
-        [$sharedField, $personIdField] = $this->transformer->getSchemaFields();
+        $sharedFields = $this->transformer->getSharedFields();
+        $personIdField = $this->transformer->getPersonIdField();
         // First we get a mapping of the base ID to the base content for all Persons in typesense
-        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, $sharedField);
+        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, $sharedFields);
         $this->logger->debug('Base entries found: '.count($baseMapping));
 
         // Then we fetch all files from the blob bucket, transform it to the typsensese schema, and enrich it
@@ -100,7 +101,7 @@ class TypesenseSync implements LoggerAwareInterface
         $documentCount = 0;
         foreach ($fileDataList as $fileData) {
             foreach ($this->fileDataToPartialDocuments($fileData) as $transformed) {
-                $id = $this->searchIndex->getField($transformed, $personIdField);
+                $id = Utils::getField($transformed, $personIdField);
                 // XXX: If the related person isn't in typesense, we just ignore the file
                 if (!array_key_exists($id, $baseMapping)) {
                     if (!array_key_exists($id, $notFound)) {
@@ -125,12 +126,13 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function upsertFileData(string $collectionName, array $fileData): void
     {
-        [$sharedField, $personIdField] = $this->transformer->getSchemaFields();
+        $sharedFields = $this->transformer->getSharedFields();
+        $personIdField = $this->transformer->getPersonIdField();
         foreach ($this->fileDataToPartialDocuments($fileData) as $partialFileDocument) {
-            $blobFilePersonId = $this->searchIndex->getField($partialFileDocument, $personIdField);
+            $blobFilePersonId = Utils::getField($partialFileDocument, $personIdField);
             $results = $this->searchIndex->findDocuments($collectionName, 'Person', $personIdField, $blobFilePersonId);
             if ($results) {
-                foreach ($sharedField as $field) {
+                foreach ($sharedFields as $field) {
                     $partialFileDocument[$field] = $results[0][$field];
                 }
             } else {
@@ -147,7 +149,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function deleteFile(string $blobFileId): void
     {
-        [, , $documentIdField] = $this->transformer->getSchemaFields();
+        $documentIdField = $this->transformer->getDocumentIdField();
         $collectionName = $this->searchIndex->getCollectionName();
         $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $documentIdField, $blobFileId);
         foreach ($results as $result) {
@@ -235,10 +237,10 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function getUpdatedRelatedDocumentFiles(string $collectionName, array $personDocuments): array
     {
-        [, $personIdField] = $this->transformer->getSchemaFields();
+        $personIdField = $this->transformer->getPersonIdField();
         $updateDocuments = [];
         foreach ($personDocuments as $personDocument) {
-            $id = $this->searchIndex->getField($personDocument, $personIdField);
+            $id = Utils::getField($personDocument, $personIdField);
             $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $personIdField, $id);
             foreach ($relatedDocs as &$relatedDoc) {
                 foreach (self::SHARED_FIELDS as $field) {
