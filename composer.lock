@@ -2216,16 +2216,16 @@
         },
         {
             "name": "justinrainbow/json-schema",
-            "version": "6.4.1",
+            "version": "6.4.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/jsonrainbow/json-schema.git",
-                "reference": "35d262c94959571e8736db1e5c9bc36ab94ae900"
+                "reference": "ce1fd2d47799bb60668643bc6220f6278a4c1d02"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/jsonrainbow/json-schema/zipball/35d262c94959571e8736db1e5c9bc36ab94ae900",
-                "reference": "35d262c94959571e8736db1e5c9bc36ab94ae900",
+                "url": "https://api.github.com/repos/jsonrainbow/json-schema/zipball/ce1fd2d47799bb60668643bc6220f6278a4c1d02",
+                "reference": "ce1fd2d47799bb60668643bc6220f6278a4c1d02",
                 "shasum": ""
             },
             "require": {
@@ -2285,9 +2285,9 @@
             ],
             "support": {
                 "issues": "https://github.com/jsonrainbow/json-schema/issues",
-                "source": "https://github.com/jsonrainbow/json-schema/tree/6.4.1"
+                "source": "https://github.com/jsonrainbow/json-schema/tree/6.4.2"
             },
-            "time": "2025-04-04T13:08:07+00:00"
+            "time": "2025-06-03T18:27:04+00:00"
         },
         {
             "name": "kekos/multipart-form-data-parser",
@@ -12350,16 +12350,16 @@
         },
         {
             "name": "sebastianfeldmann/git",
-            "version": "3.14.2",
+            "version": "3.14.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/sebastianfeldmann/git.git",
-                "reference": "bc13c3bab8f67dee26352c94e23a4ee775d9d05b"
+                "reference": "22584df8df01d95b0700000cfd855779fae7d8ea"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/sebastianfeldmann/git/zipball/bc13c3bab8f67dee26352c94e23a4ee775d9d05b",
-                "reference": "bc13c3bab8f67dee26352c94e23a4ee775d9d05b",
+                "url": "https://api.github.com/repos/sebastianfeldmann/git/zipball/22584df8df01d95b0700000cfd855779fae7d8ea",
+                "reference": "22584df8df01d95b0700000cfd855779fae7d8ea",
                 "shasum": ""
             },
             "require": {
@@ -12400,7 +12400,7 @@
             ],
             "support": {
                 "issues": "https://github.com/sebastianfeldmann/git/issues",
-                "source": "https://github.com/sebastianfeldmann/git/tree/3.14.2"
+                "source": "https://github.com/sebastianfeldmann/git/tree/3.14.3"
             },
             "funding": [
                 {
@@ -12408,7 +12408,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2025-03-28T19:09:31+00:00"
+            "time": "2025-06-05T16:05:10+00:00"
         },
         {
             "name": "staabm/side-effects-detector",
