@@ -17,7 +17,7 @@ class TypesenseClient implements LoggerAwareInterface
 {
     use LoggerAwareTrait;
 
-    private const COLLECTION_PREFIX = 'cabinet';
+    private const COLLECTION_NAMESPACE = 'cabinet';
 
     private ConfigurationService $config;
     private TypesenseConnection $connection;
@@ -41,7 +41,7 @@ class TypesenseClient implements LoggerAwareInterface
 
     public function getAliasName(): string
     {
-        return self::COLLECTION_PREFIX;
+        return self::COLLECTION_NAMESPACE;
     }
 
     public function getConnectionBaseUrl(): string
@@ -49,15 +49,14 @@ class TypesenseClient implements LoggerAwareInterface
         return $this->connection->getBaseUrl();
     }
 
-    private function getCollectionPrefix(): string
-    {
-        return $this->getAliasName().'-';
-    }
-
-    public function createNewCollection(?array $schema = null): string
+    public function createNewCollection(?array $schema = null, ?string $name = null): string
     {
         // We are using a new collection name based on the alias name with the current date
-        $collectionName = $this->getCollectionPrefix().date('YmdHis').'-'.(new Ulid())->toBase32();
+        if ($name !== null) {
+            $collectionName = $name;
+        } else {
+            $collectionName = self::COLLECTION_NAMESPACE.'-'.date('YmdHis').'-'.(new Ulid())->toBase32();
+        }
         // Typesense requires a non-empty schema, so create one that auto-detects all fields
         if ($schema === null) {
             $schema = ['fields' => [['name' => '.*', 'type' => 'auto']]];
@@ -92,10 +91,10 @@ class TypesenseClient implements LoggerAwareInterface
         return $alias['collection_name'];
     }
 
-    public function needsSetup(): bool
+    public function needsSetup(string $alias): bool
     {
         // Either the alias doesn't exist, or the collection it references
-        return !$this->getClient()->collections[$this->getAliasName()]->exists();
+        return !$this->getClient()->collections[$alias]->exists();
     }
 
     public function addDocumentsToCollection(string $collectionName, array $documents): void
@@ -170,12 +169,11 @@ class TypesenseClient implements LoggerAwareInterface
         $this->getClient()->collections[$collectionName]->documents[$id]->delete();
     }
 
-    public function updateAlias(string $collectionName): void
+    public function updateAlias(string $collectionName, string $alias): void
     {
-        $aliasName = $this->getAliasName();
-        $this->logger->info("Updating '$aliasName' to point to '$collectionName'");
+        $this->logger->info("Updating '$alias' to point to '$collectionName'");
         // Create/Overwrite the alias with the new collection
-        $this->getClient()->aliases->upsert($aliasName, ['collection_name' => $collectionName]);
+        $this->getClient()->aliases->upsert($alias, ['collection_name' => $collectionName]);
     }
 
     public function clearSearchCache(): void
@@ -187,17 +185,18 @@ class TypesenseClient implements LoggerAwareInterface
 
     /**
      * Ensures the proxy API keys for the alias are registered and deletes outdated keys.
+     *
+     * @param string[] $aliases - the aliases the key has access to
      */
-    public function updateProxyApiKeys(): void
+    public function updateProxyApiKeys(array $aliases): void
     {
-        $aliasName = $this->getAliasName();
         $schemas = [
             [
                 'description' => $this->config->getTypesenseProxyApiKey(),
                 'actions' => [
                     'documents:search',
                 ],
-                'collections' => [$aliasName],
+                'collections' => $aliases,
                 'value' => $this->config->getTypesenseProxyApiKey(),
             ],
         ];
@@ -220,8 +219,10 @@ class TypesenseClient implements LoggerAwareInterface
         // All keys that are for our alias
         $aliasKeys = [];
         foreach ($keys['keys'] as $key) {
-            if (in_array($aliasName, $key['collections'], true)) {
-                $aliasKeys[] = $key;
+            foreach ($aliases as $aliasName) {
+                if (in_array($aliasName, $key['collections'], true)) {
+                    $aliasKeys[] = $key;
+                }
             }
         }
 
@@ -270,23 +271,18 @@ class TypesenseClient implements LoggerAwareInterface
     }
 
     /**
-     * Delete all collections that are no longer actively used.
+     * Delete all collections that are no longer actively used and all aliases that referenced them.
      */
-    public function deleteOldCollections(): void
+    public function deleteOldCollections(array $collectionsToSkip): void
     {
         $client = $this->getClient();
-        $collectionNameSkipList = [];
-
-        // Don't delete the currently linked collection in all cases
-        $alias = $client->aliases[$this->getAliasName()]->retrieve();
-        $collectionNameSkipList[] = $alias['collection_name'];
 
         // Collect all collections with the given prefix that are not in the skip list
         $collections = $client->collections->retrieve();
         $collectionNameList = [];
         foreach ($collections as $collection) {
-            if (str_starts_with($collection['name'], $this->getCollectionPrefix())
-                && !in_array($collection['name'], $collectionNameSkipList, true)) {
+            if (str_starts_with($collection['name'], self::COLLECTION_NAMESPACE.'-')
+                && !in_array($collection['name'], $collectionsToSkip, true)) {
                 $collectionNameList[] = $collection['name'];
             }
         }
@@ -295,6 +291,17 @@ class TypesenseClient implements LoggerAwareInterface
         foreach ($collectionNameList as $collectionName) {
             $this->logger->info("Deleting old collection '$collectionName'");
             $client->collections[$collectionName]->delete();
+        }
+
+        // Delete tangling aliases
+        $aliases = $client->aliases->retrieve()['aliases'];
+        foreach ($aliases as $alias) {
+            $aliasName = $alias['name'];
+            if ($aliasName === self::COLLECTION_NAMESPACE || str_starts_with($aliasName, self::COLLECTION_NAMESPACE.'-')) {
+                if (!$client->collections[$aliasName]->exists()) {
+                    $client->aliases[$aliasName]->delete();
+                }
+            }
         }
     }
 

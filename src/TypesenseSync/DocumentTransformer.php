@@ -70,7 +70,12 @@ class DocumentTransformer
         $event = new DocumentTransformEvent($objectType, $document);
         $event = $this->eventDispatcher->dispatch($event);
 
-        return $event->getTransformedDocuments() ?? [$document];
+        $documents = $event->getTransformedDocuments() ?? [$document];
+        foreach ($documents as &$doc) {
+            $doc['partitionKey'] = self::getPartitionKey(Utils::getField($doc, $this->getPersonIdField()));
+        }
+
+        return $documents;
     }
 
     /**
@@ -90,10 +95,8 @@ class DocumentTransformer
     {
         $event = new DocumentFinalizeEvent($document);
         $event = $this->eventDispatcher->dispatch($event);
-        $document = $event->getDocument();
-        $document['partitionKey'] = self::getPartitionKey(Utils::getField($document, $this->getPersonIdField()));
 
-        return $document;
+        return $event->getDocument();
     }
 
     public function getSharedFields(): array

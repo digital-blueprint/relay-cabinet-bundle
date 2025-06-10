@@ -228,19 +228,19 @@ class TypesensePartitionedSearchTest extends TestCase
 
     public function testBasicPartitioning(): void
     {
-        $result = TypesensePartitionedSearch::getPartitions('partition_field', 10, 2);
+        $result = TypesensePartitionedSearch::getPartitionsFilter('partition_field', 10, 2);
         $this->assertCount(2, $result);
-        $this->assertEquals('partition_field: [0..4]', $result[0]);
-        $this->assertEquals('partition_field: [5..9]', $result[1]);
+        $this->assertEquals('partition_field: [0..4]', $result[0]['filter_by']);
+        $this->assertEquals('partition_field: [5..9]', $result[1]['filter_by']);
 
-        $result = TypesensePartitionedSearch::getPartitions('partition_field', 10, 1);
+        $result = TypesensePartitionedSearch::getPartitionsFilter('partition_field', 10, 1);
         $this->assertCount(1, $result);
-        $this->assertEquals('partition_field: [0..9]', $result[0]);
+        $this->assertEquals('partition_field: [0..9]', $result[0]['filter_by']);
     }
 
     public function testMergeResults(): void
     {
-        $minimal = (object) ['hits' => [], 'found' => 0, 'facet_counts' => [], 'search_time_ms' => 0, 'search_cutoff' => false, 'request_params' => (object) [], 'page' => 1, 'out_of' => 42];
+        $minimal = (object) ['hits' => [], 'found' => 0, 'facet_counts' => [], 'search_time_ms' => 0, 'search_cutoff' => false, 'request_params' => (object) ['collection_name' => 'foo'], 'page' => 1, 'out_of' => 42];
         $res = TypesensePartitionedSearch::mergeResults($minimal, $minimal);
         $this->assertSame([], $res->hits);
     }

@@ -163,7 +163,11 @@ class TypesensePartitionedSearch
         $newResult = new \stdClass();
         $newResult->facet_counts = self::mergeFaceCounts($result1->facet_counts, $result2->facet_counts);
         $newResult->found = $result1->found + $result2->found;
-        $newResult->out_of = $result1->out_of;
+        if ($result1->request_params->collection_name === $result2->request_params->collection_name) {
+            $newResult->out_of = $result1->out_of;
+        } else {
+            $newResult->out_of = $result1->out_of + $result2->out_of;
+        }
         $newResult->page = $result1->page;
         $newResult->request_params = $result1->request_params;
         $newResult->search_cutoff = $result1->search_cutoff || $result2->search_cutoff;
@@ -185,10 +189,8 @@ class TypesensePartitionedSearch
 
     /**
      * Returns typesense range queries for partitioning based ona key that goes from 0 to $totalPartitions - 1.
-     *
-     * @return string[]
      */
-    public static function getPartitions(string $partitionKey, int $totalPartitions, int $numPartitions): array
+    public static function getPartitionsFilter(string $partitionKey, int $totalPartitions, int $numPartitions): array
     {
         if ($totalPartitions < $numPartitions || $totalPartitions < 1 || $numPartitions < 1) {
             throw new \RuntimeException('Invalid partitioning');
@@ -200,7 +202,7 @@ class TypesensePartitionedSearch
             $rangeStart = $i * $perPartition;
             $rangeEnd = min($rangeStart + $perPartition - 1, $totalPartitions - 1);
 
-            $partitions[] = "$partitionKey: [$rangeStart..$rangeEnd]";
+            $partitions[] = ['filter_by' => "$partitionKey: [$rangeStart..$rangeEnd]"];
         }
 
         return $partitions;
@@ -318,13 +320,23 @@ class TypesensePartitionedSearch
      *   * The hits sorting only supports some parts of the typesense syntax (could be improved)
      *   * The hits are limited to 250 * partitions entries (could be improved)
      */
-    public static function splitJsonRequest(string $request, int $numPartitions, bool $sameRequest = false): array
+    public static function splitJsonRequest(string $request, int $numPartitions, bool $sameRequest = false, bool $sameCollection = true): array
     {
-        $adjustSearch = function (&$search, $partition) {
-            if ($search->filter_by) {
-                $search->filter_by .= ' && '.$partition;
+        $adjustSearchForPartition = function (&$search, int $index) use ($numPartitions, $sameCollection) {
+            if ($sameCollection) {
+                $partitions = self::getPartitionsFilter('partitionKey', 100, $numPartitions);
+                $partition = $partitions[$index];
+                if ($search->filter_by) {
+                    $search->filter_by .= ' && '.$partition['filter_by'];
+                } else {
+                    $search->filter_by = $partition['filter_by'];
+                }
             } else {
-                $search = $partition;
+                $alias = $search->collection;
+                if ($index > 0) {
+                    $alias .= '-'.$index;
+                }
+                $search->collection = $alias;
             }
 
             // facet only searches don't require responses
@@ -342,9 +354,8 @@ class TypesensePartitionedSearch
         }
 
         if ($sameRequest) {
-            $partitions = self::getPartitions('partitionKey', 100, $numPartitions);
             $newRequestObject = ['searches' => []];
-            foreach ($partitions as $partition) {
+            for ($i = 0; $i < $numPartitions; ++$i) {
                 $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
                 $isMulti = is_array($requestObj->searches ?? null);
                 if (!$isMulti) {
@@ -353,7 +364,7 @@ class TypesensePartitionedSearch
                     $requestObj = $newMulti;
                 }
                 foreach ($requestObj->searches as &$search) {
-                    $adjustSearch($search, $partition);
+                    $adjustSearchForPartition($search, $i);
                     $newRequestObject['searches'][] = $search;
                 }
             }
@@ -361,9 +372,8 @@ class TypesensePartitionedSearch
             return [json_encode($newRequestObject)];
         }
 
-        $partitions = self::getPartitions('partitionKey', 100, $numPartitions);
         $newRequestObjects = [];
-        foreach ($partitions as $partition) {
+        for ($i = 0; $i < $numPartitions; ++$i) {
             $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
             $isMulti = is_array($requestObj->searches ?? null);
             // Convert everything to a multi search, to simplify things
@@ -373,7 +383,7 @@ class TypesensePartitionedSearch
                 $requestObj = $newMulti;
             }
             foreach ($requestObj->searches as &$search) {
-                $adjustSearch($search, $partition);
+                $adjustSearchForPartition($search, $i);
             }
             $newRequestObjects[] = $requestObj;
         }

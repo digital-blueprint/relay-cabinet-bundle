@@ -7,6 +7,7 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 use Dbp\Relay\BlobLibrary\Api\BlobFile;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
+use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
@@ -25,14 +26,16 @@ class TypesenseSync implements LoggerAwareInterface
     private const CHUNK_SIZE = 10000;
 
     private const SHARED_FIELDS = ['person'];
+    private ConfigurationService $config;
 
-    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService)
+    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService, ConfigurationService $config)
     {
         $this->searchIndex = $searchIndex;
         $this->personSync = $personSync;
         $this->logger = new NullLogger();
         $this->transformer = $transformer;
         $this->blobService = $blobService;
+        $this->config = $config;
     }
 
     public function getConnectionBaseUrl(): string
@@ -40,61 +43,81 @@ class TypesenseSync implements LoggerAwareInterface
         return $this->searchIndex->getConnectionBaseUrl();
     }
 
-    private function getCursor(string $collectionName): ?string
+    private function getCursor(string $primaryCollectionName): ?string
     {
-        $metadata = $this->searchIndex->getCollectionMetadata($collectionName);
+        $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
 
         return $metadata['cabinet:syncCursor'] ?? null;
     }
 
-    private function addDocumentsToCollection(string $collectionName, array $documents): void
+    private function addDocuments(string $primaryCollectionName, array $documents): void
     {
+        $groups = [];
         foreach ($documents as &$document) {
             $document = $this->transformer->finalizeDocument($document);
+            $name = $this->getCollectionNameForDocument($primaryCollectionName, $document);
+            $groups[$name][] = $document;
         }
 
-        $this->searchIndex->addDocumentsToCollection($collectionName, $documents);
+        foreach ($groups as $collectionName => $docs) {
+            $this->searchIndex->addDocumentsToCollection($collectionName, $docs);
+        }
     }
 
     /**
      * Sync all files from blob into typesense. Needs to be called after all persons have already been synced.
      */
-    public function upsertAllFiles(string $collectionName): void
+    public function upsertAllFiles(string $primaryCollectionName): void
     {
         $this->logger->info('Syncing all blob files');
         $blobFileIterable = $this->blobService->getAllFiles();
-        $this->upsertMultipleBlobFiles($collectionName, $blobFileIterable);
+        $this->upsertMultipleBlobFiles($primaryCollectionName, $blobFileIterable);
         $this->searchIndex->clearSearchCache();
     }
 
     public function upsertFile(string $blobFileId): void
     {
         $blobFile = $this->blobService->getFile($blobFileId);
-        $collectionName = $this->searchIndex->getCollectionName();
-        $this->upsertBlobFile($collectionName, $blobFile);
+        $primaryCollectionName = $this->searchIndex->getCollectionName();
+        $this->upsertBlobFile($primaryCollectionName, $blobFile);
         $this->searchIndex->clearSearchCache();
     }
 
-    public function getAllPersonIds(string $collectionName): array
+    public function getAllPersonIds(string $primaryCollectionName): array
     {
         $personIdField = $this->transformer->getPersonIdField();
+        $ids = [];
+        foreach ($this->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+            $ids = array_merge($ids, array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField]))));
+        }
 
-        return array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField])));
+        return $ids;
+    }
+
+    public function getSharedFieldData(string $primaryCollectionName)
+    {
+        $sharedFields = $this->transformer->getSharedFields();
+        $personIdField = $this->transformer->getPersonIdField();
+        $baseMapping = [];
+        foreach ($this->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+            $baseMapping = array_replace($baseMapping, $this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, $sharedFields));
+        }
+
+        return $baseMapping;
     }
 
     /**
      * @param iterable<BlobFile> $blobFiles
      */
-    public function upsertMultipleBlobFiles(string $collectionName, iterable $blobFiles): void
+    public function upsertMultipleBlobFiles(string $primaryCollectionName, iterable $blobFiles): void
     {
         $this->logger->info('Syncing all blob files');
 
         $this->logger->info('Fetch mapping for base data');
-        $sharedFields = $this->transformer->getSharedFields();
         $personIdField = $this->transformer->getPersonIdField();
         // First we get a mapping of the base ID to the base content for all Persons in typesense
-        $baseMapping = $this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, $sharedFields);
-        $this->logger->debug('Base entries found: '.count($baseMapping));
+        $sharedFieldData = $this->getSharedFieldData($primaryCollectionName);
+        $this->logger->debug('Base entries found: '.count($sharedFieldData));
 
         // Then we fetch all files from the blob bucket, transform it to the typsensese schema, and enrich it
         // with the base data of the persons from the mapping above.
@@ -107,33 +130,34 @@ class TypesenseSync implements LoggerAwareInterface
             foreach ($this->blobFileToPartialDocuments($blobFile) as $transformed) {
                 $id = Utils::getField($transformed, $personIdField);
                 // XXX: If the related person isn't in typesense, we just ignore the file
-                if (!array_key_exists($id, $baseMapping)) {
-                    if (!array_key_exists($id, $notFound)) {
+                if (!isset($sharedFieldData[$id])) {
+                    if (!isset($notFound[$id])) {
                         $this->logger->warning('For file '.$blobFile->getIdentifier().' (and possibly more) with baseId "'.$id.'" no matching base data found, skipping');
-                        $notFound[$id] = null;
+                        $notFound[$id] = true;
                     }
                     continue;
                 }
-                $transformed = array_merge($transformed, $baseMapping[$id]);
+                $transformed = array_merge($transformed, $sharedFieldData[$id]);
                 $newDocuments[] = $transformed;
                 ++$documentCount;
                 if (count($newDocuments) > self::CHUNK_SIZE) {
-                    $this->addDocumentsToCollection($collectionName, $newDocuments);
+                    $this->addDocuments($primaryCollectionName, $newDocuments);
                     $newDocuments = [];
                 }
             }
         }
-        $this->addDocumentsToCollection($collectionName, $newDocuments);
+        $this->addDocuments($primaryCollectionName, $newDocuments);
         $this->logger->info('Upserted '.$documentCount.' file documents into typesense');
         $this->searchIndex->clearSearchCache();
     }
 
-    public function upsertBlobFile(string $collectionName, BlobFile $blobFile): void
+    public function upsertBlobFile(string $primaryCollectionName, BlobFile $blobFile): void
     {
         $sharedFields = $this->transformer->getSharedFields();
         $personIdField = $this->transformer->getPersonIdField();
         foreach ($this->blobFileToPartialDocuments($blobFile) as $partialFileDocument) {
             $blobFilePersonId = Utils::getField($partialFileDocument, $personIdField);
+            $collectionName = $this->getCollectionNameForDocument($primaryCollectionName, $partialFileDocument);
             $results = $this->searchIndex->findDocuments($collectionName, 'Person', $personIdField, $blobFilePersonId);
             if ($results) {
                 foreach ($sharedFields as $field) {
@@ -146,7 +170,7 @@ class TypesenseSync implements LoggerAwareInterface
 
                 return;
             }
-            $this->addDocumentsToCollection($collectionName, [$partialFileDocument]);
+            $this->addDocuments($primaryCollectionName, [$partialFileDocument]);
         }
         $this->searchIndex->clearSearchCache();
     }
@@ -154,30 +178,32 @@ class TypesenseSync implements LoggerAwareInterface
     public function deleteFile(string $blobFileId): void
     {
         $documentIdField = $this->transformer->getDocumentIdField();
-        $collectionName = $this->searchIndex->getCollectionName();
-        $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $documentIdField, $blobFileId);
-        foreach ($results as $result) {
-            $typesenseId = $result['id'];
-            $this->searchIndex->deleteDocument($collectionName, $typesenseId);
+        $primaryCollectionName = $this->searchIndex->getCollectionName();
+        foreach ($this->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+            $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $documentIdField, $blobFileId);
+            foreach ($results as $result) {
+                $typesenseId = $result['id'];
+                $this->searchIndex->deleteDocument($collectionName, $typesenseId);
+            }
         }
         $this->searchIndex->clearSearchCache();
     }
 
-    private function saveCursor(string $collectionName, ?string $cursor): void
+    private function saveCursor(string $primaryCollectionName, ?string $cursor): void
     {
-        $metadata = $this->searchIndex->getCollectionMetadata($collectionName);
+        $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
         $metadata['cabinet:syncCursor'] = $cursor;
         $now = (new \DateTimeImmutable(timezone: new \DateTimeZone('UTC')))->format(\DateTime::ATOM);
         $metadata['cabinet:updatedAt'] = $now;
-        $this->searchIndex->setCollectionMetadata($collectionName, $metadata);
+        $this->searchIndex->setCollectionMetadata($primaryCollectionName, $metadata);
     }
 
     public function syncFull()
     {
         $this->logger->info('Starting a full sync');
         $schema = $this->transformer->getSchema();
-        $this->searchIndex->deleteOldCollections();
-        $collectionName = $this->searchIndex->createNewCollection($schema);
+        $this->deleteOldCollections();
+        $primaryCollectionName = $this->createNewCollections($schema);
 
         $res = $this->personSync->getAllPersons();
         foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
@@ -187,16 +213,53 @@ class TypesenseSync implements LoggerAwareInterface
                     $documents[] = $document;
                 }
             }
-            $this->addDocumentsToCollection($collectionName, $documents);
+            $this->addDocuments($primaryCollectionName, $documents);
         }
 
-        $this->upsertAllFiles($collectionName);
+        $this->upsertAllFiles($primaryCollectionName);
+        $this->updateAliases($primaryCollectionName);
+        $this->deleteOldCollections();
 
-        $this->searchIndex->updateAlias($collectionName);
-        $this->searchIndex->deleteOldCollections();
-
-        $this->saveCursor($collectionName, $res->getCursor());
+        $this->saveCursor($primaryCollectionName, $res->getCursor());
         $this->searchIndex->clearSearchCache();
+    }
+
+    public function deleteOldCollections(): void
+    {
+        $primaryCollectionName = $this->searchIndex->getCollectionName();
+        $this->searchIndex->deleteOldCollections($this->getAllCollectionNames($primaryCollectionName));
+    }
+
+    public function createNewCollections(array $schema)
+    {
+        $primaryCollectionName = $this->searchIndex->createNewCollection($schema);
+        foreach ($this->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+            if ($primaryCollectionName === $collectionName) {
+                continue;
+            }
+            $this->searchIndex->createNewCollection($schema, $collectionName);
+        }
+
+        return $primaryCollectionName;
+    }
+
+    public function updateAliases(string $primaryCollectionName)
+    {
+        $mapping = array_combine($this->getAllAliases(), $this->getAllCollectionNames($primaryCollectionName));
+        foreach ($mapping as $alias => $collectionName) {
+            $this->searchIndex->updateAlias($collectionName, $alias);
+        }
+    }
+
+    public function needsSetup(): bool
+    {
+        foreach ($this->getAllAliases() as $alias) {
+            if ($this->searchIndex->needsSetup($alias)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -205,29 +268,27 @@ class TypesenseSync implements LoggerAwareInterface
     public function ensureSetup(): void
     {
         $this->logger->info('Running setup');
-        if ($this->searchIndex->needsSetup()) {
+        if ($this->needsSetup()) {
             $this->logger->info('No alias or collection found, re-creating empty collection and alias');
             $schema = $this->transformer->getSchema();
-            $newName = $this->searchIndex->createNewCollection($schema);
-            $this->searchIndex->updateAlias($newName);
-            $this->searchIndex->deleteOldCollections();
+            $primaryCollectionName = $this->createNewCollections($schema);
+            $this->updateAliases($primaryCollectionName);
         }
-
-        $this->searchIndex->updateProxyApiKeys();
+        $this->searchIndex->updateProxyApiKeys($this->getAllAliases());
     }
 
     public function sync(bool $full = false)
     {
         $this->ensureSetup();
-        $collectionName = $this->searchIndex->getCollectionName();
-        $cursor = $this->getCursor($collectionName);
+        $primaryCollectionName = $this->searchIndex->getCollectionName();
+        $cursor = $this->getCursor($primaryCollectionName);
 
         if ($full || $cursor === null) {
             $this->syncFull();
         } else {
             $this->logger->info('Starting a partial sync');
 
-            $metadata = $this->searchIndex->getCollectionMetadata($collectionName);
+            $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
             $outdated = $this->transformer->isSchemaOutdated($metadata);
             if ($outdated) {
                 $this->logger->info('Schema is outdated, falling back to a full sync');
@@ -244,24 +305,87 @@ class TypesenseSync implements LoggerAwareInterface
                         $documents[] = $document;
                     }
                 }
-                $this->addDocumentsToCollection($collectionName, $documents);
+                $this->addDocuments($primaryCollectionName, $documents);
 
                 // Also update the base data of all related DocumentFiles
-                $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
-                $this->addDocumentsToCollection($collectionName, $relatedDocs);
+                $relatedDocs = $this->getUpdatedRelatedDocumentFiles($primaryCollectionName, $documents);
+                $this->addDocuments($primaryCollectionName, $relatedDocs);
             }
 
-            $this->saveCursor($collectionName, $res->getCursor());
+            $this->saveCursor($primaryCollectionName, $res->getCursor());
             $this->searchIndex->clearSearchCache();
         }
     }
 
-    public function getUpdatedRelatedDocumentFiles(string $collectionName, array $personDocuments): array
+    public function getCollectionNameForDocument(string $primaryCollectionName, array $document)
+    {
+        if ($this->config->getTypesenseSearchPartitionsSplitCollection()) {
+            $partitionKey = $document['partitionKey'];
+            $index = Utils::getPartitionIndex($this->config->getTypesenseSearchPartitions(), $partitionKey, 100);
+            if ($index === 0) {
+                $name = $primaryCollectionName;
+            } else {
+                $name = $primaryCollectionName.'-'.$index;
+            }
+
+            return $name;
+        } else {
+            return $primaryCollectionName;
+        }
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getAllAliases(): array
+    {
+        $primaryAlias = $this->searchIndex->getAliasName();
+        $aliases = [];
+        if ($this->config->getTypesenseSearchPartitionsSplitCollection()) {
+            for ($index = 0; $index < $this->config->getTypesenseSearchPartitions(); ++$index) {
+                if ($index === 0) {
+                    $aliases[] = $primaryAlias;
+                } else {
+                    $aliases[] = $primaryAlias.'-'.$index;
+                }
+            }
+        } else {
+            $aliases[] = $primaryAlias;
+        }
+
+        return $aliases;
+    }
+
+    /**
+     * Returns all possible collection names for a primary name.
+     *
+     * @return string[]
+     */
+    public function getAllCollectionNames(string $primaryCollectionName): array
+    {
+        $names = [];
+        if ($this->config->getTypesenseSearchPartitionsSplitCollection()) {
+            for ($index = 0; $index < $this->config->getTypesenseSearchPartitions(); ++$index) {
+                if ($index === 0) {
+                    $names[] = $primaryCollectionName;
+                } else {
+                    $names[] = $primaryCollectionName.'-'.$index;
+                }
+            }
+        } else {
+            $names[] = $primaryCollectionName;
+        }
+
+        return $names;
+    }
+
+    public function getUpdatedRelatedDocumentFiles(string $primaryCollectionName, array $personDocuments): array
     {
         $personIdField = $this->transformer->getPersonIdField();
         $updateDocuments = [];
         foreach ($personDocuments as $personDocument) {
             $id = Utils::getField($personDocument, $personIdField);
+            $collectionName = $this->getCollectionNameForDocument($primaryCollectionName, $personDocument);
             $relatedDocs = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $personIdField, $id);
             foreach ($relatedDocs as &$relatedDoc) {
                 foreach (self::SHARED_FIELDS as $field) {
@@ -277,8 +401,8 @@ class TypesenseSync implements LoggerAwareInterface
     public function syncOne(string $id)
     {
         $this->logger->info('Syncing one person: '.$id);
-        $collectionName = $this->searchIndex->getCollectionName();
-        $cursor = $this->getCursor($collectionName);
+        $primaryCollectionName = $this->searchIndex->getCollectionName();
+        $cursor = $this->getCursor($primaryCollectionName);
         $res = $this->personSync->getPersons([$id], $cursor);
         if ($res->getPersons() === []) {
             throw new NotFoundHttpException('Unkown person: '.$id);
@@ -289,13 +413,13 @@ class TypesenseSync implements LoggerAwareInterface
                 $documents[] = $document;
             }
         }
-        $this->addDocumentsToCollection($collectionName, $documents);
+        $this->addDocuments($primaryCollectionName, $documents);
 
         // Also update the base data of all related DocumentFiles
-        $relatedDocs = $this->getUpdatedRelatedDocumentFiles($collectionName, $documents);
-        $this->addDocumentsToCollection($collectionName, $relatedDocs);
+        $relatedDocs = $this->getUpdatedRelatedDocumentFiles($primaryCollectionName, $documents);
+        $this->addDocuments($primaryCollectionName, $relatedDocs);
 
-        $this->saveCursor($collectionName, $res->getCursor());
+        $this->saveCursor($primaryCollectionName, $res->getCursor());
         $this->searchIndex->clearSearchCache();
     }
 
