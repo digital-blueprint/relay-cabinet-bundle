@@ -279,7 +279,7 @@ class TypesensePartitionedSearchTest extends TestCase
         $this->assertStringContainsString('partitionKey: [0..49]', $split[0]);
         $this->assertStringContainsString('partitionKey: [50..99]', $split[1]);
 
-        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, ['{"results":[]}',  '{"results":[]}']);
+        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, ['{"results":[]}',  '{"results":[]}'], 2);
         $this->assertSame('{"results":[]}', $merged);
 
         $response = '{
@@ -331,7 +331,7 @@ class TypesensePartitionedSearchTest extends TestCase
     ]
 }';
 
-        $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response]), flags: JSON_THROW_ON_ERROR);
+        $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2), flags: JSON_THROW_ON_ERROR);
         $this->assertCount(1, $merged->results[0]->facet_counts);
         $this->assertSame(10024, $merged->results[0]->found_docs);
         $this->assertSame(6344, $merged->results[0]->found);
@@ -394,7 +394,7 @@ class TypesensePartitionedSearchTest extends TestCase
     ]
 }]}';
 
-        $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response]), flags: JSON_THROW_ON_ERROR);
+        $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2), flags: JSON_THROW_ON_ERROR);
         $this->assertCount(1, $merged->facet_counts);
         $this->assertSame(6344, $merged->found);
         $this->assertCount(2, $merged->hits);

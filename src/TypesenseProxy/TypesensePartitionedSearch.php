@@ -209,9 +209,9 @@ class TypesensePartitionedSearch
     /**
      * Merges one or more partitioned search responses into one.
      */
-    public static function mergeJsonResponses(string $request, array $jsonResponses): string
+    public static function mergeJsonResponses(string $request, array $jsonResponses, int $numPartitions, bool $sameRequest = false): string
     {
-        if (count($jsonResponses) === 1) {
+        if ($numPartitions === 1) {
             return $jsonResponses[0];
         }
         if (count($jsonResponses) === 0) {
@@ -256,6 +256,20 @@ class TypesensePartitionedSearch
         $responseObjects = [];
         foreach ($jsonResponses as $response) {
             $responseObjects[] = json_decode($response, flags: JSON_THROW_ON_ERROR);
+        }
+
+        if ($sameRequest) {
+            if (count($responseObjects) !== 1) {
+                throw new \RuntimeException('expected only one response');
+            }
+            $singleResponse = $responseObjects[0];
+            $resultsPerPartition = count($singleResponse->results) / $numPartitions;
+            $responseObjects = [];
+            foreach (array_chunk($singleResponse->results, $resultsPerPartition) as $chunk) {
+                $chunkResponse = (object) [];
+                $chunkResponse->results = $chunk;
+                $responseObjects[] = $chunkResponse;
+            }
         }
 
         $newResponse = new \stdClass();
@@ -304,7 +318,7 @@ class TypesensePartitionedSearch
      *   * The hits sorting only supports some parts of the typesense syntax (could be improved)
      *   * The hits are limited to 250 * partitions entries (could be improved)
      */
-    public static function splitJsonRequest(string $request, int $numPartitions): array
+    public static function splitJsonRequest(string $request, int $numPartitions, bool $sameRequest = false): array
     {
         $adjustSearch = function (&$search, $partition) {
             if ($search->filter_by) {
@@ -325,6 +339,26 @@ class TypesensePartitionedSearch
 
         if ($numPartitions === 1) {
             return [$request];
+        }
+
+        if ($sameRequest) {
+            $partitions = self::getPartitions('partitionKey', 100, $numPartitions);
+            $newRequestObject = ['searches' => []];
+            foreach ($partitions as $partition) {
+                $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
+                $isMulti = is_array($requestObj->searches ?? null);
+                if (!$isMulti) {
+                    $newMulti = (object) [];
+                    $newMulti->searches = [$requestObj];
+                    $requestObj = $newMulti;
+                }
+                foreach ($requestObj->searches as &$search) {
+                    $adjustSearch($search, $partition);
+                    $newRequestObject['searches'][] = $search;
+                }
+            }
+
+            return [json_encode($newRequestObject)];
         }
 
         $partitions = self::getPartitions('partitionKey', 100, $numPartitions);

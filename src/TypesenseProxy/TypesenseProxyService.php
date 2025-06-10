@@ -67,9 +67,11 @@ class TypesenseProxyService implements LoggerAwareInterface
         $queryParams['x-typesense-api-key'] = $proxyKey;
 
         $requestContent = $request->getContent();
+        $partitions = $this->config->getTypesenseSearchPartitions();
+        $sameRequest = false;
 
         if ($isSearch) {
-            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $this->config->getTypesenseSearchPartitions());
+            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameRequest);
             $responses = [];
             foreach ($partitionRequestContents as $partitionRequestContent) {
                 $responses[] = $this->client->request($method, $url, [
@@ -108,7 +110,7 @@ class TypesenseProxyService implements LoggerAwareInterface
             if ($failContent !== null) {
                 return new Response($failContent, $status, $headers);
             } else {
-                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents), $status, $headers);
+                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions, $sameRequest), $status, $headers);
             }
         } else {
             // not a search, just pass through
