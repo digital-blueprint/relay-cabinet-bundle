@@ -184,7 +184,7 @@ class TypesensePartitionedSearch
     }
 
     /**
-     * Returns typesense range queries for partitioning based ona key that goes from 0 to $totalPartitions.
+     * Returns typesense range queries for partitioning based ona key that goes from 0 to $totalPartitions - 1.
      *
      * @return string[]
      */
