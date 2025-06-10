@@ -68,10 +68,11 @@ class TypesenseProxyService implements LoggerAwareInterface
 
         $requestContent = $request->getContent();
         $partitions = $this->config->getTypesenseSearchPartitions();
-        $sameRequest = false;
+        $sameRequest = false; // experimental
+        $sameCollection = !$this->config->getTypesenseSearchPartitionsSplitCollection();
 
         if ($isSearch) {
-            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameRequest);
+            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameRequest, $sameCollection);
             $responses = [];
             foreach ($partitionRequestContents as $partitionRequestContent) {
                 $responses[] = $this->client->request($method, $url, [
@@ -113,6 +114,9 @@ class TypesenseProxyService implements LoggerAwareInterface
                 return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions, $sameRequest), $status, $headers);
             }
         } else {
+            if (!$sameCollection) {
+                throw new \RuntimeException('Not supported');
+            }
             // not a search, just pass through
             $response = $this->client->request($method, $url, [
                 'headers' => [

@@ -37,6 +37,11 @@ class ConfigurationService
         return $this->config['typesense']['search_partitions'];
     }
 
+    public function getTypesenseSearchPartitionsSplitCollection(): bool
+    {
+        return $this->config['typesense']['search_partitions_split_collection'];
+    }
+
     public function getTypesenseSearchCacheTtl(): int
     {
         return $this->config['typesense']['search_cache_ttl'];
