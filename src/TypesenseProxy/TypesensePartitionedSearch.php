@@ -251,40 +251,20 @@ class TypesensePartitionedSearch
         };
 
         $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
-        $isMulti = is_array($requestObj->searches ?? null);
+        $wasMulti = is_array($requestObj->searches ?? null);
 
         $responseObjects = [];
         foreach ($jsonResponses as $response) {
             $responseObjects[] = json_decode($response, flags: JSON_THROW_ON_ERROR);
         }
 
-        if ($isMulti) {
-            $newResponse = new \stdClass();
-            $mergedResults = [];
-            $searchCount = count($responseObjects[0]->results);
-            for ($i = 0; $i < $searchCount; ++$i) {
-                $newResult = null;
-                foreach ($responseObjects as $d) {
-                    $result = $d->results[$i];
-                    if ($newResult === null) {
-                        $newResult = $result;
-                    } else {
-                        $newResult = self::mergeResults($newResult, $result);
-                    }
-                }
-
-                $search = $requestObj->searches[$i];
-                $adjustResult($search, $newResult);
-
-                $mergedResults[] = $newResult;
-            }
-            $newResponse->results = $mergedResults;
-
-            return json_encode($newResponse);
-        } else {
+        $newResponse = new \stdClass();
+        $mergedResults = [];
+        $searchCount = count($responseObjects[0]->results);
+        for ($i = 0; $i < $searchCount; ++$i) {
             $newResult = null;
-            $search = $requestObj;
-            foreach ($responseObjects as $result) {
+            foreach ($responseObjects as $d) {
+                $result = $d->results[$i];
                 if ($newResult === null) {
                     $newResult = $result;
                 } else {
@@ -292,10 +272,26 @@ class TypesensePartitionedSearch
                 }
             }
 
+            if ($wasMulti) {
+                $search = $requestObj->searches[$i];
+            } else {
+                $search = $requestObj;
+            }
             $adjustResult($search, $newResult);
 
-            return json_encode($newResult);
+            $mergedResults[] = $newResult;
         }
+        $newResponse->results = $mergedResults;
+
+        // If it was a non-multi search, convert it back
+        if (!$wasMulti) {
+            if (count($mergedResults) !== 1) {
+                throw new \RuntimeException('Unexpected results count for a non-multi search');
+            }
+            $newResponse = $mergedResults[0];
+        }
+
+        return json_encode($newResponse);
     }
 
     /**
@@ -336,12 +332,14 @@ class TypesensePartitionedSearch
         foreach ($partitions as $partition) {
             $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
             $isMulti = is_array($requestObj->searches ?? null);
-            if ($isMulti) {
-                foreach ($requestObj->searches as &$search) {
-                    $adjustSearch($search, $partition);
-                }
-            } else {
-                $adjustSearch($requestObj, $partition);
+            // Convert everything to a multi search, to simplify things
+            if (!$isMulti) {
+                $newMulti = (object) [];
+                $newMulti->searches = [$requestObj];
+                $requestObj = $newMulti;
+            }
+            foreach ($requestObj->searches as &$search) {
+                $adjustSearch($search, $partition);
             }
             $newRequestObjects[] = $requestObj;
         }

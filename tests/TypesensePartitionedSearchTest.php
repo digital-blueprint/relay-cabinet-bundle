@@ -358,7 +358,7 @@ class TypesensePartitionedSearchTest extends TestCase
         $this->assertStringContainsString('partitionKey: [0..49]', $split[0]);
         $this->assertStringContainsString('partitionKey: [50..99]', $split[1]);
 
-        $response = '{
+        $response = '{"results": [{
     "facet_counts": [
         {
             "field_name": "@type",
@@ -392,7 +392,7 @@ class TypesensePartitionedSearchTest extends TestCase
             }
         }
     ]
-}';
+}]}';
 
         $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response]), flags: JSON_THROW_ON_ERROR);
         $this->assertCount(1, $merged->facet_counts);
