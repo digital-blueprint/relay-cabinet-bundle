@@ -195,19 +195,10 @@ class TypesenseClient implements LoggerAwareInterface
             [
                 'description' => $this->config->getTypesenseProxyApiKey(),
                 'actions' => [
-                    'documents:get',
                     'documents:search',
                 ],
                 'collections' => [$aliasName],
                 'value' => $this->config->getTypesenseProxyApiKey(),
-            ],
-            [
-                'description' => $this->config->getTypesenseProxyApiSearchKey(),
-                'actions' => [
-                    'documents:search',
-                ],
-                'collections' => [$aliasName],
-                'value' => $this->config->getTypesenseProxyApiSearchKey(),
             ],
         ];
 

@@ -32,11 +32,6 @@ class ConfigurationService
         return 'cabinet:proxy-key';
     }
 
-    public function getTypesenseProxyApiSearchKey(): string
-    {
-        return 'cabinet:proxy-search-key';
-    }
-
     public function getTypesenseSearchPartitions(): int
     {
         return $this->config['typesense']['search_partitions'];

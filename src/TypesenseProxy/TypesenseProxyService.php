@@ -49,12 +49,12 @@ class TypesenseProxyService implements LoggerAwareInterface
 
         $isSearch = ($path === 'multi_search' || $path === 'search');
 
-        // Scoped keys only work for search endpoints, and only with keys that only allow searching, so we use a scoped
-        // key for searches, and another key for everything else.
+        // Note: Scoped keys only work for search endpoints, and only with keys that only allow searching,
+        // so we use a scoped key for searches, and another key for everything else.
         if ($isSearch) {
             $connection = new TypesenseConnection($this->config->getTypesenseApiUrl(), $this->config->getTypesenseApiKey());
             $proxyKey = $connection->getClient()->keys->generateScopedSearchKey(
-                $this->config->getTypesenseProxyApiSearchKey(), ['cache_ttl' => $this->config->getTypesenseSearchCacheTtl()]);
+                $this->config->getTypesenseProxyApiKey(), ['cache_ttl' => $this->config->getTypesenseSearchCacheTtl()]);
         } else {
             $proxyKey = $this->config->getTypesenseProxyApiKey();
         }
