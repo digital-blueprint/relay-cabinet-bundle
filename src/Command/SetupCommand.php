@@ -25,7 +25,6 @@ class SetupCommand extends Command
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $this->typesenseSync->ensureSetup();
-        $this->typesenseSync->deleteOldCollections();
 
         return Command::SUCCESS;
     }
