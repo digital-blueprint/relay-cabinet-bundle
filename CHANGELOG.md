@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.3.3
+
+* Add a dbp:relay:cabinet:setup command for setting up Typesense without the need to run a full sync
+* The proxy no longer allows "get" on collections, only searches are allowed now.
+* Add new "search_partitions_split_collection" option to split the collection into multiple partitions
+  instead of splitting it at query time via a filter.
+
 ## 0.3.2
 
 * DocumentTransformEvent: `deleteAt` is always set again
