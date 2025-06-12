@@ -10,6 +10,7 @@ use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseConnection;
 use Dbp\Relay\CoreBundle\Exception\ApiError;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
+use Symfony\Component\HttpClient\HttpClient;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -28,9 +29,10 @@ class TypesenseProxyService implements LoggerAwareInterface
 
     private ConfigurationService $config;
 
-    public function __construct(HttpClientInterface $client, AuthorizationService $auth, ConfigurationService $config)
+    public function __construct(AuthorizationService $auth, ConfigurationService $config)
     {
-        $this->client = $client;
+        // create manually, since the default maxHostConnections is 6 and can't be changed
+        $this->client = HttpClient::create(maxHostConnections: 100);
         $this->auth = $auth;
         $this->config = $config;
     }
