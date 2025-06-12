@@ -61,6 +61,7 @@ class DeleteAllFilesCommand extends Command
         } catch (BlobApiError $e) {
             $output->writeln('<error>Error deleting file: '.$e->getMessage().' </error>');
             $output->writeln(print_r($e->getErrorId(), true));
+            $output->writeln(print_r($e->getMessage(), true));
             $output->writeln(print_r($e->getBlobErrorId(), true));
 
             return Command::FAILURE;

@@ -87,7 +87,8 @@ class BlobService implements LoggerAwareInterface
      */
     public function deleteFile(string $id): void
     {
-        $this->blobApi->removeFile($id);
+        $this->blobApi->removeFile($id, [
+            BlobApi::INCLUDE_DELETE_AT_OPTION => true]);
     }
 
     /**
