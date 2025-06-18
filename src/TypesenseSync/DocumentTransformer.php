@@ -47,6 +47,7 @@ class DocumentTransformer
         $metadata['cabinet:schemaVersion'] = $event->getSchemaVersion();
         $schema['metadata'] = $metadata;
         $schema['fields'][] = ['name' => 'partitionKey', 'type' => 'int32', 'optional' => false, 'facet' => false, 'sort' => false, 'range_index' => true];
+        $schema['fields'][] = ['name' => 'isPrimary', 'type' => 'bool', 'optional' => false, 'facet' => false, 'sort' => false, 'index' => true];
 
         return $schema;
     }
@@ -71,7 +72,11 @@ class DocumentTransformer
         $event = $this->eventDispatcher->dispatch($event);
 
         $documents = $event->getTransformedDocuments() ?? [$document];
+        $isPrimary = true;
         foreach ($documents as &$doc) {
+            // Markt the first document as primary, so allow easy grouping without actually using typesense grouping
+            $doc['isPrimary'] = $isPrimary;
+            $isPrimary = false;
             $doc['partitionKey'] = self::getPartitionKey(Utils::getField($doc, $this->getPersonIdField()));
         }
 
