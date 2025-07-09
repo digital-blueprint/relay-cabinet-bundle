@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.3.4
+
+* Fix error in case there are no person entires in typesense
+* Allow more than 6 parallel connections to typesense
+* Add a new "isPrimary" field to the base typesense schema, to mark the primary
+  document of each group (to allow some basic grouping via filter_by)
+* BlobService: also delete file if scheduled for deletion
+
 ## 0.3.3
 
 * Add a dbp:relay:cabinet:setup command for setting up Typesense without the need to run a full sync
