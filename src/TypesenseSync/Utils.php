@@ -19,6 +19,18 @@ class Utils
         return $current;
     }
 
+    public static function decodeJsonLines(string $jsonl, ?bool $associative = null): iterable
+    {
+        $lines = explode("\n", $jsonl);
+        $count = count($lines);
+        foreach ($lines as $index => $line) {
+            if ($index === $count - 1 && $line === '') {
+                continue;
+            }
+            yield json_decode($line, $associative, flags: JSON_THROW_ON_ERROR);
+        }
+    }
+
     public static function getPartitionIndex(int $numPartitions, int $value, int $totalPartitions): int
     {
         if ($numPartitions <= 0) {

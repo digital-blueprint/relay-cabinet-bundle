@@ -126,11 +126,8 @@ class TypesenseClient implements LoggerAwareInterface
         }
         $filterBy = '@type := '.$type;
         $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy, 'include_fields' => implode(',', $includeFields)]);
-        $lines = explode("\n", $lines);
-
         $mapping = [];
-        foreach ($lines as $line) {
-            $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+        foreach (Utils::decodeJsonLines($lines, true) as $decoded) {
             $id = Utils::getField($decoded, $groupBy);
             $mapping[$id] = [];
             foreach ($includeFields as $include) {
@@ -151,13 +148,8 @@ class TypesenseClient implements LoggerAwareInterface
         }
         $filterBy = $key.':='.$value.' && @type := '.$type;
         $lines = $this->getClient()->collections[$collectionName]->documents->export(['filter_by' => $filterBy]);
-        if ($lines === '') {
-            return [];
-        }
-        $lines = explode("\n", $lines);
         $documents = [];
-        foreach ($lines as $line) {
-            $decoded = json_decode($line, true, flags: JSON_THROW_ON_ERROR);
+        foreach (Utils::decodeJsonLines($lines, true) as $decoded) {
             $documents[] = $decoded;
         }
 
