@@ -326,7 +326,7 @@ class TypesensePartitionedSearch
             if ($sameCollection) {
                 $partitions = self::getPartitionsFilter('partitionKey', 100, $numPartitions);
                 $partition = $partitions[$index];
-                if ($search->filter_by) {
+                if (isset($search->filter_by) && trim($search->filter_by) !== '') {
                     $search->filter_by .= ' && '.$partition['filter_by'];
                 } else {
                     $search->filter_by = $partition['filter_by'];
