@@ -1,8 +1,12 @@
 # Changelog
 
+## 0.3.5
+
+* Fix partition errors in case there is no filter_by and per_page in the request
+
 ## 0.3.4
 
-* Fix error in case there are no person entires in typesense
+* Fix error in case there are no person entries in typesense
 * Allow more than 6 parallel connections to typesense
 * Add a new "isPrimary" field to the base typesense schema, to mark the primary
   document of each group (to allow some basic grouping via filter_by)
