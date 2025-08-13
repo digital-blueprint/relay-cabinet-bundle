@@ -240,6 +240,10 @@ class TypesensePartitionedSearch
                 array_splice($facetCount->counts, $maxFacetValues);
             }
 
+            if (isset($search->per_page)) {
+                $result->request_params->per_page = $search->per_page;
+            }
+
             // Sort hits and slice for pagination
             if (isset($result->grouped_hits)) {
                 $sortFunction = self::createSortFunction($sortBy);
