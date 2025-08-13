@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.6
+
+* Fix partition pagination size when used with the instantsearch adapter
+
 ## 0.3.5
 
 * Fix partition errors in case there is no filter_by and per_page in the request
