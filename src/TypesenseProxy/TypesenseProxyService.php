@@ -70,11 +70,10 @@ class TypesenseProxyService implements LoggerAwareInterface
 
         $requestContent = $request->getContent();
         $partitions = $this->config->getTypesenseSearchPartitions();
-        $sameRequest = false; // experimental
         $sameCollection = !$this->config->getTypesenseSearchPartitionsSplitCollection();
 
         if ($isSearch) {
-            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameRequest, $sameCollection);
+            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameCollection);
             $responses = [];
             foreach ($partitionRequestContents as $partitionRequestContent) {
                 $responses[] = $this->client->request($method, $url, [
@@ -113,7 +112,7 @@ class TypesenseProxyService implements LoggerAwareInterface
             if ($failContent !== null) {
                 return new Response($failContent, $status, $headers);
             } else {
-                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions, $sameRequest), $status, $headers);
+                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions), $status, $headers);
             }
         } else {
             if (!$sameCollection) {
