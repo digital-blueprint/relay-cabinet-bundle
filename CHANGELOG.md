@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.7
+
+* sync-person-actions: allow to sync via a typesense document ID
+
 ## 0.3.6
 
 * Fix partition pagination size when used with the instantsearch adapter
