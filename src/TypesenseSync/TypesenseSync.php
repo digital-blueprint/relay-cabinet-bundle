@@ -294,14 +294,31 @@ class TypesenseSync implements LoggerAwareInterface
         return $updateDocuments;
     }
 
-    public function syncOne(string $id)
+    public function syncOneByDocumentId(string $typesenseDocumentId)
     {
-        $this->logger->info('Syncing one person: '.$id);
+        // Find the document, extract the person ID, and start a sync
+        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+        foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+            $document = $this->searchIndex->getDocument($collectionName, $typesenseDocumentId);
+            if ($document !== null) {
+                $personIdField = $this->transformer->getPersonIdField();
+                $personId = Utils::getField($document, $personIdField);
+                $this->syncOne($personId);
+
+                return;
+            }
+        }
+        throw new NotFoundHttpException('document with id='.$typesenseDocumentId.' not found');
+    }
+
+    public function syncOne(string $personId)
+    {
+        $this->logger->info('Syncing one person: '.$personId);
         $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
         $cursor = $this->collectionManager->getCursor($primaryCollectionName);
-        $res = $this->personSync->getPersons([$id], $cursor);
+        $res = $this->personSync->getPersons([$personId], $cursor);
         if ($res->getPersons() === []) {
-            throw new NotFoundHttpException('Unkown person: '.$id);
+            throw new NotFoundHttpException('Unkown person: '.$personId);
         }
         $documents = [];
         foreach ($res->getPersons() as $person) {

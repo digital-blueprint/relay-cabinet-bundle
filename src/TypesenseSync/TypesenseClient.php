@@ -12,6 +12,7 @@ use Psr\Log\NullLogger;
 use Symfony\Component\Uid\Ulid;
 use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Typesense\Client;
+use Typesense\Exceptions\ObjectNotFound;
 
 class TypesenseClient implements LoggerAwareInterface
 {
@@ -154,6 +155,18 @@ class TypesenseClient implements LoggerAwareInterface
         }
 
         return $documents;
+    }
+
+    /**
+     * Returns the document, or null if it was not found.
+     */
+    public function getDocument(string $collectionName, string $id): ?array
+    {
+        try {
+            return $this->getClient()->collections[$collectionName]->documents[$id]->retrieve();
+        } catch (ObjectNotFound) {
+            return null;
+        }
     }
 
     public function deleteDocument(string $collectionName, string $id): void

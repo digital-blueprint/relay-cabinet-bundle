@@ -23,7 +23,14 @@ use ApiPlatform\OpenApi\Model\Parameter;
                         name: 'person_id',
                         in: 'query',
                         description: 'Sync the person data for the provided person ID',
-                        required: true,
+                        required: false,
+                        schema: ['type' => 'string']
+                    ),
+                    new Parameter(
+                        name: 'documentId',
+                        in: 'query',
+                        description: 'Sync the person data for the provided document ID',
+                        required: false,
                         schema: ['type' => 'string']
                     ),
                 ]
