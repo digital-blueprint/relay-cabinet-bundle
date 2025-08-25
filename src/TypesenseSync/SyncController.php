@@ -19,14 +19,11 @@ class SyncController extends AbstractController
     {
         $this->auth->checkCanUse();
 
-        $personId = $request->query->get('person_id');
         $documentId = $request->query->get('documentId');
         if ($documentId !== null) {
             $this->typesenseSync->syncOneByDocumentId($documentId);
-        } elseif ($personId !== null) {
-            $this->typesenseSync->syncOne($personId);
         } else {
-            throw new BadRequestHttpException('one of person_id or documentId are required');
+            throw new BadRequestHttpException('documentId required');
         }
 
         return new SyncPersonAction();
