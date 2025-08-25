@@ -251,10 +251,10 @@ class TypesenseSync implements LoggerAwareInterface
         $this->collectionManager->deleteOldCollections();
     }
 
-    public function syncAsync(bool $full = false): void
+    public function syncAsync(bool $full = false, ?string $personId = null): void
     {
         $this->logger->debug('Creating new sync task');
-        $task = new SyncTask($full);
+        $task = new SyncTask($full, $personId);
         $this->messageBus->dispatch($task);
     }
 
@@ -317,21 +317,20 @@ class TypesenseSync implements LoggerAwareInterface
         return $updateDocuments;
     }
 
-    public function syncOneByDocumentId(string $typesenseDocumentId)
+    public function getPersonIdForDocumentId(string $typesenseDocumentId): ?string
     {
-        // Find the document, extract the person ID, and start a sync
+        // Find the document, extract the person ID
         $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
         foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
             $document = $this->searchIndex->getDocument($collectionName, $typesenseDocumentId);
             if ($document !== null) {
                 $personIdField = $this->transformer->getPersonIdField();
-                $personId = Utils::getField($document, $personIdField);
-                $this->syncOne($personId);
 
-                return;
+                return Utils::getField($document, $personIdField);
             }
         }
-        throw new NotFoundHttpException('document with id='.$typesenseDocumentId.' not found');
+
+        return null;
     }
 
     public function syncOne(string $personId)
@@ -389,6 +388,10 @@ class TypesenseSync implements LoggerAwareInterface
     public function handleSyncTask(SyncTask $task): void
     {
         $this->logger->debug('Handling sync task');
-        $this->sync($task->full);
+        if ($task->personId !== null) {
+            $this->syncOne($task->personId);
+        } else {
+            $this->sync($task->full);
+        }
     }
 }

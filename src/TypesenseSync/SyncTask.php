@@ -6,7 +6,7 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 
 class SyncTask
 {
-    public function __construct(public bool $full = false)
+    public function __construct(public bool $full = false, public ?string $personId = null)
     {
     }
 }
