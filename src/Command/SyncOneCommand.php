@@ -26,19 +26,19 @@ class SyncOneCommand extends Command
     {
         $this->setName('dbp:relay:cabinet:sync-one');
         $this->setDescription('Sync command');
-        $this->addArgument('obfuscated-id', InputArgument::REQUIRED, 'obfuscated id');
+        $this->addArgument('person-id', InputArgument::REQUIRED, 'person ID');
         $this->addOption('--async', mode: InputOption::VALUE_NONE, description: 'Run the sync in the background');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
-        $obfuscatedId = $input->getArgument('obfuscated-id');
+        $personId = $input->getArgument('person-id');
         $async = $input->getOption('async');
 
         if ($async) {
-            $this->typesenseSync->syncAsync(personId: $obfuscatedId);
+            $this->typesenseSync->syncAsync(personId: $personId);
         } else {
-            $this->typesenseSync->syncOne($obfuscatedId);
+            $this->typesenseSync->syncOne($personId);
         }
 
         return 0;
