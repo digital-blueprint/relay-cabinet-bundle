@@ -33,12 +33,26 @@ class CollectionManager
         return new \DateTimeImmutable($updatedAt);
     }
 
+    public function getCreatedAt(string $primaryCollectionName): ?\DateTimeInterface
+    {
+        $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
+        $createdAt = $metadata['cabinet:createdAt'] ?? null;
+        if ($createdAt === null) {
+            return null;
+        }
+
+        return new \DateTimeImmutable($createdAt);
+    }
+
     public function saveCursor(string $primaryCollectionName, ?string $cursor): void
     {
         $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
         $metadata['cabinet:syncCursor'] = $cursor;
         $now = (new \DateTimeImmutable(timezone: new \DateTimeZone('UTC')))->format(\DateTime::ATOM);
         $metadata['cabinet:updatedAt'] = $now;
+        if (!array_key_exists('cabinet:createdAt', $metadata)) {
+            $metadata['cabinet:createdAt'] = $now;
+        }
         $this->searchIndex->setCollectionMetadata($primaryCollectionName, $metadata);
     }
 

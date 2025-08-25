@@ -50,6 +50,11 @@ class SyncCommand extends Command
             }
         }
 
+        $lastFullSyncDate = $this->typesenseSync->getLastFullSyncDate();
+        if ($lastFullSyncDate !== null) {
+            $output->writeln('<info>Last full sync:</info> '.$lastFullSyncDate->format(\DateTime::ATOM));
+        }
+
         $lastSyncDate = $this->typesenseSync->getLastSyncDate();
         if ($lastSyncDate !== null) {
             $output->writeln('<info>Last sync:</info> '.$lastSyncDate->format(\DateTime::ATOM));

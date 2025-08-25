@@ -42,8 +42,6 @@ class DocumentTransformer
     {
         $event = $this->ensureSchema();
         $schema = $event->getSchema() ?? self::DEFAULT_SCHEMA;
-        $now = (new \DateTimeImmutable(timezone: new \DateTimeZone('UTC')))->format(\DateTime::ATOM);
-        $metadata['cabinet:createdAt'] = $now;
         $metadata['cabinet:schemaVersion'] = $event->getSchemaVersion();
         $schema['metadata'] = $metadata;
         $schema['fields'][] = ['name' => 'partitionKey', 'type' => 'int32', 'optional' => false, 'facet' => false, 'sort' => false, 'range_index' => true];

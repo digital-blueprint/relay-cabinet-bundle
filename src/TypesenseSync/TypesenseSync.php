@@ -59,6 +59,13 @@ class TypesenseSync implements LoggerAwareInterface
         }
     }
 
+    public function getLastFullSyncDate(): ?\DateTimeInterface
+    {
+        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+
+        return $this->collectionManager->getCreatedAt($primaryCollectionName);
+    }
+
     public function getLastSyncDate(): ?\DateTimeInterface
     {
         $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
