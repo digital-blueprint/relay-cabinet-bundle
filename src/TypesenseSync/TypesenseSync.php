@@ -198,32 +198,6 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
-    public function syncFull()
-    {
-        $this->logger->info('Starting a full sync');
-        $schema = $this->transformer->getSchema();
-        $this->collectionManager->deleteOldCollections();
-        $primaryCollectionName = $this->collectionManager->createNewCollections($schema);
-
-        $res = $this->personSync->getAllPersons();
-        foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
-            $documents = [];
-            foreach ($persons as $person) {
-                foreach ($this->personToDocuments($person) as $document) {
-                    $documents[] = $document;
-                }
-            }
-            $this->addDocuments($primaryCollectionName, $documents);
-        }
-
-        $this->upsertAllFiles($primaryCollectionName);
-        $this->collectionManager->updateAliases($primaryCollectionName);
-        $this->collectionManager->deleteOldCollections();
-
-        $this->collectionManager->saveCursor($primaryCollectionName, $res->getCursor());
-        $this->searchIndex->clearSearchCache();
-    }
-
     public function needsSetup(): bool
     {
         foreach ($this->collectionManager->getAllAliases() as $alias) {
@@ -251,34 +225,60 @@ class TypesenseSync implements LoggerAwareInterface
         $this->collectionManager->deleteOldCollections();
     }
 
-    public function syncAsync(bool $full = false, ?string $personId = null): void
+    public function syncAsync(bool $forceFull = false, ?string $personId = null): void
     {
         $this->logger->debug('Creating new sync task');
-        $task = new SyncTask($full, $personId);
+        $task = new SyncTask($forceFull, $personId);
         $this->messageBus->dispatch($task);
     }
 
-    public function sync(bool $full = false)
+    public function sync(bool $forceFull = false)
     {
         $this->ensureSetup();
+
         $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
         $cursor = $this->collectionManager->getCursor($primaryCollectionName);
 
-        if ($full || $cursor === null) {
-            $this->syncFull();
+        if ($forceFull || $cursor === null) {
+            $res = $this->personSync->getAllPersons();
         } else {
-            $this->logger->info('Starting a partial sync');
-
             $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
             $outdated = $this->transformer->isSchemaOutdated($metadata);
             if ($outdated) {
-                $this->logger->info('Schema is outdated, falling back to a full sync');
-                $this->syncFull();
+                $this->logger->info('Schema is outdated, falling back to forcing a full sync');
 
-                return;
+                $res = $this->personSync->getAllPersons();
+            } else {
+                $res = $this->personSync->getAllPersons($cursor);
+            }
+        }
+
+        if ($res->isFullSyncResult()) {
+            $this->logger->info('Starting a full sync');
+
+            $schema = $this->transformer->getSchema();
+            $primaryCollectionName = $this->collectionManager->createNewCollections($schema);
+
+            foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
+                $documents = [];
+                foreach ($persons as $person) {
+                    foreach ($this->personToDocuments($person) as $document) {
+                        $documents[] = $document;
+                    }
+                }
+                $this->addDocuments($primaryCollectionName, $documents);
             }
 
-            $res = $this->personSync->getAllPersons($cursor);
+            $this->upsertAllFiles($primaryCollectionName);
+            $this->collectionManager->updateAliases($primaryCollectionName);
+            $this->collectionManager->deleteOldCollections();
+
+            $this->collectionManager->saveCursor($primaryCollectionName, $res->getCursor());
+            $this->searchIndex->clearSearchCache();
+        } else {
+            $this->logger->info('Starting a partial sync');
+
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
             foreach (array_chunk($res->getPersons(), self::CHUNK_SIZE) as $persons) {
                 $documents = [];
                 foreach ($persons as $person) {
@@ -391,7 +391,7 @@ class TypesenseSync implements LoggerAwareInterface
         if ($task->personId !== null) {
             $this->syncOne($task->personId);
         } else {
-            $this->sync($task->full);
+            $this->sync($task->forceFull);
         }
     }
 }
