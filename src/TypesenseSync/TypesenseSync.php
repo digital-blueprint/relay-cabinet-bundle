@@ -76,7 +76,7 @@ class TypesenseSync implements LoggerAwareInterface
     /**
      * Sync all files from blob into typesense. Needs to be called after all persons have already been synced.
      */
-    public function upsertAllFiles(string $primaryCollectionName): void
+    private function upsertAllFiles(string $primaryCollectionName): void
     {
         $this->logger->info('Syncing all blob files');
         $blobFileIterable = $this->blobService->getAllFiles();
@@ -103,7 +103,7 @@ class TypesenseSync implements LoggerAwareInterface
         return $ids;
     }
 
-    public function getSharedFieldData(string $primaryCollectionName)
+    private function getSharedFieldData(string $primaryCollectionName)
     {
         $sharedFields = $this->transformer->getSharedFields();
         $personIdField = $this->transformer->getPersonIdField();
@@ -160,7 +160,7 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
-    public function upsertBlobFile(string $primaryCollectionName, BlobFile $blobFile): void
+    private function upsertBlobFile(string $primaryCollectionName, BlobFile $blobFile): void
     {
         $sharedFields = $this->transformer->getSharedFields();
         $personIdField = $this->transformer->getPersonIdField();
@@ -198,24 +198,22 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
-    public function needsSetup(): bool
-    {
-        foreach ($this->collectionManager->getAllAliases() as $alias) {
-            if ($this->searchIndex->needsSetup($alias)) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
     /**
      * Puts typesense in a state where the API at least works. i.e. the schema, the alias and the collection are there.
      */
     public function ensureSetup(): void
     {
         $this->logger->info('Running setup');
-        if ($this->needsSetup()) {
+
+        $needsSetup = false;
+        foreach ($this->collectionManager->getAllAliases() as $alias) {
+            if ($this->searchIndex->needsSetup($alias)) {
+                $needsSetup = true;
+                break;
+            }
+        }
+
+        if ($needsSetup) {
             $this->logger->info('No alias or collection found, re-creating empty collection and alias');
             $schema = $this->transformer->getSchema();
             $primaryCollectionName = $this->collectionManager->createNewCollections($schema);
@@ -298,7 +296,7 @@ class TypesenseSync implements LoggerAwareInterface
         }
     }
 
-    public function getUpdatedRelatedDocumentFiles(string $primaryCollectionName, array $personDocuments): array
+    private function getUpdatedRelatedDocumentFiles(string $primaryCollectionName, array $personDocuments): array
     {
         $personIdField = $this->transformer->getPersonIdField();
         $updateDocuments = [];
@@ -358,12 +356,12 @@ class TypesenseSync implements LoggerAwareInterface
         $this->searchIndex->clearSearchCache();
     }
 
-    public function personToDocuments(array $person): array
+    private function personToDocuments(array $person): array
     {
         return $this->transformer->transformDocument('person', $person);
     }
 
-    public function blobFileToPartialDocuments(BlobFile $blobFile): array
+    private function blobFileToPartialDocuments(BlobFile $blobFile): array
     {
         $bucketId = $this->blobService->getBucketIdentifier();
         $metadataJson = $blobFile->getMetadata();
