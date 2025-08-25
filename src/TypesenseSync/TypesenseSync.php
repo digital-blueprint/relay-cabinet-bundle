@@ -11,6 +11,8 @@ use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Messenger\Attribute\AsMessageHandler;
+use Symfony\Component\Messenger\MessageBusInterface;
 
 class TypesenseSync implements LoggerAwareInterface
 {
@@ -28,7 +30,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     private CollectionManager $collectionManager;
 
-    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService, CollectionManager $collectionManager)
+    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService, CollectionManager $collectionManager, private MessageBusInterface $messageBus)
     {
         $this->searchIndex = $searchIndex;
         $this->personSync = $personSync;
@@ -55,6 +57,13 @@ class TypesenseSync implements LoggerAwareInterface
         foreach ($groups as $collectionName => $docs) {
             $this->searchIndex->addDocumentsToCollection($collectionName, $docs);
         }
+    }
+
+    public function getLastSyncDate(): ?\DateTimeInterface
+    {
+        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+
+        return $this->collectionManager->getUpdatedAt($primaryCollectionName);
     }
 
     /**
@@ -235,6 +244,13 @@ class TypesenseSync implements LoggerAwareInterface
         $this->collectionManager->deleteOldCollections();
     }
 
+    public function syncAsync(bool $full = false): void
+    {
+        $this->logger->debug('Creating new sync task');
+        $task = new SyncTask($full);
+        $this->messageBus->dispatch($task);
+    }
+
     public function sync(bool $full = false)
     {
         $this->ensureSetup();
@@ -360,5 +376,12 @@ class TypesenseSync implements LoggerAwareInterface
         ];
 
         return $this->transformer->transformDocument($objectType, $input);
+    }
+
+    #[AsMessageHandler]
+    public function handleSyncTask(SyncTask $task): void
+    {
+        $this->logger->debug('Handling sync task');
+        $this->sync($task->full);
     }
 }

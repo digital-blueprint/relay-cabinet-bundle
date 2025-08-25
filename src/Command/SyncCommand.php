@@ -29,12 +29,14 @@ class SyncCommand extends Command
         $this->setDescription('Sync command');
         $this->addOption('--full', mode: InputOption::VALUE_NONE, description: 'Sync all records');
         $this->addOption('--ask', mode: InputOption::VALUE_NONE, description: 'Ask for confirmation before syncing');
+        $this->addOption('--async', mode: InputOption::VALUE_NONE, description: 'Run the sync in the background');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
     {
         $full = $input->getOption('full');
         $ask = $input->getOption('ask');
+        $async = $input->getOption('async');
 
         if ($ask) {
             /** @var QuestionHelper $helper */
@@ -48,7 +50,16 @@ class SyncCommand extends Command
             }
         }
 
-        $this->typesenseSync->sync($full);
+        $lastSyncDate = $this->typesenseSync->getLastSyncDate();
+        if ($lastSyncDate !== null) {
+            $output->writeln('<info>Last sync:</info> '.$lastSyncDate->format(\DateTime::ATOM));
+        }
+
+        if ($async) {
+            $this->typesenseSync->syncAsync($full);
+        } else {
+            $this->typesenseSync->sync($full);
+        }
 
         return 0;
     }

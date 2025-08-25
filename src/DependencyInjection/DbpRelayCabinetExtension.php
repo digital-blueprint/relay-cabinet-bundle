@@ -9,6 +9,7 @@ use Dbp\Relay\CabinetBundle\Blob\BlobEventTask;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\Service\CabinetService;
 use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
+use Dbp\Relay\CabinetBundle\TypesenseSync\SyncTask;
 use Dbp\Relay\CoreBundle\Extension\ExtensionTrait;
 use Symfony\Component\Config\FileLocator;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
@@ -91,5 +92,6 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
         ]);
 
         $this->addQueueMessageClass($container, BlobEventTask::class);
+        $this->addQueueMessageClass($container, SyncTask::class);
     }
 }

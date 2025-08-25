@@ -19,6 +19,20 @@ class CollectionManager
         return $metadata['cabinet:syncCursor'] ?? null;
     }
 
+    /**
+     * Returns the time the collection was updated last. null if it was never updated so far.
+     */
+    public function getUpdatedAt(string $primaryCollectionName): ?\DateTimeInterface
+    {
+        $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
+        $updatedAt = $metadata['cabinet:updatedAt'] ?? null;
+        if ($updatedAt === null) {
+            return null;
+        }
+
+        return new \DateTimeImmutable($updatedAt);
+    }
+
     public function saveCursor(string $primaryCollectionName, ?string $cursor): void
     {
         $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
