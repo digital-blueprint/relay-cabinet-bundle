@@ -45,11 +45,6 @@ class TypesenseClient implements LoggerAwareInterface
         return self::COLLECTION_NAMESPACE;
     }
 
-    public function getConnectionBaseUrl(): string
-    {
-        return $this->connection->getBaseUrl();
-    }
-
     public function createNewCollection(?array $schema = null, ?string $name = null): string
     {
         // We are using a new collection name based on the alias name with the current date
@@ -221,7 +216,7 @@ class TypesenseClient implements LoggerAwareInterface
         $client = $this->getClient();
         $keys = $client->keys->retrieve();
 
-        // All keys that are for our alias
+        // All keys that are for our aliases
         $aliasKeys = [];
         foreach ($keys['keys'] as $key) {
             foreach ($aliases as $aliasName) {
@@ -276,9 +271,35 @@ class TypesenseClient implements LoggerAwareInterface
     }
 
     /**
+     * Delete all proxy keys that are related to cabinet.
+     */
+    public function deleteAllProxyKeys(): void
+    {
+        $this->logger->info('Deleting all keys');
+        $client = $this->getClient();
+        $keys = $client->keys->retrieve();
+
+        // Delete all keys that are for our aliases
+        $toDelete = [];
+        foreach ($keys['keys'] as $key) {
+            foreach ($key['collections'] as $aliasName) {
+                if ($aliasName === self::COLLECTION_NAMESPACE || str_starts_with($aliasName, self::COLLECTION_NAMESPACE.'-')) {
+                    $toDelete[] = $key;
+                    break;
+                }
+            }
+        }
+
+        foreach ($toDelete as $aliasKey) {
+            $this->logger->info('Deleting key: id='.$aliasKey['id']);
+            $client->keys[$aliasKey['id']]->delete();
+        }
+    }
+
+    /**
      * Delete all collections that are no longer actively used and all aliases that referenced them.
      */
-    public function deleteOldCollections(array $collectionsToSkip): void
+    public function deleteAllCollections(array $collectionsToSkip): void
     {
         $client = $this->getClient();
 

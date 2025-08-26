@@ -13,6 +13,16 @@ class ConfigurationService
         $this->config = $config;
     }
 
+    public function getFullSyncInterval(): string
+    {
+        return $this->config['sync']['full_sync_interval'];
+    }
+
+    public function getSyncSchedule(): string
+    {
+        return $this->config['sync']['schedule'];
+    }
+
     public function getTypesenseApiUrl(): string
     {
         return $this->config['typesense']['api_url'];

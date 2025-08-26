@@ -134,7 +134,7 @@ class CollectionManager
     public function deleteOldCollections(): void
     {
         $primaryCollectionName = $this->getPrimaryCollectionName();
-        $this->searchIndex->deleteOldCollections($this->getAllCollectionNames($primaryCollectionName));
+        $this->searchIndex->deleteAllCollections($this->getAllCollectionNames($primaryCollectionName));
     }
 
     public function createNewCollections(array $schema): string

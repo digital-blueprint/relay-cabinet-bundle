@@ -41,8 +41,7 @@ class SyncCommand extends Command
         if ($ask) {
             /** @var QuestionHelper $helper */
             $helper = $this->getHelper('question');
-            $connectionBaseUrl = $this->typesenseSync->getConnectionBaseUrl();
-            $question = new ConfirmationQuestion('About to sync to '.$connectionBaseUrl.'. Are you sure you want to continue? (y/N) ', false);
+            $question = new ConfirmationQuestion('About to sync. Are you sure you want to continue? (y/N) ', false);
             if (!$helper->ask($input, $output, $question)) {
                 $output->writeln('Action cancelled.');
 

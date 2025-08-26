@@ -7,10 +7,13 @@ namespace Dbp\Relay\CabinetBundle\TypesenseSync;
 use Dbp\Relay\BlobLibrary\Api\BlobFile;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\PersonSync\PersonSyncInterface;
+use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Psr\Log\LoggerAwareInterface;
 use Psr\Log\LoggerAwareTrait;
 use Psr\Log\NullLogger;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
+use Symfony\Component\Lock\LockFactory;
+use Symfony\Component\Lock\LockInterface;
 use Symfony\Component\Messenger\Attribute\AsMessageHandler;
 use Symfony\Component\Messenger\MessageBusInterface;
 
@@ -30,7 +33,13 @@ class TypesenseSync implements LoggerAwareInterface
 
     private CollectionManager $collectionManager;
 
-    public function __construct(TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer, BlobService $blobService, CollectionManager $collectionManager, private MessageBusInterface $messageBus)
+    private LockInterface $lock;
+    private LockInterface $syncLock;
+
+    public function __construct(
+        TypesenseClient $searchIndex, PersonSyncInterface $personSync, DocumentTransformer $transformer,
+        BlobService $blobService, CollectionManager $collectionManager, private MessageBusInterface $messageBus,
+        private LockFactory $lockFactory, private ConfigurationService $configurationService)
     {
         $this->searchIndex = $searchIndex;
         $this->personSync = $personSync;
@@ -38,11 +47,15 @@ class TypesenseSync implements LoggerAwareInterface
         $this->transformer = $transformer;
         $this->blobService = $blobService;
         $this->collectionManager = $collectionManager;
-    }
-
-    public function getConnectionBaseUrl(): string
-    {
-        return $this->searchIndex->getConnectionBaseUrl();
+        /**
+         * Lock accessing typesense, the alias, collections and the keys,
+         * but not the content of the collections.
+         */
+        $this->lock = $this->lockFactory->createLock('cabinet-typesense', 60 * 60);
+        /**
+         * Lock for doing a collection sync. To avoid multiple syncs piling up.
+         */
+        $this->syncLock = $this->lockFactory->createLock('cabinet-sync', 60 * 60);
     }
 
     private function addDocuments(string $primaryCollectionName, array $documents): void
@@ -61,16 +74,32 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function getLastFullSyncDate(): ?\DateTimeInterface
     {
-        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+        $this->lock->acquire(true);
+        try {
+            if ($this->_needsSetup()) {
+                return null;
+            }
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
 
-        return $this->collectionManager->getCreatedAt($primaryCollectionName);
+            return $this->collectionManager->getCreatedAt($primaryCollectionName);
+        } finally {
+            $this->lock->release();
+        }
     }
 
     public function getLastSyncDate(): ?\DateTimeInterface
     {
-        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+        $this->lock->acquire(true);
+        try {
+            if ($this->_needsSetup()) {
+                return null;
+            }
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
 
-        return $this->collectionManager->getUpdatedAt($primaryCollectionName);
+            return $this->collectionManager->getUpdatedAt($primaryCollectionName);
+        } finally {
+            $this->lock->release();
+        }
     }
 
     /**
@@ -80,24 +109,35 @@ class TypesenseSync implements LoggerAwareInterface
     {
         $this->logger->info('Syncing all blob files');
         $blobFileIterable = $this->blobService->getAllFiles();
-        $this->upsertMultipleBlobFiles($primaryCollectionName, $blobFileIterable);
+        $this->_upsertBlobFiles($primaryCollectionName, $blobFileIterable);
         $this->searchIndex->clearSearchCache();
     }
 
     public function upsertFile(string $blobFileId): void
     {
         $blobFile = $this->blobService->getFile($blobFileId);
-        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
-        $this->upsertBlobFile($primaryCollectionName, $blobFile);
+        $this->lock->acquire(true);
+        try {
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+            $this->upsertBlobFile($primaryCollectionName, $blobFile);
+        } finally {
+            $this->lock->release();
+        }
         $this->searchIndex->clearSearchCache();
     }
 
-    public function getAllPersonIds(string $primaryCollectionName): array
+    public function getAllPersonIds(): array
     {
-        $personIdField = $this->transformer->getPersonIdField();
-        $ids = [];
-        foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
-            $ids = array_merge($ids, array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField]))));
+        $this->lock->acquire(true);
+        try {
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+            $personIdField = $this->transformer->getPersonIdField();
+            $ids = [];
+            foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+                $ids = array_merge($ids, array_map('strval', array_keys($this->searchIndex->getBaseMapping($collectionName, 'Person', $personIdField, [$personIdField]))));
+            }
+        } finally {
+            $this->lock->release();
         }
 
         return $ids;
@@ -118,7 +158,21 @@ class TypesenseSync implements LoggerAwareInterface
     /**
      * @param iterable<BlobFile> $blobFiles
      */
-    public function upsertMultipleBlobFiles(string $primaryCollectionName, iterable $blobFiles): void
+    public function upsertBlobFiles(iterable $blobFiles): void
+    {
+        $this->lock->acquire(true);
+        try {
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+            $this->_upsertBlobFiles($primaryCollectionName, $blobFiles);
+        } finally {
+            $this->lock->release();
+        }
+    }
+
+    /**
+     * @param iterable<BlobFile> $blobFiles
+     */
+    private function _upsertBlobFiles(string $primaryCollectionName, iterable $blobFiles): void
     {
         $this->logger->info('Syncing all blob files');
 
@@ -162,6 +216,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     private function upsertBlobFile(string $primaryCollectionName, BlobFile $blobFile): void
     {
+        assert($this->lock->isAcquired());
         $sharedFields = $this->transformer->getSharedFields();
         $personIdField = $this->transformer->getPersonIdField();
         foreach ($this->blobFileToPartialDocuments($blobFile) as $partialFileDocument) {
@@ -187,24 +242,49 @@ class TypesenseSync implements LoggerAwareInterface
     public function deleteFile(string $blobFileId): void
     {
         $documentIdField = $this->transformer->getDocumentIdField();
-        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
-        foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
-            $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $documentIdField, $blobFileId);
-            foreach ($results as $result) {
-                $typesenseId = $result['id'];
-                $this->searchIndex->deleteDocument($collectionName, $typesenseId);
+        $this->lock->acquire(true);
+        try {
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+            foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+                $results = $this->searchIndex->findDocuments($collectionName, 'DocumentFile', $documentIdField, $blobFileId);
+                foreach ($results as $result) {
+                    $typesenseId = $result['id'];
+                    $this->searchIndex->deleteDocument($collectionName, $typesenseId);
+                }
             }
+            $this->searchIndex->clearSearchCache();
+        } finally {
+            $this->lock->release();
         }
-        $this->searchIndex->clearSearchCache();
+    }
+
+    public function ensureSetup(): void
+    {
+        $this->lock->acquire(true);
+        try {
+            $this->_ensureSetup();
+        } finally {
+            $this->lock->release();
+        }
     }
 
     /**
-     * Puts typesense in a state where the API at least works. i.e. the schema, the alias and the collection are there.
+     * Remove all data, collections, keys from typesense.
      */
-    public function ensureSetup(): void
+    public function removeSetup(): void
     {
-        $this->logger->info('Running setup');
+        $this->lock->acquire(true);
+        try {
+            $this->searchIndex->deleteAllProxyKeys();
+            $this->searchIndex->deleteAllCollections([]);
+        } finally {
+            $this->lock->release();
+        }
+    }
 
+    private function _needsSetup(): bool
+    {
+        assert($this->lock->isAcquired());
         $needsSetup = false;
         foreach ($this->collectionManager->getAllAliases() as $alias) {
             if ($this->searchIndex->needsSetup($alias)) {
@@ -213,7 +293,17 @@ class TypesenseSync implements LoggerAwareInterface
             }
         }
 
-        if ($needsSetup) {
+        return $needsSetup;
+    }
+
+    /**
+     * Puts typesense in a state where the API at least works. i.e. the schema, the alias and the collection are there.
+     */
+    private function _ensureSetup(): void
+    {
+        assert($this->lock->isAcquired());
+        $this->logger->info('Running setup');
+        if ($this->_needsSetup()) {
             $this->logger->info('No alias or collection found, re-creating empty collection and alias');
             $schema = $this->transformer->getSchema();
             $primaryCollectionName = $this->collectionManager->createNewCollections($schema);
@@ -230,26 +320,72 @@ class TypesenseSync implements LoggerAwareInterface
         $this->messageBus->dispatch($task);
     }
 
-    public function sync(bool $forceFull = false)
+    /**
+     * Returns if the sync happened, or false in case there was already a sync in progress.
+     */
+    public function sync(bool $forceFull = false): bool
     {
-        $this->ensureSetup();
+        if (!$this->syncLock->acquire(false)) {
+            $this->logger->debug('Sync already in progress, skipping.');
+
+            return false;
+        }
+        try {
+            $this->lock->acquire(true);
+            try {
+                $this->_sync($forceFull);
+
+                return true;
+            } finally {
+                $this->lock->release();
+            }
+        } finally {
+            $this->syncLock->release();
+        }
+    }
+
+    public function _sync(bool $forceFull = false)
+    {
+        assert($this->lock->isAcquired());
+        assert($this->syncLock->isAcquired());
+        $this->_ensureSetup();
 
         $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
         $cursor = $this->collectionManager->getCursor($primaryCollectionName);
 
         if ($forceFull || $cursor === null) {
-            $res = $this->personSync->getAllPersons();
+            $cursor = null;
         } else {
-            $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
-            $outdated = $this->transformer->isSchemaOutdated($metadata);
-            if ($outdated) {
-                $this->logger->info('Schema is outdated, falling back to forcing a full sync');
+            // Check if getFullSyncInterval() has passed since the collection was created
+            $fullSyncTooLongAgo = false;
+            $createdAt = $this->collectionManager->getCreatedAt($primaryCollectionName);
+            if ($createdAt !== null) {
+                $interval = $this->configurationService->getFullSyncInterval();
+                $targetDateTime = \DateTimeImmutable::createFromInterface($createdAt)
+                    ->add(new \DateInterval($interval));
+                $fullSyncTooLongAgo = (new \DateTimeImmutable()) >= $targetDateTime;
+            }
 
-                $res = $this->personSync->getAllPersons();
+            if ($fullSyncTooLongAgo) {
+                $this->logger->info('Last full sync too long ago, forcing one');
+
+                $cursor = null;
             } else {
-                $res = $this->personSync->getAllPersons($cursor);
+                $metadata = $this->searchIndex->getCollectionMetadata($primaryCollectionName);
+                $outdated = $this->transformer->isSchemaOutdated($metadata);
+
+                if ($outdated) {
+                    $this->logger->info('Schema is outdated, falling back to forcing a full sync');
+
+                    $cursor = null;
+                }
             }
         }
+
+        $res = $this->personSync->getAllPersons($cursor);
+
+        $this->lock->refresh();
+        $this->syncLock->refresh();
 
         if ($res->isFullSyncResult()) {
             $this->logger->info('Starting a full sync');
@@ -265,6 +401,9 @@ class TypesenseSync implements LoggerAwareInterface
                     }
                 }
                 $this->addDocuments($primaryCollectionName, $documents);
+
+                $this->lock->refresh();
+                $this->syncLock->refresh();
             }
 
             $this->upsertAllFiles($primaryCollectionName);
@@ -289,6 +428,9 @@ class TypesenseSync implements LoggerAwareInterface
                 // Also update the base data of all related DocumentFiles
                 $relatedDocs = $this->getUpdatedRelatedDocumentFiles($primaryCollectionName, $documents);
                 $this->addDocuments($primaryCollectionName, $relatedDocs);
+
+                $this->lock->refresh();
+                $this->syncLock->refresh();
             }
 
             $this->collectionManager->saveCursor($primaryCollectionName, $res->getCursor());
@@ -298,6 +440,7 @@ class TypesenseSync implements LoggerAwareInterface
 
     private function getUpdatedRelatedDocumentFiles(string $primaryCollectionName, array $personDocuments): array
     {
+        assert($this->lock->isAcquired());
         $personIdField = $this->transformer->getPersonIdField();
         $updateDocuments = [];
         foreach ($personDocuments as $personDocument) {
@@ -317,15 +460,25 @@ class TypesenseSync implements LoggerAwareInterface
 
     public function getPersonIdForDocumentId(string $typesenseDocumentId): ?string
     {
-        // Find the document, extract the person ID
-        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
-        foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
-            $document = $this->searchIndex->getDocument($collectionName, $typesenseDocumentId);
-            if ($document !== null) {
-                $personIdField = $this->transformer->getPersonIdField();
-
-                return Utils::getField($document, $personIdField);
+        $this->lock->acquire(true);
+        try {
+            // Find the document, extract the person ID
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+            $document = null;
+            foreach ($this->collectionManager->getAllCollectionNames($primaryCollectionName) as $collectionName) {
+                $document = $this->searchIndex->getDocument($collectionName, $typesenseDocumentId);
+                if ($document !== null) {
+                    break;
+                }
             }
+        } finally {
+            $this->lock->release();
+        }
+
+        if ($document !== null) {
+            $personIdField = $this->transformer->getPersonIdField();
+
+            return Utils::getField($document, $personIdField);
         }
 
         return null;
@@ -334,26 +487,31 @@ class TypesenseSync implements LoggerAwareInterface
     public function syncOne(string $personId)
     {
         $this->logger->info('Syncing one person: '.$personId);
-        $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
-        $cursor = $this->collectionManager->getCursor($primaryCollectionName);
-        $res = $this->personSync->getPersons([$personId], $cursor);
-        if ($res->getPersons() === []) {
-            throw new NotFoundHttpException('Unkown person: '.$personId);
-        }
-        $documents = [];
-        foreach ($res->getPersons() as $person) {
-            foreach ($this->personToDocuments($person) as $document) {
-                $documents[] = $document;
+        $this->lock->acquire(true);
+        try {
+            $primaryCollectionName = $this->collectionManager->getPrimaryCollectionName();
+            $cursor = $this->collectionManager->getCursor($primaryCollectionName);
+            $res = $this->personSync->getPersons([$personId], $cursor);
+            if ($res->getPersons() === []) {
+                throw new NotFoundHttpException('Unkown person: '.$personId);
             }
+            $documents = [];
+            foreach ($res->getPersons() as $person) {
+                foreach ($this->personToDocuments($person) as $document) {
+                    $documents[] = $document;
+                }
+            }
+            $this->addDocuments($primaryCollectionName, $documents);
+
+            // Also update the base data of all related DocumentFiles
+            $relatedDocs = $this->getUpdatedRelatedDocumentFiles($primaryCollectionName, $documents);
+            $this->addDocuments($primaryCollectionName, $relatedDocs);
+
+            $this->collectionManager->saveCursor($primaryCollectionName, $res->getCursor());
+            $this->searchIndex->clearSearchCache();
+        } finally {
+            $this->lock->release();
         }
-        $this->addDocuments($primaryCollectionName, $documents);
-
-        // Also update the base data of all related DocumentFiles
-        $relatedDocs = $this->getUpdatedRelatedDocumentFiles($primaryCollectionName, $documents);
-        $this->addDocuments($primaryCollectionName, $relatedDocs);
-
-        $this->collectionManager->saveCursor($primaryCollectionName, $res->getCursor());
-        $this->searchIndex->clearSearchCache();
     }
 
     private function personToDocuments(array $person): array

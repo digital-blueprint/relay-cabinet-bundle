@@ -6,7 +6,6 @@ namespace Dbp\Relay\CabinetBundle\FakeData;
 
 use Dbp\Relay\BlobLibrary\Api\BlobFile;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
-use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseClient;
 use Dbp\Relay\CabinetBundle\TypesenseSync\TypesenseSync;
 use Symfony\Component\Console\Command\Command;
 use Symfony\Component\Console\Helper\QuestionHelper;
@@ -20,16 +19,14 @@ use Symfony\Component\Uid\Uuid;
 
 class AddFakeFilesCommand extends Command
 {
-    private TypesenseClient $searchIndex;
     private BlobService $blobService;
     private EventDispatcherInterface $eventDispatcher;
     private TypesenseSync $typesenseSync;
 
-    public function __construct(TypesenseClient $searchIndex, BlobService $blobService, TypesenseSync $typesenseSync, EventDispatcherInterface $eventDispatcher)
+    public function __construct(BlobService $blobService, TypesenseSync $typesenseSync, EventDispatcherInterface $eventDispatcher)
     {
         parent::__construct();
 
-        $this->searchIndex = $searchIndex;
         $this->blobService = $blobService;
         $this->eventDispatcher = $eventDispatcher;
         $this->typesenseSync = $typesenseSync;
@@ -62,8 +59,7 @@ class AddFakeFilesCommand extends Command
             return Command::SUCCESS;
         }
 
-        $collectionName = $this->searchIndex->getCollectionName();
-        $personIds = $this->typesenseSync->getAllPersonIds($collectionName);
+        $personIds = $this->typesenseSync->getAllPersonIds();
         $personId = $input->getOption('person-id');
         if ($personId !== null) {
             if (!in_array($personId, $personIds, true)) {
@@ -101,8 +97,7 @@ class AddFakeFilesCommand extends Command
                 $blobFile->setMetadata($event->getMetadata() ?? '');
                 $entries[] = $blobFile;
             }
-            $collectionName = $this->searchIndex->getCollectionName();
-            $this->typesenseSync->upsertMultipleBlobFiles($collectionName, $entries);
+            $this->typesenseSync->upsertBlobFiles($entries);
         } else {
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
