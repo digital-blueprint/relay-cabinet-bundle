@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.8
+
+* Add cron job for periodic syncing (configure via the `sync.schedule` option)
+* CabinetSyncPersonAction: remove option to sync via person ID, use document ID only
+* CabinetSyncPersonAction: make partially async
+* sync: properly handle case when the connector forces a full sync
+* config: add `sync.full_sync_interval` option to force a full sync after a given interval
+* sync: serialize all backend access to typesense to avoid race conditions
+
 ## 0.3.7
 
 * sync-person-actions: allow to sync via a typesense document ID
