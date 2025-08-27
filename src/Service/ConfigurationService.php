@@ -23,6 +23,11 @@ class ConfigurationService
         return $this->config['sync']['schedule'];
     }
 
+    public function isSyncEnabled(): bool
+    {
+        return $this->config['sync']['enabled'];
+    }
+
     public function getTypesenseApiUrl(): string
     {
         return $this->config['typesense']['api_url'];

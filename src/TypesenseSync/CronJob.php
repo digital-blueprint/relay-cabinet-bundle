@@ -32,6 +32,8 @@ class CronJob implements CronJobInterface, LoggerAwareInterface
 
     public function run(CronOptions $options): void
     {
-        $this->typesenseSync->syncAsync();
+        if ($this->configurationService->isSyncEnabled()) {
+            $this->typesenseSync->syncAsync();
+        }
     }
 }
