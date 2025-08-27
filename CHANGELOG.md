@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.9
+
+* Make the cron sync opt-in (via the `sync.enabled` option)
+
 ## 0.3.8
 
 * Add cron job for periodic syncing (configure via the `sync.schedule` option)
