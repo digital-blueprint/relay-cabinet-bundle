@@ -102,17 +102,6 @@ class TypesenseSync implements LoggerAwareInterface
         }
     }
 
-    /**
-     * Sync all files from blob into typesense. Needs to be called after all persons have already been synced.
-     */
-    private function upsertAllFiles(string $primaryCollectionName): void
-    {
-        $this->logger->info('Syncing all blob files');
-        $blobFileIterable = $this->blobService->getAllFiles();
-        $this->_upsertBlobFiles($primaryCollectionName, $blobFileIterable);
-        $this->searchIndex->clearSearchCache();
-    }
-
     public function upsertFile(string $blobFileId): void
     {
         $blobFile = $this->blobService->getFile($blobFileId);
@@ -406,7 +395,11 @@ class TypesenseSync implements LoggerAwareInterface
                 $this->syncLock->refresh();
             }
 
-            $this->upsertAllFiles($primaryCollectionName);
+            // Sync all files from blob into typesense. Needs to be called after all persons have already been synced.
+            $this->logger->info('Syncing all blob files');
+            $blobFileIterable = $this->blobService->getAllFiles();
+            $this->_upsertBlobFiles($primaryCollectionName, $blobFileIterable);
+
             $this->collectionManager->updateAliases($primaryCollectionName);
             $this->collectionManager->deleteOldCollections();
 
