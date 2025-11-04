@@ -1,6 +1,6 @@
 # Overview
 
-Source: https://github.com/digital-blueprint/dbp-relay-cabinet-bundle
+Source: https://github.com/digital-blueprint/relay-cabinet-bundle
 
 This bundle provides an API for managing student records.
 
