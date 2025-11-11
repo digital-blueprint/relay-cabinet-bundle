@@ -211,7 +211,7 @@ class TypesensePartitionedSearch
     /**
      * Merges one or more partitioned search responses into one.
      */
-    public static function mergeJsonResponses(string $request, array $jsonResponses, int $numPartitions): string
+    public static function mergeJsonResponses(string $request, array $jsonResponses, int $numPartitions): object
     {
         if ($numPartitions === 1) {
             return $jsonResponses[0];
@@ -299,7 +299,64 @@ class TypesensePartitionedSearch
             $newResponse = $mergedResults[0];
         }
 
-        return json_encode($newResponse);
+        return $newResponse;
+    }
+
+    /**
+     * Check if there are not enough results and we should try searching again with different settings.
+     *
+     * @return array{0: bool, 1: object[]}
+     */
+    public static function getRetryOverrides(string $request, object $mergedResponse): array
+    {
+        $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
+        $isMulti = is_array($requestObj->searches ?? null);
+        // Convert everything to a multi search, to simplify things
+        if (!$isMulti) {
+            $newMulti = (object) [];
+            $newMulti->searches = [$requestObj];
+            $requestObj = $newMulti;
+        }
+
+        $retryOverrides = [];
+        $needsRetry = false;
+        $i = 0;
+        foreach ($requestObj->searches as $search) {
+            $result = $mergedResponse->results[$i++];
+
+            $found = $result->found;
+            $dropTokensThreshold = $search->drop_tokens_threshold ?? 1;
+            $typoTokensThreshold = $search->typo_tokens_threshold ?? 1;
+
+            $retryParams = new \stdClass();
+            if ($found < $dropTokensThreshold) {
+                $needsRetry = true;
+                $retryParams->drop_tokens_threshold = $dropTokensThreshold;
+            }
+            if ($found < $typoTokensThreshold) {
+                $needsRetry = true;
+                $retryParams->typo_tokens_threshold = $typoTokensThreshold;
+            }
+            $retryOverrides[] = $retryParams;
+        }
+
+        return [$needsRetry, $retryOverrides];
+    }
+
+    /**
+     * Apply search setting overrides to partitioned requests. $retryOverrides come from getRetryOverrides()).
+     */
+    public static function applyRetryOverrides(array $partitionRequests, array $retryOverrides): void
+    {
+        foreach ($partitionRequests as $partitionRequest) {
+            $searchIndex = 0;
+            foreach ($partitionRequest->searches as &$search) {
+                $searchOverrides = $retryOverrides[$searchIndex++] ?? null;
+                foreach ($searchOverrides as $key => $value) {
+                    $search->$key = $value;
+                }
+            }
+        }
     }
 
     /**
@@ -339,11 +396,15 @@ class TypesensePartitionedSearch
                 $search->per_page = 249;
                 $search->page = 1;
             }
-        };
 
-        if ($numPartitions === 1) {
-            return [$request];
-        }
+            // These are settings which change the search strategy in case there are no results. Since we make
+            // requests on a subset of the data, not getting any hits doesn't mean we won't get hits from other
+            // collections. To somewhat fix this we disable them, and in case there are not enough results after merging
+            // we retry with them enabled. This way we at least get no random typo tolerance results in case there are
+            // enough hits overall.
+            $search->drop_tokens_threshold = 0;
+            $search->typo_tokens_threshold = 0;
+        };
 
         $newRequestObjects = [];
         for ($i = 0; $i < $numPartitions; ++$i) {
@@ -361,6 +422,6 @@ class TypesensePartitionedSearch
             $newRequestObjects[] = $requestObj;
         }
 
-        return array_map(fn ($item) => json_encode($item), $newRequestObjects);
+        return $newRequestObjects;
     }
 }

@@ -73,47 +73,68 @@ class TypesenseProxyService implements LoggerAwareInterface
         $sameCollection = !$this->config->getTypesenseSearchPartitionsSplitCollection();
 
         if ($isSearch) {
-            $partitionRequestContents = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameCollection);
-            $responses = [];
-            foreach ($partitionRequestContents as $partitionRequestContent) {
-                $responses[] = $this->client->request($method, $url, [
-                    'headers' => [
-                        'X-TYPESENSE-API-KEY' => $proxyKey,
-                    ],
-                    'body' => $partitionRequestContent,
-                    'query' => $queryParams,
-                ]);
-            }
-
-            $responseContents = [];
-            $status = null;
-            $failContent = null;
-            $headers = [];
-            foreach ($responses as $response) {
-                $status = $response->getStatusCode();
-                $headers = $response->getHeaders(false);
-                if ($status !== 200) {
-                    $failContent = $response->getContent(false);
-                    $responseContents = [];
-                    // Something is wrong, cancel all
-                    foreach ($responses as $r) {
-                        $r->getStatusCode(); // docs say this is needed to stop throw on destruction
-                        $r->cancel();
-                    }
-                    break;
+            $executePartitionedRequest = function ($requests) use ($method, $url, $proxyKey, $queryParams) {
+                $responses = [];
+                foreach ($requests as $partitionRequest) {
+                    $responses[] = $this->client->request($method, $url, [
+                        'headers' => [
+                            'X-TYPESENSE-API-KEY' => $proxyKey,
+                        ],
+                        'body' => json_encode($partitionRequest),
+                        'query' => $queryParams,
+                    ]);
                 }
-                $responseContents[] = $response->getContent(false);
-            }
 
+                $responseContents = [];
+                $status = null;
+                $failContent = null;
+                $headers = [];
+
+                foreach ($responses as $response) {
+                    $status = $response->getStatusCode();
+                    $headers = $response->getHeaders(false);
+                    if ($status !== 200) {
+                        $failContent = $response->getContent(false);
+                        $responseContents = [];
+                        // Something is wrong, cancel all
+                        foreach ($responses as $r) {
+                            $r->getStatusCode(); // docs say this is needed to stop throw on destruction
+                            $r->cancel();
+                        }
+                        break;
+                    }
+                    $responseContents[] = $response->getContent(false);
+                }
+
+                return [$responseContents, $status, $headers, $failContent];
+            };
+
+            // First try
+            $partitionRequests = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameCollection);
+            [$responseContents, $status, $headers, $failContent] = $executePartitionedRequest($partitionRequests);
             $headers = [
                 'Content-Type' => $headers['content-type'],
             ];
-
             if ($failContent !== null) {
                 return new Response($failContent, $status, $headers);
-            } else {
-                return new Response(TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions), $status, $headers);
             }
+            $mergedResponse = TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions);
+
+            // Check if we need to retry the request in case there are not enough results
+            [$needsRetry, $retryOverrides] = TypesensePartitionedSearch::getRetryOverrides($requestContent, $mergedResponse);
+            if ($needsRetry) {
+                TypesensePartitionedSearch::applyRetryOverrides($partitionRequests, $retryOverrides);
+                [$responseContents, $status, $headers, $failContent] = $executePartitionedRequest($partitionRequests);
+                $headers = [
+                    'Content-Type' => $headers['content-type'],
+                ];
+                if ($failContent !== null) {
+                    return new Response($failContent, $status, $headers);
+                }
+                $mergedResponse = TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions);
+            }
+
+            return new Response(json_encode($mergedResponse), $status, $headers);
         } else {
             if (!$sameCollection) {
                 throw new \RuntimeException('Not supported');

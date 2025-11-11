@@ -272,14 +272,13 @@ class TypesensePartitionedSearchTest extends TestCase
         }
     ]
 }';
-        $this->assertSame($request, TypesensePartitionedSearch::splitJsonRequest($request, 1)[0]);
 
         $split = TypesensePartitionedSearch::splitJsonRequest($request, 2);
         $this->assertCount(2, $split);
-        $this->assertStringContainsString('partitionKey: [0..49]', $split[0]);
-        $this->assertStringContainsString('partitionKey: [50..99]', $split[1]);
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0]->searches[0]->filter_by);
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1]->searches[0]->filter_by);
 
-        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, ['{"results":[]}',  '{"results":[]}'], 2);
+        $merged = json_encode(TypesensePartitionedSearch::mergeJsonResponses($request, ['{"results":[]}',  '{"results":[]}'], 2));
         $this->assertSame('{"results":[]}', $merged);
 
         $response = '{
@@ -331,11 +330,67 @@ class TypesensePartitionedSearchTest extends TestCase
     ]
 }';
 
-        $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2), flags: JSON_THROW_ON_ERROR);
+        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2);
         $this->assertCount(1, $merged->results[0]->facet_counts);
         $this->assertSame(10024, $merged->results[0]->found_docs);
         $this->assertSame(6344, $merged->results[0]->found);
         $this->assertCount(2, $merged->results[0]->grouped_hits);
+    }
+
+    public function testGetRetryOverrides(): void
+    {
+        $request = '{
+    "query_by": "person.familyName,person.givenName,file.base.fileName,objectType,person.stPersonNr,person.studId,person.identNrObfuscated,person.birthDate",
+    "sort_by": "person.person:asc,@type:desc,objectType:desc",
+    "collection": "cabinet",
+    "q": "*",
+    "facet_by": "@type",
+    "filter_by": "base.isScheduledForDeletion:false",
+    "max_facet_values": 1,
+    "typo_tokens_threshold": 0,
+    "page": 2,
+    "per_page": 2
+}';
+        $response = '{"results": [{
+    "facet_counts": [
+        {
+            "field_name": "@type",
+            "sampled": false,
+            "counts": [
+                {
+                    "count": 3172,
+                    "highlighted": "Person",
+                    "value": "Person"
+                }
+            ],
+            "stats": {
+                "total_values": 1
+            }
+        }
+    ],
+    "found": 0,
+    "out_of": 5012,
+    "page": 1,
+    "request_params": {
+        "collection_name": "cabinet",
+        "first_q": "*",
+        "per_page": 250,
+        "q": "*"
+    },
+    "search_cutoff": false,
+    "search_time_ms": 101,
+    "hits": [
+    ]
+}]}';
+
+        [$needsRetry, $overrides] = TypesensePartitionedSearch::getRetryOverrides($request, json_decode($response, flags: JSON_THROW_ON_ERROR));
+        $this->assertTrue($needsRetry);
+        $this->assertSame(1, $overrides[0]->drop_tokens_threshold);
+
+        $partitionRequests = TypesensePartitionedSearch::splitJsonRequest($request, 1);
+        $this->assertSame(0, $partitionRequests[0]->searches[0]->drop_tokens_threshold);
+        TypesensePartitionedSearch::applyRetryOverrides($partitionRequests, $overrides);
+        $this->assertSame(1, $partitionRequests[0]->searches[0]->drop_tokens_threshold);
     }
 
     public function testSplitSingleSearch(): void
@@ -351,12 +406,10 @@ class TypesensePartitionedSearchTest extends TestCase
     "page": 2,
     "per_page": 2
 }';
-        $this->assertSame($request, TypesensePartitionedSearch::splitJsonRequest($request, 1)[0]);
-
         $split = TypesensePartitionedSearch::splitJsonRequest($request, 2);
         $this->assertCount(2, $split);
-        $this->assertStringContainsString('partitionKey: [0..49]', $split[0]);
-        $this->assertStringContainsString('partitionKey: [50..99]', $split[1]);
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0]->searches[0]->filter_by);
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1]->searches[0]->filter_by);
 
         $response = '{"results": [{
     "facet_counts": [
@@ -398,7 +451,7 @@ class TypesensePartitionedSearchTest extends TestCase
     ]
 }]}';
 
-        $merged = json_decode(TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2), flags: JSON_THROW_ON_ERROR);
+        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2);
         $this->assertCount(1, $merged->facet_counts);
         $this->assertSame(6344, $merged->found);
         $this->assertCount(2, $merged->hits);
