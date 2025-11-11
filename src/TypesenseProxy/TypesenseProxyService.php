@@ -72,7 +72,7 @@ class TypesenseProxyService implements LoggerAwareInterface
         $partitions = $this->config->getTypesenseSearchPartitions();
         $sameCollection = !$this->config->getTypesenseSearchPartitionsSplitCollection();
 
-        if ($isSearch) {
+        if ($isSearch && $partitions > 1) {
             $executePartitionedRequest = function ($requests) use ($method, $url, $proxyKey, $queryParams) {
                 $responses = [];
                 foreach ($requests as $partitionRequest) {
@@ -136,10 +136,10 @@ class TypesenseProxyService implements LoggerAwareInterface
 
             return new Response(json_encode($mergedResponse), $status, $headers);
         } else {
-            if (!$sameCollection) {
+            if ($partitions > 1 && !$sameCollection) {
                 throw new \RuntimeException('Not supported');
             }
-            // not a search, just pass through
+            // not something we need to adjust, just pass through
             $response = $this->client->request($method, $url, [
                 'headers' => [
                     'X-TYPESENSE-API-KEY' => $proxyKey,
