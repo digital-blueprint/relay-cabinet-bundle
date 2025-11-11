@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.10
+
+* partition: fix "page" always being "1" in merged results
+* partition: add partial support for "drop_tokens_threshold" and "typo_tokens_threshold"
+
 ## 0.3.9
 
 * Make the cron sync opt-in (via the `sync.enabled` option)
