@@ -240,6 +240,8 @@ class TypesensePartitionedSearch
                 array_splice($facetCount->counts, $maxFacetValues);
             }
 
+            $result->page = $page;
+
             if (isset($search->per_page)) {
                 $result->request_params->per_page = $search->per_page;
             }

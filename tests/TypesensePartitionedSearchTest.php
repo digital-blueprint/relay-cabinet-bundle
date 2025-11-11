@@ -348,8 +348,8 @@ class TypesensePartitionedSearchTest extends TestCase
     "facet_by": "@type",
     "filter_by": "base.isScheduledForDeletion:false",
     "max_facet_values": 1,
-    "page": 1,
-    "per_page": 99
+    "page": 2,
+    "per_page": 2
 }';
         $this->assertSame($request, TypesensePartitionedSearch::splitJsonRequest($request, 1)[0]);
 
@@ -390,6 +390,10 @@ class TypesensePartitionedSearchTest extends TestCase
         {
             "document": {
             }
+        },
+        {
+            "document": {
+            }
         }
     ]
 }]}';
@@ -398,5 +402,8 @@ class TypesensePartitionedSearchTest extends TestCase
         $this->assertCount(1, $merged->facet_counts);
         $this->assertSame(6344, $merged->found);
         $this->assertCount(2, $merged->hits);
+        $this->assertSame(2, $merged->page);
+        $this->assertSame(5012, $merged->out_of);
+        $this->assertSame(false, $merged->search_cutoff);
     }
 }
