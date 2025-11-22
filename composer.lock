@@ -8,16 +8,16 @@
     "packages": [
         {
             "name": "api-platform/core",
-            "version": "v4.2.4",
+            "version": "v4.2.6",
             "source": {
                 "type": "git",
                 "url": "https://github.com/api-platform/core.git",
-                "reference": "baa66e404e3de37bd455915367298d937a49468e"
+                "reference": "bad923f4ced6e62fc3918d501619c9138418f161"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/api-platform/core/zipball/baa66e404e3de37bd455915367298d937a49468e",
-                "reference": "baa66e404e3de37bd455915367298d937a49468e",
+                "url": "https://api.github.com/repos/api-platform/core/zipball/bad923f4ced6e62fc3918d501619c9138418f161",
+                "reference": "bad923f4ced6e62fc3918d501619c9138418f161",
                 "shasum": ""
             },
             "require": {
@@ -224,9 +224,9 @@
             ],
             "support": {
                 "issues": "https://github.com/api-platform/core/issues",
-                "source": "https://github.com/api-platform/core/tree/v4.2.4"
+                "source": "https://github.com/api-platform/core/tree/v4.2.6"
             },
-            "time": "2025-11-13T15:53:15+00:00"
+            "time": "2025-11-17T17:32:37+00:00"
         },
         {
             "name": "brick/math",
@@ -356,20 +356,21 @@
         },
         {
             "name": "dbp/relay-base-person-bundle",
-            "version": "v0.2.42",
+            "version": "v0.2.43",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-base-person-bundle.git",
-                "reference": "d846d5b258f3b144107f7296eefc172639613290"
+                "reference": "f72e94857415ae495ed4aa46070f22b688d21212"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-base-person-bundle/zipball/d846d5b258f3b144107f7296eefc172639613290",
-                "reference": "d846d5b258f3b144107f7296eefc172639613290",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-base-person-bundle/zipball/f72e94857415ae495ed4aa46070f22b688d21212",
+                "reference": "f72e94857415ae495ed4aa46070f22b688d21212",
                 "shasum": ""
             },
             "require": {
-                "api-platform/core": "^4.1",
+                "api-platform/metadata": "^4.1",
+                "api-platform/openapi": "^4.1",
                 "dbp/relay-core-bundle": "^0.1.220",
                 "ext-json": "*",
                 "php": ">=8.2",
@@ -381,18 +382,20 @@
                 "symfony/serializer": "^6.4"
             },
             "require-dev": {
+                "api-platform/symfony": "^4.1",
                 "captainhook/captainhook": "^5.25",
                 "friendsofphp/php-cs-fixer": "^3.50",
                 "phpstan/phpstan": "^2.0.0",
                 "phpstan/phpstan-phpunit": "^2.0.0",
                 "phpstan/phpstan-symfony": "^2.0.0",
-                "phpunit/phpunit": "^10.1",
+                "phpunit/phpunit": "^11.5",
                 "symfony/browser-kit": "^6.4",
                 "symfony/error-handler": "^6.4",
                 "symfony/http-client": "^6.4",
                 "symfony/monolog-bridge": "^6.4",
                 "symfony/monolog-bundle": "^3.10",
-                "symfony/phpunit-bridge": "^7.0.4"
+                "symfony/phpunit-bridge": "^7.0.4",
+                "symfony/runtime": "*"
             },
             "type": "symfony-bundle",
             "autoload": {
@@ -406,26 +409,27 @@
             ],
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-base-person-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-base-person-bundle/tree/v0.2.42"
+                "source": "https://github.com/digital-blueprint/relay-base-person-bundle/tree/v0.2.43"
             },
-            "time": "2025-10-02T08:42:58+00:00"
+            "time": "2025-11-18T13:35:15+00:00"
         },
         {
             "name": "dbp/relay-blob-bundle",
-            "version": "v0.1.90",
+            "version": "v0.1.92",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-blob-bundle.git",
-                "reference": "7c652c40513810304d3f2b4bd7c689ecfe4597b0"
+                "reference": "1bce42c085cfc0ffefe322f5cd47ecc436569c08"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/7c652c40513810304d3f2b4bd7c689ecfe4597b0",
-                "reference": "7c652c40513810304d3f2b4bd7c689ecfe4597b0",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/1bce42c085cfc0ffefe322f5cd47ecc436569c08",
+                "reference": "1bce42c085cfc0ffefe322f5cd47ecc436569c08",
                 "shasum": ""
             },
             "require": {
-                "api-platform/core": "^3.4 || ^4.1",
+                "api-platform/metadata": " ^4.1",
+                "api-platform/openapi": " ^4.1",
                 "dbp/relay-blob-library": "^0.3.10",
                 "dbp/relay-core-bundle": "^0.1.212",
                 "dbp/relay-verity-bundle": "^0.1.4",
@@ -460,19 +464,20 @@
                 "twig/twig": "^3.8"
             },
             "require-dev": {
+                "api-platform/symfony": " ^4.1",
                 "ext-curl": "*",
                 "friendsofphp/php-cs-fixer": "^3.50",
                 "phpstan/phpstan": "^2.0",
                 "phpstan/phpstan-phpunit": "^2.0",
                 "phpstan/phpstan-symfony": "^2.0",
-                "phpunit/phpunit": "^10.1",
+                "phpunit/phpunit": "^11.5",
                 "symfony/browser-kit": "^6.4",
                 "symfony/error-handler": "^6.4",
                 "symfony/http-client": "^6.4",
                 "symfony/monolog-bridge": "^6.4",
                 "symfony/monolog-bundle": "^3.10",
                 "symfony/phpunit-bridge": "^7.0.4",
-                "vimeo/psalm": "^5.22.2"
+                "symfony/runtime": "^6.4"
             },
             "type": "symfony-bundle",
             "autoload": {
@@ -487,9 +492,9 @@
             "description": "A bundle for file-serving, persisting and managing",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-blob-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.90"
+                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.1.92"
             },
-            "time": "2025-10-22T11:06:35+00:00"
+            "time": "2025-11-18T14:35:47+00:00"
         },
         {
             "name": "dbp/relay-blob-library",
