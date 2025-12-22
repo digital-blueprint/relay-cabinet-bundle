@@ -8,7 +8,7 @@
         "api-platform/metadata": "^4.1",
         "api-platform/openapi": "^4.1",
         "dbp/relay-base-person-bundle": "^0.2.30",
-        "dbp/relay-blob-bundle": "^0.1.76",
+        "dbp/relay-blob-bundle": "^0.2.0",
         "dbp/relay-blob-library": "^0.3.3",
         "dbp/relay-core-bundle": "^0.1.212",
         "doctrine/dbal": "^3.8 || ^4.0",
