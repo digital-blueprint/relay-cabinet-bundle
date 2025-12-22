@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.11
+
+* Add support for Symfony 7
+
 ## 0.3.10
 
 * partition: fix "page" always being "1" in merged results
