@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.12
+
+* Symfony 7 fixes
+
 ## 0.3.11
 
 * Add support for Symfony 7
