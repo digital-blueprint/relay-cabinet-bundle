@@ -1,7 +1,3 @@
 typesense_proxy:
   resource: ../../TypesenseProxy/
-  type: annotation
-
-blob_api:
-  resource: ../../Blob/
-  type: annotation
+  type: attribute
