@@ -5,15 +5,7 @@ services:
     arguments:
       $em: '@doctrine.orm.dbp_relay_cabinet_bundle_entity_manager'
 
-  Dbp\Relay\CabinetBundle\Service\BlobService:
-    autowire: true
-    autoconfigure: true
-
   Dbp\Relay\CabinetBundle\Service\ConfigurationService:
-    autowire: true
-    autoconfigure: true
-
-  Dbp\Relay\CabinetBundle\Service\CollectionManager:
     autowire: true
     autoconfigure: true
 
