@@ -118,9 +118,9 @@ class CollectionManager
             }
 
             return $name;
-        } else {
-            return $primaryCollectionName;
         }
+
+        return $primaryCollectionName;
     }
 
     public function updateAliases(string $primaryCollectionName)

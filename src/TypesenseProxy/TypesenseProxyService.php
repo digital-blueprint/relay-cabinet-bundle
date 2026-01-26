@@ -135,24 +135,23 @@ class TypesenseProxyService implements LoggerAwareInterface
             }
 
             return new Response(json_encode($mergedResponse), $status, $headers);
-        } else {
-            if ($partitions > 1 && !$sameCollection) {
-                throw new \RuntimeException('Not supported');
-            }
-            // not something we need to adjust, just pass through
-            $response = $this->client->request($method, $url, [
-                'headers' => [
-                    'X-TYPESENSE-API-KEY' => $proxyKey,
-                ],
-                'body' => $requestContent,
-                'query' => $queryParams,
-            ]);
-            $headers = $response->getHeaders(false);
-            $headers = [
-                'Content-Type' => $headers['content-type'],
-            ];
-
-            return new Response($response->getContent(false), $response->getStatusCode(), $headers);
         }
+        if ($partitions > 1 && !$sameCollection) {
+            throw new \RuntimeException('Not supported');
+        }
+        // not something we need to adjust, just pass through
+        $response = $this->client->request($method, $url, [
+            'headers' => [
+                'X-TYPESENSE-API-KEY' => $proxyKey,
+            ],
+            'body' => $requestContent,
+            'query' => $queryParams,
+        ]);
+        $headers = $response->getHeaders(false);
+        $headers = [
+            'Content-Type' => $headers['content-type'],
+        ];
+
+        return new Response($response->getContent(false), $response->getStatusCode(), $headers);
     }
 }
