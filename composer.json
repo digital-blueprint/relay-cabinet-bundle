@@ -34,7 +34,7 @@
         "symfony/mime": "^6.4 || ^7.4",
         "symfony/routing": "^6.4 || ^7.4",
         "symfony/uid": "^6.4 || ^7.4",
-        "typesense/typesense-php": "^4.9.2 || ^5.0.2"
+        "typesense/typesense-php": "^6.0.0"
     },
     "conflict": {
         "php-http/httplug": "<2"
