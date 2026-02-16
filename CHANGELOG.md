@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.13
+
+* Add support for typesense/typesense-php v6
+* Remove some unused service definitions
+
 ## 0.3.12
 
 * Symfony 7 fixes
