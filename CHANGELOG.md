@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.14
+
+* dbp:relay:cabinet:add-fake-files: add `--file` option to add a specific file
+  instead of random ones
+
 ## 0.3.13
 
 * Add support for typesense/typesense-php v6
