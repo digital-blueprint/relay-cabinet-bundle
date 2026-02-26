@@ -40,6 +40,7 @@ class AddFakeFilesCommand extends Command
         $this->addOption('person-id', null, InputOption::VALUE_REQUIRED, 'If the files should be added for only one specific person');
         $this->addOption('count', null, InputOption::VALUE_REQUIRED, 'The the number of files to add', '10');
         $this->addOption('no-blob', null, InputOption::VALUE_NONE, 'Don\'t add the files to blob, only to typesense');
+        $this->addOption('file', null, InputOption::VALUE_REQUIRED, 'Force a file path to use for the file (optional)');
     }
 
     protected function execute(InputInterface $input, OutputInterface $output): int
@@ -49,6 +50,11 @@ class AddFakeFilesCommand extends Command
         }
 
         $count = (int) $input->getOption('count');
+        $filenameOverride = $input->getOption('file');
+
+        if ($filenameOverride !== null && !file_exists($filenameOverride)) {
+            throw new \RuntimeException('File doesnt exist: '.$filenameOverride);
+        }
 
         /** @var QuestionHelper $helper */
         $helper = $this->getHelper('question');
@@ -83,6 +89,9 @@ class AddFakeFilesCommand extends Command
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
                 $event = $this->eventDispatcher->dispatch($event);
                 $filename = $event->getFileName();
+                if ($filenameOverride !== null) {
+                    $filename = $filenameOverride;
+                }
                 $guesser = new FileinfoMimeTypeGuesser();
                 $mimeType = $guesser->guessMimeType($event->getFilePath());
                 if (!$mimeType) {
@@ -102,8 +111,14 @@ class AddFakeFilesCommand extends Command
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
                 $event = $this->eventDispatcher->dispatch($event);
-                $payload = file_get_contents($event->getFilePath());
                 $filename = $event->getFileName();
+                if ($filenameOverride !== null) {
+                    $filename = $filenameOverride;
+                }
+                $payload = file_get_contents($filename);
+                if ($payload === false) {
+                    throw new \RuntimeException('Unable to read file');
+                }
                 $type = $event->getBlobType();
                 $metadata = $event->getMetadata();
                 $this->blobService->uploadFile($filename, $payload, $type, $metadata);
