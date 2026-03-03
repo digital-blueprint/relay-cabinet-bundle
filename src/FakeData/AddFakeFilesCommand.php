@@ -111,11 +111,16 @@ class AddFakeFilesCommand extends Command
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
                 $event = $this->eventDispatcher->dispatch($event);
-                $filename = $event->getFileName();
+                $filename = $event->getFilePath();
                 if ($filenameOverride !== null) {
                     $filename = $filenameOverride;
                 }
                 $payload = file_get_contents($filename);
+                if ($filenameOverride !== null) {
+                    $filename = basename($filename);
+                } else {
+                    $filename = $event->getFileName();
+                }
                 if ($payload === false) {
                     throw new \RuntimeException('Unable to read file');
                 }
