@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.15
+
+* dbp:relay:cabinet:add-fake-files: fix `--file` resulting in filenames containing the filepath instead of the
+  basename.
+
 ## 0.3.14
 
 * dbp:relay:cabinet:add-fake-files: add `--file` option to add a specific file
