@@ -50,10 +50,10 @@ class AddFakeFilesCommand extends Command
         }
 
         $count = (int) $input->getOption('count');
-        $filenameOverride = $input->getOption('file');
+        $filepathOverride = $input->getOption('file');
 
-        if ($filenameOverride !== null && !file_exists($filenameOverride)) {
-            throw new \RuntimeException('File doesnt exist: '.$filenameOverride);
+        if ($filepathOverride !== null && !file_exists($filepathOverride)) {
+            throw new \RuntimeException('File doesnt exist: '.$filepathOverride);
         }
 
         /** @var QuestionHelper $helper */
@@ -88,12 +88,15 @@ class AddFakeFilesCommand extends Command
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
                 $event = $this->eventDispatcher->dispatch($event);
-                $filename = $event->getFileName();
-                if ($filenameOverride !== null) {
-                    $filename = $filenameOverride;
-                }
                 $guesser = new FileinfoMimeTypeGuesser();
-                $mimeType = $guesser->guessMimeType($event->getFilePath());
+                if ($filepathOverride !== null) {
+                    $filepath = $filepathOverride;
+                    $filename = basename($filepath);
+                } else {
+                    $filepath = $event->getFilePath();
+                    $filename = $event->getFileName();
+                }
+                $mimeType = $guesser->guessMimeType($filepath);
                 if (!$mimeType) {
                     throw new \RuntimeException('No mime type guessed');
                 }
@@ -111,16 +114,14 @@ class AddFakeFilesCommand extends Command
             for ($i = 0; $i < $count; ++$i) {
                 $event = new FakeFileEvent($i + 1, $count, $getRandom($personIds));
                 $event = $this->eventDispatcher->dispatch($event);
-                $filename = $event->getFilePath();
-                if ($filenameOverride !== null) {
-                    $filename = $filenameOverride;
-                }
-                $payload = file_get_contents($filename);
-                if ($filenameOverride !== null) {
-                    $filename = basename($filename);
+                if ($filepathOverride !== null) {
+                    $filepath = $filepathOverride;
+                    $filename = basename($filepath);
                 } else {
+                    $filepath = $event->getFilePath();
                     $filename = $event->getFileName();
                 }
+                $payload = file_get_contents($filepath);
                 if ($payload === false) {
                     throw new \RuntimeException('Unable to read file');
                 }
