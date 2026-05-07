@@ -209,19 +209,51 @@ class TypesensePartitionedSearch
     }
 
     /**
-     * Merges one or more partitioned search responses into one.
+     * Merges multiple pages from the same partition into one result.
+     *
+     * Unlike mergeResults() which merges across partitions (summing found/out_of),
+     * this merges pages within a single partition: hits are concatenated but found/out_of
+     * come only from the first page, since each page already reports the same total count.
      */
-    public static function mergeJsonResponses(string $request, array $jsonResponses, int $numPartitions): object
+    public static function mergePages(object $page1, object $page2): object
     {
-        if ($numPartitions === 1) {
-            return $jsonResponses[0];
+        if (isset($page1->error)) {
+            return $page1;
+        } elseif (isset($page2->error)) {
+            return $page2;
         }
-        if (count($jsonResponses) === 0) {
+        $merged = clone $page1;
+        if (isset($page1->hits)) {
+            $merged->hits = array_merge($page1->hits, $page2->hits);
+        }
+        if (isset($page1->grouped_hits)) {
+            $merged->grouped_hits = array_merge($page1->grouped_hits, $page2->grouped_hits);
+        }
+
+        return $merged;
+    }
+
+    /**
+     * Merges one or more partitioned search responses into one.
+     *
+     * $nestedResponses is a nested array indexed as [partition][page], matching the structure
+     * returned by splitJsonRequest(). Each element is an already-decoded JSON response string.
+     */
+    public static function mergeJsonResponses(string $request, array $nestedResponses, int $numPartitions): object
+    {
+        $pagesPerPartition = count($nestedResponses[0] ?? [[]]);
+        if ($numPartitions * $pagesPerPartition === 1) {
+            return $nestedResponses[0][0];
+        }
+        if (count($nestedResponses) === 0) {
             throw new \RuntimeException('No results found');
         }
 
+        // If we fetch X from each partition, then we can only use the first X of the merged result
+        $maxUsableResults = $pagesPerPartition * self::MAX_PER_PAGE;
+
         /* After everything is merged, get the result in an expected shape. Limit lengths, sort etc. */
-        $adjustResult = function ($search, &$result) {
+        $adjustResult = function ($search, &$result) use ($maxUsableResults) {
             if (isset($result->error)) {
                 return;
             }
@@ -250,10 +282,12 @@ class TypesensePartitionedSearch
             if (isset($result->grouped_hits)) {
                 $sortFunction = self::createSortFunction($sortBy);
                 usort($result->grouped_hits, fn ($a, $b) => $sortFunction($a->hits[0], $b->hits[0]));
+                $result->grouped_hits = array_slice($result->grouped_hits, 0, $maxUsableResults);
                 $result->grouped_hits = array_slice($result->grouped_hits, ($page - 1) * $pageSize, $pageSize);
             } else {
                 $sortFunction = self::createSortFunction($sortBy);
                 usort($result->hits, $sortFunction);
+                $result->hits = array_slice($result->hits, 0, $maxUsableResults);
                 $result->hits = array_slice($result->hits, ($page - 1) * $pageSize, $pageSize);
             }
         };
@@ -261,22 +295,42 @@ class TypesensePartitionedSearch
         $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
         $wasMulti = is_array($requestObj->searches ?? null);
 
-        $responseObjects = [];
-        foreach ($jsonResponses as $response) {
-            $responseObjects[] = json_decode($response, flags: JSON_THROW_ON_ERROR);
+        // Decode all responses: [partition][page] => response object
+        $decodedResponses = [];
+        foreach ($nestedResponses as $partitionPages) {
+            $decodedPages = [];
+            foreach ($partitionPages as $response) {
+                $decodedPages[] = json_decode($response, flags: JSON_THROW_ON_ERROR);
+            }
+            $decodedResponses[] = $decodedPages;
         }
 
         $newResponse = new \stdClass();
         $mergedResults = [];
-        $searchCount = count($responseObjects[0]->results);
+        $searchCount = count($decodedResponses[0][0]->results);
         for ($i = 0; $i < $searchCount; ++$i) {
+            // Step 1: merge all pages within each partition (hits concatenated, found kept from page 1)
+            $partitionResults = [];
+            foreach ($decodedResponses as $partitionPages) {
+                $partitionResult = null;
+                foreach ($partitionPages as $decodedPage) {
+                    $result = $decodedPage->results[$i];
+                    if ($partitionResult === null) {
+                        $partitionResult = $result;
+                    } else {
+                        $partitionResult = self::mergePages($partitionResult, $result);
+                    }
+                }
+                $partitionResults[] = $partitionResult;
+            }
+
+            // Step 2: merge across partitions (found/out_of are summed)
             $newResult = null;
-            foreach ($responseObjects as $d) {
-                $result = $d->results[$i];
+            foreach ($partitionResults as $partitionResult) {
                 if ($newResult === null) {
-                    $newResult = $result;
+                    $newResult = $partitionResult;
                 } else {
-                    $newResult = self::mergeResults($newResult, $result);
+                    $newResult = self::mergeResults($newResult, $partitionResult);
                 }
             }
 
@@ -345,19 +399,33 @@ class TypesensePartitionedSearch
 
     /**
      * Apply search setting overrides to partitioned requests. $retryOverrides come from getRetryOverrides()).
+     * $nestedRequests is the nested array[partition][page] returned by splitJsonRequest().
      */
-    public static function applyRetryOverrides(array $partitionRequests, array $retryOverrides): void
+    public static function applyRetryOverrides(array $nestedRequests, array $retryOverrides): void
     {
-        foreach ($partitionRequests as $partitionRequest) {
-            $searchIndex = 0;
-            foreach ($partitionRequest->searches as &$search) {
-                $searchOverrides = $retryOverrides[$searchIndex++] ?? null;
-                foreach ($searchOverrides as $key => $value) {
-                    $search->$key = $value;
+        foreach ($nestedRequests as $partitionPages) {
+            foreach ($partitionPages as $partitionRequest) {
+                $searchIndex = 0;
+                foreach ($partitionRequest->searches as &$search) {
+                    $searchOverrides = $retryOverrides[$searchIndex++] ?? null;
+                    foreach ($searchOverrides as $key => $value) {
+                        $search->$key = $value;
+                    }
                 }
             }
         }
     }
+
+    /**
+     * The maximum number of results Typesense returns per page.
+     * 249 instead of 250 due to a Typesense bug: per_page=250 causes an error when the collection is empty.
+     */
+    private const MAX_PER_PAGE = 249;
+
+    /**
+     * Default maximum pages to query, to limit the amount of pages that are fetch in one request.
+     */
+    private const MAX_PAGES = 4;
 
     /**
      * Splits a typesense search request into 1 or more partitioned requests.
@@ -367,14 +435,24 @@ class TypesensePartitionedSearch
      *   * The total_values of facets are no longer correct, they are just a lower bound (not possible)
      *   * Special sorting of facet values is not supported (could be improved)
      *   * The hits sorting only supports some parts of the typesense syntax (could be improved)
-     *   * The hits are limited to 250 * partitions entries (could be improved)
+     *
+     * $maxResults controls how many hits the caller may need in total. When this exceeds what a single
+     * partition page can supply (numPartitions * MAX_PER_PAGE), multiple pages are fetched per partition
+     * so that the merged pool is large enough to satisfy the request.
+     *
+     * Returns a nested array indexed as [partition][page].
+     * Pass this directly to mergeJsonResponses() after collecting the responses in the same shape.
+     *
+     * @return object[][]
      */
-    public static function splitJsonRequest(string $request, int $numPartitions, bool $sameCollection = true): array
+    public static function splitJsonRequest(string $request, int $numPartitions, bool $sameCollection = true, int $maxResults = self::MAX_PER_PAGE, int $maxPages = self::MAX_PAGES): array
     {
-        $adjustSearchForPartition = function (&$search, int $index) use ($numPartitions, $sameCollection) {
+        $pagesPerPartition = min($maxPages, ceil($maxResults / self::MAX_PER_PAGE));
+
+        $adjustSearchForPartition = function (&$search, int $partitionIndex, int $pageIndex) use ($numPartitions, $sameCollection) {
             if ($sameCollection) {
                 $partitions = self::getPartitionsFilter('partitionKey', 100, $numPartitions);
-                $partition = $partitions[$index];
+                $partition = $partitions[$partitionIndex];
                 if (isset($search->filter_by) && trim($search->filter_by) !== '') {
                     $search->filter_by .= ' && '.$partition['filter_by'];
                 } else {
@@ -382,19 +460,19 @@ class TypesensePartitionedSearch
                 }
             } else {
                 $alias = $search->collection;
-                if ($index > 0) {
-                    $alias .= '-'.$index;
+                if ($partitionIndex > 0) {
+                    $alias .= '-'.$partitionIndex;
                 }
                 $search->collection = $alias;
             }
 
             // facet only searches don't require responses
             if (!isset($search->per_page) || $search->per_page > 0) {
-                // fetch as much as we can, so we can emulate pagination for a few pages when merging
+                // fetch as much as we can per page, so we can emulate pagination for many pages when merging
                 // XXX: For some reason if the collection is empty 250 leads to an error (maybe a typesense bug?)
                 // reducing to 249 makes it work again
-                $search->per_page = 249;
-                $search->page = 1;
+                $search->per_page = self::MAX_PER_PAGE;
+                $search->page = $pageIndex + 1;
             }
 
             // These are settings which change the search strategy in case there are no results. Since we make
@@ -408,20 +486,46 @@ class TypesensePartitionedSearch
 
         $newRequestObjects = [];
         for ($i = 0; $i < $numPartitions; ++$i) {
-            $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
-            $isMulti = is_array($requestObj->searches ?? null);
-            // Convert everything to a multi search, to simplify things
-            if (!$isMulti) {
-                $newMulti = (object) [];
-                $newMulti->searches = [$requestObj];
-                $requestObj = $newMulti;
+            $partitionPages = [];
+            for ($p = 0; $p < $pagesPerPartition; ++$p) {
+                $requestObj = json_decode($request, flags: JSON_THROW_ON_ERROR);
+                $isMulti = is_array($requestObj->searches ?? null);
+                // Convert everything to a multi search, to simplify things
+                if (!$isMulti) {
+                    $newMulti = (object) [];
+                    $newMulti->searches = [$requestObj];
+                    $requestObj = $newMulti;
+                }
+                foreach ($requestObj->searches as &$search) {
+                    $adjustSearchForPartition($search, $i, $p);
+                }
+                $partitionPages[] = $requestObj;
             }
-            foreach ($requestObj->searches as &$search) {
-                $adjustSearchForPartition($search, $i);
-            }
-            $newRequestObjects[] = $requestObj;
+            $newRequestObjects[] = $partitionPages;
         }
 
         return $newRequestObjects;
+    }
+
+    /**
+     * Determines the maximum number of results the client may need from the request.
+     * This is used to decide how many Typesense pages to fetch per partition.
+     */
+    public static function getMaxResultsFromRequest(string $requestContent): int
+    {
+        $requestObj = json_decode($requestContent, flags: JSON_THROW_ON_ERROR);
+        $searches = $requestObj->searches ?? [$requestObj];
+
+        $maxResults = 0;
+        foreach ($searches as $search) {
+            $page = $search->page ?? 1;
+            $perPage = $search->per_page ?? 10;
+            // A per_page of 0 means facet-only: no hits needed
+            if ($perPage > 0) {
+                $maxResults = max($maxResults, $page * $perPage);
+            }
+        }
+
+        return max($maxResults, 1);
     }
 }

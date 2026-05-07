@@ -109,29 +109,47 @@ class TypesenseProxyService implements LoggerAwareInterface
                 return [$responseContents, $status, $headers, $failContent];
             };
 
+            // Determine how many results the client may need so that we fetch enough pages per partition.
+            $maxResults = TypesensePartitionedSearch::getMaxResultsFromRequest($requestContent);
+            $maxPages = $this->config->getTypesenseSearchMaxPartitionPages();
+
+            // splitJsonRequest returns a nested array[partition][page]
+            $nestedRequests = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameCollection, $maxResults, $maxPages);
+            $pagesPerPartition = count($nestedRequests[0]);
+
+            // Flatten to a single list for parallel HTTP dispatch, then reshape responses back to [partition][page]
+            $flattenRequests = fn (array $nested) => array_merge(...$nested);
+            $unflattenResponses = function (array $flat) use ($partitions, $pagesPerPartition): array {
+                $nested = [];
+                for ($p = 0; $p < $partitions; ++$p) {
+                    $nested[] = array_slice($flat, $p * $pagesPerPartition, $pagesPerPartition);
+                }
+
+                return $nested;
+            };
+
             // First try
-            $partitionRequests = TypesensePartitionedSearch::splitJsonRequest($requestContent, $partitions, $sameCollection);
-            [$responseContents, $status, $headers, $failContent] = $executePartitionedRequest($partitionRequests);
+            [$responseContents, $status, $headers, $failContent] = $executePartitionedRequest($flattenRequests($nestedRequests));
             $headers = [
                 'Content-Type' => $headers['content-type'],
             ];
             if ($failContent !== null) {
                 return new Response($failContent, $status, $headers);
             }
-            $mergedResponse = TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions);
+            $mergedResponse = TypesensePartitionedSearch::mergeJsonResponses($requestContent, $unflattenResponses($responseContents), $partitions);
 
             // Check if we need to retry the request in case there are not enough results
             [$needsRetry, $retryOverrides] = TypesensePartitionedSearch::getRetryOverrides($requestContent, $mergedResponse);
             if ($needsRetry) {
-                TypesensePartitionedSearch::applyRetryOverrides($partitionRequests, $retryOverrides);
-                [$responseContents, $status, $headers, $failContent] = $executePartitionedRequest($partitionRequests);
+                TypesensePartitionedSearch::applyRetryOverrides($nestedRequests, $retryOverrides);
+                [$responseContents, $status, $headers, $failContent] = $executePartitionedRequest($flattenRequests($nestedRequests));
                 $headers = [
                     'Content-Type' => $headers['content-type'],
                 ];
                 if ($failContent !== null) {
                     return new Response($failContent, $status, $headers);
                 }
-                $mergedResponse = TypesensePartitionedSearch::mergeJsonResponses($requestContent, $responseContents, $partitions);
+                $mergedResponse = TypesensePartitionedSearch::mergeJsonResponses($requestContent, $unflattenResponses($responseContents), $partitions);
             }
 
             return new Response(json_encode($mergedResponse), $status, $headers);

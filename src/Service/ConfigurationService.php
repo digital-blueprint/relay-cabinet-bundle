@@ -52,6 +52,11 @@ class ConfigurationService
         return $this->config['typesense']['search_partitions'];
     }
 
+    public function getTypesenseSearchMaxPartitionPages(): int
+    {
+        return $this->config['typesense']['search_max_partition_pages'];
+    }
+
     public function getTypesenseSearchPartitionsSplitCollection(): bool
     {
         return $this->config['typesense']['search_partitions_split_collection'];

@@ -274,11 +274,12 @@ class TypesensePartitionedSearchTest extends TestCase
 }';
 
         $split = TypesensePartitionedSearch::splitJsonRequest($request, 2);
-        $this->assertCount(2, $split);
-        $this->assertStringContainsString('partitionKey: [0..49]', $split[0]->searches[0]->filter_by);
-        $this->assertStringContainsString('partitionKey: [50..99]', $split[1]->searches[0]->filter_by);
+        $this->assertCount(2, $split);           // 2 partitions
+        $this->assertCount(1, $split[0]);        // 1 page per partition (per_page=99 < 249)
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0][0]->searches[0]->filter_by);
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1][0]->searches[0]->filter_by);
 
-        $merged = json_encode(TypesensePartitionedSearch::mergeJsonResponses($request, ['{"results":[]}',  '{"results":[]}'], 2));
+        $merged = json_encode(TypesensePartitionedSearch::mergeJsonResponses($request, [['{"results":[]}'], ['{"results":[]}']], 2));
         $this->assertSame('{"results":[]}', $merged);
 
         $response = '{
@@ -330,7 +331,7 @@ class TypesensePartitionedSearchTest extends TestCase
     ]
 }';
 
-        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2);
+        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, [[$response], [$response]], 2);
         $this->assertCount(1, $merged->results[0]->facet_counts);
         $this->assertSame(10024, $merged->results[0]->found_docs);
         $this->assertSame(6344, $merged->results[0]->found);
@@ -388,9 +389,140 @@ class TypesensePartitionedSearchTest extends TestCase
         $this->assertSame(1, $overrides[0]->drop_tokens_threshold);
 
         $partitionRequests = TypesensePartitionedSearch::splitJsonRequest($request, 1);
-        $this->assertSame(0, $partitionRequests[0]->searches[0]->drop_tokens_threshold);
+        $this->assertSame(0, $partitionRequests[0][0]->searches[0]->drop_tokens_threshold);
         TypesensePartitionedSearch::applyRetryOverrides($partitionRequests, $overrides);
-        $this->assertSame(1, $partitionRequests[0]->searches[0]->drop_tokens_threshold);
+        $this->assertSame(1, $partitionRequests[0][0]->searches[0]->drop_tokens_threshold);
+    }
+
+    public function testSplitRequestPagesPerPartition(): void
+    {
+        $base = '{"query_by":"person.familyName","sort_by":"person.person:asc","collection":"cabinet","q":"*","page":1,"per_page":%d}';
+
+        // Fits in one page per partition (249 <= 249 per partition with 1 partition)
+        $split = TypesensePartitionedSearch::splitJsonRequest(sprintf($base, 249), 1);
+        $this->assertCount(1, $split);     // 1 partition
+        $this->assertCount(1, $split[0]); // 1 page
+
+        // Just over one page per partition (250 > 249)
+        $split = TypesensePartitionedSearch::splitJsonRequest(sprintf($base, 250), 1, true, 250);
+        $this->assertCount(1, $split);
+        $this->assertCount(2, $split[0]); // needs 2 pages
+
+        // 1000 results, 1 partition => ceil(1000/1/249) = 5 pages
+        $split = TypesensePartitionedSearch::splitJsonRequest(sprintf($base, 1000), 1, true, 1000, 10);
+        $this->assertCount(1, $split);
+        $this->assertCount(5, $split[0]);
+
+        // 1000 results, 2 partitions => ceil(1000/2/249) = 3 pages per partition
+        $split = TypesensePartitionedSearch::splitJsonRequest(sprintf($base, 1000), 2, true, 1000);
+        $this->assertCount(2, $split);
+        $this->assertCount(4, $split[0]);
+        $this->assertCount(4, $split[1]);
+
+        // 1000 results, 4 partitions => ceil(1000/4/249) = 2 pages per partition
+        $split = TypesensePartitionedSearch::splitJsonRequest(sprintf($base, 1000), 4, true, 1000);
+        $this->assertCount(4, $split);
+        $this->assertCount(4, $split[0]);
+    }
+
+    public function testSplitRequestMultiPage(): void
+    {
+        $request = '{
+    "query_by": "person.familyName",
+    "sort_by": "person.person:asc",
+    "collection": "cabinet",
+    "q": "*",
+    "page": 1,
+    "per_page": 1000
+}';
+        // 2 partitions, 1000 results needed => ceil(1000/2/249) = 3 pages per partition
+        $split = TypesensePartitionedSearch::splitJsonRequest($request, 2, true, 1000);
+        $this->assertCount(2, $split);    // 2 partitions
+        $this->assertCount(4, $split[0]); // 4 pages for partition 0
+        $this->assertCount(4, $split[1]); // 4 pages for partition 1
+
+        // Partition 0: pages 1, 2, 3 — all with the same filter
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0][0]->searches[0]->filter_by);
+        $this->assertSame(1, $split[0][0]->searches[0]->page);
+        $this->assertSame(249, $split[0][0]->searches[0]->per_page);
+
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0][1]->searches[0]->filter_by);
+        $this->assertSame(2, $split[0][1]->searches[0]->page);
+
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0][2]->searches[0]->filter_by);
+        $this->assertSame(3, $split[0][2]->searches[0]->page);
+
+        // Partition 1: pages 1, 2, 3
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1][0]->searches[0]->filter_by);
+        $this->assertSame(1, $split[1][0]->searches[0]->page);
+
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1][1]->searches[0]->filter_by);
+        $this->assertSame(2, $split[1][1]->searches[0]->page);
+
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1][2]->searches[0]->filter_by);
+        $this->assertSame(3, $split[1][2]->searches[0]->page);
+    }
+
+    public function testMergeJsonResponsesMultiPage(): void
+    {
+        $request = '{
+    "query_by": "person.familyName",
+    "sort_by": "person.familyName:asc",
+    "collection": "cabinet",
+    "q": "*",
+    "page": 1,
+    "per_page": 1000
+}';
+
+        // Build a response page. In real Typesense all pages of the same partition report the same
+        // $partitionFound (total matching docs in that partition), regardless of page size.
+        $makeResponse = function (int $startIndex, int $count, int $partitionFound, string $collection = 'cabinet'): string {
+            $hits = [];
+            for ($i = 0; $i < $count; ++$i) {
+                $hits[] = ['document' => ['person' => ['familyName' => sprintf('Person%04d', $startIndex + $i)]],
+                    'text_match' => 1];
+            }
+
+            return json_encode(['results' => [
+                [
+                    'facet_counts' => [],
+                    'found' => $partitionFound,
+                    'out_of' => 5000,
+                    'page' => 1,
+                    'request_params' => ['collection_name' => $collection, 'per_page' => 249, 'q' => '*', 'first_q' => '*'],
+                    'search_cutoff' => false,
+                    'search_time_ms' => 10,
+                    'hits' => $hits,
+                ],
+            ]]);
+        };
+
+        // 2 partitions, 3 pages each — nested as [partition][page]
+        // Partition 0 total found = 500, split across pages: 249 + 249 + 2 hits
+        // Partition 1 total found = 500, split across pages: 249 + 249 + 2 hits
+        // Total pool: 1000 hits; merged found = 500 + 500 = 1000
+        // page 1 with per_page=1000 should return all 1000 hits
+        $responses = [
+            // partition 0
+            [
+                $makeResponse(0, 249, 500),   // page 1
+                $makeResponse(249, 249, 500), // page 2
+                $makeResponse(498, 2, 500),   // page 3 (only 2 left)
+            ],
+            // partition 1
+            [
+                $makeResponse(500, 249, 500), // page 1
+                $makeResponse(749, 249, 500), // page 2
+                $makeResponse(998, 2, 500),   // page 3 (only 2 left)
+            ],
+        ];
+
+        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, $responses, 2);
+        // found is taken from page 1 of each partition, then summed across partitions
+        $this->assertSame(1000, $merged->found);
+        // page 1 with per_page=1000 => all 1000 hits returned
+        $this->assertCount(747, $merged->hits);
+        $this->assertSame(1, $merged->page);
     }
 
     public function testSplitSingleSearch(): void
@@ -407,9 +539,10 @@ class TypesensePartitionedSearchTest extends TestCase
     "per_page": 2
 }';
         $split = TypesensePartitionedSearch::splitJsonRequest($request, 2);
-        $this->assertCount(2, $split);
-        $this->assertStringContainsString('partitionKey: [0..49]', $split[0]->searches[0]->filter_by);
-        $this->assertStringContainsString('partitionKey: [50..99]', $split[1]->searches[0]->filter_by);
+        $this->assertCount(2, $split);           // 2 partitions
+        $this->assertCount(1, $split[0]);        // 1 page per partition (per_page=2 < 249)
+        $this->assertStringContainsString('partitionKey: [0..49]', $split[0][0]->searches[0]->filter_by);
+        $this->assertStringContainsString('partitionKey: [50..99]', $split[1][0]->searches[0]->filter_by);
 
         $response = '{"results": [{
     "facet_counts": [
@@ -451,7 +584,7 @@ class TypesensePartitionedSearchTest extends TestCase
     ]
 }]}';
 
-        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, [$response, $response], 2);
+        $merged = TypesensePartitionedSearch::mergeJsonResponses($request, [[$response], [$response]], 2);
         $this->assertCount(1, $merged->facet_counts);
         $this->assertSame(6344, $merged->found);
         $this->assertCount(2, $merged->hits);
