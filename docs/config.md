@@ -10,6 +10,8 @@ dbp_relay_cabinet:
     # The database DSN
     database_url:         ~ # Required
     sync:
+        # Whether automatic background synchronization is enabled
+        enabled:              false
         # Cron expression for when normal/incremental syncs should run
         schedule:             '*/60 * * * *'
         # The time after the last full sync after which a full sync is forced
@@ -23,10 +25,11 @@ dbp_relay_cabinet:
         search_partitions:    1
         # Whether the collection should be split for partitioning (requires a full sync on partition changes)
         search_partitions_split_collection: false
+        # Number of pages to query internally if partitioning is used
+        search_max_partition_pages: 4
         # Number of seconds to cache search results at most
         search_cache_ttl:     3600
     authorization:
-        policies:             []
         roles:
             # Returns true if the user is allowed to use the cabinet API.
             ROLE_USER:            'false'
@@ -54,5 +57,4 @@ dbp_relay_cabinet:
             oidc_client_secret:   ~
             # Whether to send file content and metadata checksums for Blob to check
             send_checksums:       true
-
 ```

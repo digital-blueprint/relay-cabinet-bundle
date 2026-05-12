@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.16
+
+* partition: allow fetching more than one internal page per partition, defaults to up to 996 results now.
+
 ## 0.3.15
 
 * dbp:relay:cabinet:add-fake-files: fix `--file` resulting in filenames containing the filepath instead of the
