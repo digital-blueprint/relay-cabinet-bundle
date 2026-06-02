@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.17
+
+* sync: import all files from the blob bucket to typesense, not just the ones with a specific prefix.
+
 ## 0.3.16
 
 * partition: allow fetching more than one internal page per partition, defaults to up to 996 results now.
