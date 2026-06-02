@@ -100,12 +100,9 @@ class BlobService implements LoggerAwareInterface
      */
     public function getAllFiles(int $perPage = 512): iterable
     {
-        $bucketPrefix = $this->configurationService->getBlobBucketPrefix();
-
         foreach (Pagination::getAllResultsPageNumberBased(
-            function (int $currentPageNumber, int $maxNumItemsPerPage) use ($bucketPrefix) {
+            function (int $currentPageNumber, int $maxNumItemsPerPage) {
                 return $this->blobApi->getFiles($currentPageNumber, $maxNumItemsPerPage, [
-                    BlobApi::PREFIX_OPTION => $bucketPrefix,
                     BlobApi::INCLUDE_DELETE_AT_OPTION => true]);
             }, $perPage) as $blobFile) {
             yield $blobFile;
