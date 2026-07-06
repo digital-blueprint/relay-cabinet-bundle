@@ -42,7 +42,7 @@ class Configuration implements ConfigurationInterface
                         ->end()
                         ->scalarNode('schedule')
                             ->info('Cron expression for when normal/incremental syncs should run')
-                            ->defaultValue('*/60 * * * *')
+                            ->defaultValue('0 * * * *')
                         ->end()
                         ->scalarNode('full_sync_interval')
                             ->info('The time after the last full sync after which a full sync is forced')

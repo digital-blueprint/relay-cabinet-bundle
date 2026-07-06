@@ -13,7 +13,7 @@ dbp_relay_cabinet:
         # Whether automatic background synchronization is enabled
         enabled:              false
         # Cron expression for when normal/incremental syncs should run
-        schedule:             '*/60 * * * *'
+        schedule:             '0 * * * *'
         # The time after the last full sync after which a full sync is forced
         full_sync_interval:   P1W
     typesense:
