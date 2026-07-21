@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.19
 
 * Add opt-in audit logging for signed Blob write URLs
 
