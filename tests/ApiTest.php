@@ -16,5 +16,6 @@ class ApiTest extends ApiTestCase
         self::bootKernel();
         $container = static::getContainer();
         $this->assertNotNull($container);
+        $this->assertTrue($container->has('monolog.logger.dbp_relay_cabinet_audit'));
     }
 }

@@ -93,5 +93,7 @@ class DbpRelayCabinetExtension extends ConfigurableExtension implements PrependE
 
         $this->addQueueMessageClass($container, BlobEventTask::class);
         $this->addQueueMessageClass($container, SyncTask::class);
+
+        $this->registerLoggingChannel($container, 'dbp_relay_cabinet_audit', false);
     }
 }

@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+* Add audit logging for signed Blob write URLs
+
 ## 0.3.18
 
 * Minor config cleanup to avoid Symfony bug with reference.php

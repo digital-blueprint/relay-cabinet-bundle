@@ -68,6 +68,12 @@ services:
     autowire: true
     autoconfigure: true
 
+  Dbp\Relay\CabinetBundle\Blob\BlobSignatureController:
+    autowire: true
+    autoconfigure: true
+    arguments:
+      $auditLogger: '@monolog.logger.dbp_relay_cabinet_audit'
+
   Dbp\Relay\CabinetBundle\PersonSync\DummyPersonSync:
     autowire: true
     autoconfigure: true

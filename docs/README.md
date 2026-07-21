@@ -23,3 +23,4 @@ graph TD
 * [Database](./database.md)
 * [API](./api.md)
 * [CLI Commands](./cli.md)
+* [Logging](./logging.md)
