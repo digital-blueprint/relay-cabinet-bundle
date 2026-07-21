@@ -2,7 +2,7 @@
 
 ## Unreleased
 
-* Add audit logging for signed Blob write URLs
+* Add opt-in audit logging for signed Blob write URLs
 
 ## 0.3.18
 

@@ -4,6 +4,13 @@ The Cabinet bundle provides the `dbp_relay_cabinet_audit` channel. It records
 successful issuance of signed Blob URLs for `POST`, `PATCH`, and `DELETE`, which
 is the point where Cabinet authorizes a user to perform a write operation.
 
+Enable it in the bundle configuration:
+
+```yaml
+dbp_relay_cabinet:
+    audit_logging: true
+```
+
 Records contain the authenticated user identifier (`relay-cabinet-user-id`) and
 the validated Blob URL inputs under `query-parameters`. Existing Blob resources
 are identified separately by `relay-cabinet-blob-id`, and the bucket is recorded

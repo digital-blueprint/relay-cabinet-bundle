@@ -6,6 +6,7 @@ namespace Dbp\Relay\CabinetBundle\Blob;
 
 use Dbp\Relay\BlobLibrary\Api\BlobApiError;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
+use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Dbp\Relay\CoreBundle\API\UserSessionInterface;
 use Psr\Log\LoggerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -17,6 +18,7 @@ class BlobSignatureController extends AbstractController
     public function __construct(
         private readonly BlobService $blobService,
         private readonly AuthorizationService $authorizationService,
+        private readonly ConfigurationService $configurationService,
         private readonly UserSessionInterface $userSession,
         private readonly LoggerInterface $auditLogger)
     {
@@ -33,7 +35,8 @@ class BlobSignatureController extends AbstractController
         $signedUrl = $this->blobService->createSignedUrlForGivenQueryParameters($queryParameters);
         $method = $queryParameters['method'] ?? null;
 
-        if (in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
+        if ($this->configurationService->isAuditLoggingEnabled()
+            && in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
             $this->auditLogger->debug('Issued signed URL for Blob write', $this->createAuditContext($queryParameters));
         }
 

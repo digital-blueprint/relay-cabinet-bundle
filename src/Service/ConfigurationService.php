@@ -28,6 +28,11 @@ class ConfigurationService
         return $this->config['sync']['enabled'];
     }
 
+    public function isAuditLoggingEnabled(): bool
+    {
+        return $this->config['audit_logging'];
+    }
+
     public function getTypesenseApiUrl(): string
     {
         return $this->config['typesense']['api_url'];

@@ -7,6 +7,7 @@ namespace Dbp\Relay\CabinetBundle\Tests;
 use Dbp\Relay\CabinetBundle\Authorization\AuthorizationService;
 use Dbp\Relay\CabinetBundle\Blob\BlobService;
 use Dbp\Relay\CabinetBundle\Blob\BlobSignatureController;
+use Dbp\Relay\CabinetBundle\Service\ConfigurationService;
 use Dbp\Relay\CoreBundle\API\UserSessionInterface;
 use Monolog\Handler\TestHandler;
 use Monolog\Logger;
@@ -19,6 +20,7 @@ use Symfony\Component\HttpFoundation\Request;
 class BlobSignatureControllerTest extends TestCase
 {
     private BlobService&MockObject $blobService;
+    private ConfigurationService $configurationService;
     private TestHandler $handler;
     private BlobSignatureController $controller;
 
@@ -29,10 +31,13 @@ class BlobSignatureControllerTest extends TestCase
         $userSession = $this->createMock(UserSessionInterface::class);
         $userSession->method('isAuthenticated')->willReturn(true);
         $userSession->method('getUserIdentifier')->willReturn('jane.doe@example.com');
+        $this->configurationService = new ConfigurationService();
+        $this->configurationService->setConfig(['audit_logging' => true]);
         $this->handler = new TestHandler();
         $this->controller = new BlobSignatureController(
             $this->blobService,
             $this->createMock(AuthorizationService::class),
+            $this->configurationService,
             $userSession,
             new Logger('audit', [$this->handler])
         );
@@ -122,6 +127,17 @@ class BlobSignatureControllerTest extends TestCase
         } finally {
             $this->assertSame([], $this->handler->getRecords());
         }
+    }
+
+    public function testAuditLoggingIsOptIn(): void
+    {
+        $this->configurationService->setConfig(['audit_logging' => false]);
+        $queryParameters = ['method' => 'DELETE', 'identifier' => '01981db0-8694-73ef-8e96-9d8c180ef6a7'];
+        $this->blobService->method('createSignedUrlForGivenQueryParameters')->willReturn('https://blob.example/signed');
+
+        ($this->controller)($this->createRequest($queryParameters));
+
+        $this->assertSame([], $this->handler->getRecords());
     }
 
     /**
