@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.20
+
 * Audit logging: also record signed Blob read URLs (`GET`, `DOWNLOAD`)
 
 ## 0.3.19
