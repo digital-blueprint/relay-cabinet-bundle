@@ -34,7 +34,7 @@ class Configuration implements ConfigurationInterface
                     ->cannotBeEmpty()
                 ->end()
                 ->booleanNode('audit_logging')
-                    ->info('Whether audit logging for signed Blob write URLs is enabled')
+                    ->info('Whether audit logging for signed Blob read/write URLs is enabled')
                     ->defaultValue(false)
                 ->end()
                 ->arrayNode('sync')

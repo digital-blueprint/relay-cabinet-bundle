@@ -98,20 +98,28 @@ class BlobSignatureControllerTest extends TestCase
         $this->assertSame(['blobUrl' => $signedUrl], json_decode((string) $response->getContent(), true));
         $this->assertCount(1, $this->handler->getRecords());
         $record = $this->handler->getRecords()[0];
-        $this->assertSame('Issued signed URL for Blob write', $record->message);
+        $this->assertSame('Issued signed URL for Blob', $record->message);
         $this->assertSame($expectedContext, $record->context);
     }
 
     #[TestWith(['GET'])]
     #[TestWith(['DOWNLOAD'])]
-    public function testDoesNotLogSignedReadUrlIssuance(string $method): void
+    public function testLogsSignedReadUrlIssuance(string $method): void
     {
         $queryParameters = ['method' => $method, 'identifier' => '01981db0-8694-73ef-8e96-9d8c180ef6a7'];
         $this->blobService->method('createSignedUrlForGivenQueryParameters')->willReturn('https://blob.example/signed');
 
         ($this->controller)($this->createRequest($queryParameters));
 
-        $this->assertSame([], $this->handler->getRecords());
+        $this->assertCount(1, $this->handler->getRecords());
+        $record = $this->handler->getRecords()[0];
+        $this->assertSame('Issued signed URL for Blob', $record->message);
+        $this->assertSame([
+            'relay-cabinet-blob-bucket-id' => 'cabinet',
+            'relay-cabinet-user-id' => 'jane.doe@example.com',
+            'relay-cabinet-blob-id' => '01981db0-8694-73ef-8e96-9d8c180ef6a7',
+            'query-parameters' => ['method' => $method],
+        ], $record->context);
     }
 
     public function testDoesNotLogWhenSignedUrlCreationFails(): void

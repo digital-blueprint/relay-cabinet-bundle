@@ -9,7 +9,7 @@ Created via `./bin/console config:dump-reference DbpRelayCabinetBundle | sed '/^
 dbp_relay_cabinet:
     # The database DSN
     database_url:         ~ # Required
-    # Whether audit logging for signed Blob write URLs is enabled
+    # Whether audit logging for signed Blob read/write URLs is enabled
     audit_logging:        false
     sync:
         # Whether automatic background synchronization is enabled

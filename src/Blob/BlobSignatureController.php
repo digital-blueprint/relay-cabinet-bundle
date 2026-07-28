@@ -33,11 +33,10 @@ class BlobSignatureController extends AbstractController
 
         $queryParameters = $request->query->all();
         $signedUrl = $this->blobService->createSignedUrlForGivenQueryParameters($queryParameters);
-        $method = $queryParameters['method'] ?? null;
 
-        if ($this->configurationService->isAuditLoggingEnabled()
-            && in_array($method, ['POST', 'PATCH', 'DELETE'], true)) {
-            $this->auditLogger->debug('Issued signed URL for Blob write', $this->createAuditContext($queryParameters));
+        if ($this->configurationService->isAuditLoggingEnabled()) {
+            // The requested method is part of the logged query parameters
+            $this->auditLogger->debug('Issued signed URL for Blob', $this->createAuditContext($queryParameters));
         }
 
         return new Response(json_encode([
