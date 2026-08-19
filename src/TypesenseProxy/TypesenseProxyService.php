@@ -56,7 +56,10 @@ class TypesenseProxyService implements LoggerAwareInterface
         if ($isSearch) {
             $connection = new TypesenseConnection($this->config->getTypesenseApiUrl(), $this->config->getTypesenseApiKey());
             $proxyKey = $connection->getClient()->keys->generateScopedSearchKey(
-                $this->config->getTypesenseProxyApiKey(), ['cache_ttl' => $this->config->getTypesenseSearchCacheTtl()]);
+                $this->config->getTypesenseProxyApiKey(), [
+                    'cache_ttl' => $this->config->getTypesenseSearchCacheTtl(),
+                    'exclude_fields' => 'partitionKey',
+                ]);
         } else {
             $proxyKey = $this->config->getTypesenseProxyApiKey();
         }
