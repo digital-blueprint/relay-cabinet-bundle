@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Tests;
 
-use ApiPlatform\Symfony\Bundle\Test\ApiTestCase;
-use Dbp\Relay\CoreBundle\TestUtils\UserAuthTrait;
+use Dbp\Relay\CoreBundle\TestUtils\AbstractApiTest;
 
-class ApiTest extends ApiTestCase
+class ApiTest extends AbstractApiTest
 {
-    use UserAuthTrait;
-
     public function testKernel()
     {
         self::bootKernel();
