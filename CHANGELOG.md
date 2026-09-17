@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.3.21
+
+* tests: stop using UserAuthTrait
+
 ## 0.3.20
 
 * Audit logging: also record signed Blob read URLs (`GET`, `DOWNLOAD`)
