@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+## 0.3.22
+
+* Dependency updates
+
 ## 0.3.21
 
 * tests: stop using UserAuthTrait
