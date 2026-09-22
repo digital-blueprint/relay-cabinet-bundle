@@ -4,9 +4,9 @@ declare(strict_types=1);
 
 namespace Dbp\Relay\CabinetBundle\Tests;
 
-use Dbp\Relay\CoreBundle\TestUtils\AbstractApiTest;
+use Symfony\Bundle\FrameworkBundle\Test\KernelTestCase;
 
-class ApiTest extends AbstractApiTest
+class ApiTest extends KernelTestCase
 {
     public function testKernel()
     {
