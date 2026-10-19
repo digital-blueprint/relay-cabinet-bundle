@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.24
+
 * Add `BlobAuthorizationEvent` for optional authorization restrictions before
   issuing signed Blob URLs; access defaults to "allowed" after the `ROLE_USER`
   check.
