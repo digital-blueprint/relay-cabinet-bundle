@@ -22,10 +22,10 @@ class BlobService implements LoggerAwareInterface
     use LoggerAwareTrait;
 
     private const REQUIRED_QUERY_PARAMETERS = [
-        'POST' => ['method', 'prefix', 'type'],
+        'POST' => ['method', 'prefix', 'type', 'metadata'],
         'GET' => ['method', 'identifier'],
         'DELETE' => ['method', 'identifier'],
-        'PATCH' => ['method', 'identifier'],
+        'PATCH' => ['method', 'identifier', 'metadata'],
         'DOWNLOAD' => ['method', 'identifier'],
     ];
 
@@ -118,31 +118,34 @@ class BlobService implements LoggerAwareInterface
     }
 
     /**
-     * @throws BlobApiError
+     * @param array<string, mixed> $queryParameters
+     *
+     * @throws ApiError
      */
-    public function createSignedUrlForGivenQueryParameters(array $queryParameters): string
+    public function validateSignedUrlQueryParameters(array $queryParameters): void
     {
         $method = $queryParameters['method'] ?? null;
         if ($method === null) {
             throw ApiError::withDetails(Response::HTTP_BAD_REQUEST,
-                "The required parameter 'method' is missing",
-                'cabinet:blob-urls-required-parameter-missing');
+                "The required parameter 'method' is missing");
         }
-        if (false === in_array($method, array_keys(self::REQUIRED_QUERY_PARAMETERS), true)) {
+        if (!is_string($method) || false === in_array($method, array_keys(self::REQUIRED_QUERY_PARAMETERS), true)) {
             throw ApiError::withDetails(Response::HTTP_BAD_REQUEST,
-                "method '$method' is invalid.", 'cabinet:blob-urls-invalid-method');
+                'The method is invalid.');
         }
 
-        if ($method !== 'POST') {
-            $queryParameters['includeDeleteAt'] = '1';
+        foreach ($queryParameters as $value) {
+            if (!is_string($value)) {
+                throw ApiError::withDetails(Response::HTTP_BAD_REQUEST,
+                    'Signed URL parameters must be strings.');
+            }
         }
 
         $queryParametersToCheck = $queryParameters;
         foreach (self::REQUIRED_QUERY_PARAMETERS[$method] as $requiredQueryParameter) {
             if (false === isset($queryParametersToCheck[$requiredQueryParameter])) {
                 throw ApiError::withDetails(Response::HTTP_BAD_REQUEST,
-                    "The required parameter '$requiredQueryParameter' is missing",
-                    'cabinet:blob-urls-required-parameter-missing');
+                    "The required parameter '$requiredQueryParameter' is missing");
             }
             unset($queryParametersToCheck[$requiredQueryParameter]);
         }
@@ -150,9 +153,30 @@ class BlobService implements LoggerAwareInterface
         foreach ($queryParametersToCheck as $key => $value) {
             if (false === in_array($key, self::OPTIONAL_QUERY_PARAMETERS[$method], true)) {
                 throw ApiError::withDetails(Response::HTTP_BAD_REQUEST,
-                    "The parameter '$key' is not defined for method '$method'",
-                    'cabinet:blob-urls-invalid-parameter');
+                    "The parameter '$key' is not defined for method '$method'");
             }
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $queryParameters
+     *
+     * @throws BlobApiError
+     * @throws ApiError
+     */
+    public function createSignedUrlForGivenQueryParameters(array $queryParameters): string
+    {
+        $this->validateSignedUrlQueryParameters($queryParameters);
+        $method = $queryParameters['method'];
+
+        if ($method !== 'POST') {
+            $queryParameters['includeDeleteAt'] = '1';
+        }
+
+        if (isset($queryParameters['metadata'])) {
+            // Bind the URL to the exact metadata string approved by the authorization listener.
+            $queryParameters['metadataHash'] = hash('sha256', $queryParameters['metadata']);
+            unset($queryParameters['metadata']);
         }
 
         $identifier = $queryParameters['identifier'] ?? null;

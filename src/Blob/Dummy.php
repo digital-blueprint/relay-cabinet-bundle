@@ -8,6 +8,7 @@ use ApiPlatform\Metadata\ApiResource;
 use ApiPlatform\Metadata\Post;
 use ApiPlatform\OpenApi\Model\Operation;
 use ApiPlatform\OpenApi\Model\Parameter;
+use ApiPlatform\OpenApi\Model\RequestBody;
 
 #[ApiResource(
     shortName: 'CabinetSyncBlobUrl',
@@ -68,13 +69,29 @@ use ApiPlatform\OpenApi\Model\Parameter;
                         schema: ['type' => 'string'],
                         example: 'P1D'
                     ),
-                ]
+                ],
+                requestBody: new RequestBody(
+                    description: 'Required for Blob POST/PATCH operations. Submit the exact same metadata string to Blob.',
+                    content: new \ArrayObject([
+                        'application/json' => [
+                            'schema' => [
+                                'type' => 'object',
+                                'additionalProperties' => false,
+                                'required' => ['metadata'],
+                                'properties' => [
+                                    'metadata' => ['type' => 'string', 'example' => '{"owner":"jane"}'],
+                                ],
+                            ],
+                        ],
+                    ])
+                )
             ),
             normalizationContext: [
                 'groups' => ['Cabinet:output'],
                 'jsonld_embed_context' => true,
             ],
-            read: false
+            read: false,
+            deserialize: false
         ),
     ],
     routePrefix: '/cabinet',

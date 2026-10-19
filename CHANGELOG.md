@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+* Add `BlobAuthorizationEvent` for optional authorization restrictions before
+  issuing signed Blob URLs; access defaults to "allowed" after the `ROLE_USER`
+  check.
+* Expose decoded old/new metadata and existing/resulting Blob types to
+  authorization listeners.
+* Require metadata in the body of POST/PATCH URL requests and bind it to the
+  signed URL using `metadataHash`.
+
 ## 0.3.23
 
 * Add support for api-platform 5.0
