@@ -62,6 +62,14 @@ use ApiPlatform\OpenApi\Model\RequestBody;
                         example: ''
                     ),
                     new Parameter(
+                        name: 'updateFile',
+                        in: 'query',
+                        description: 'For POST/PATCH, allow file content and filename changes in addition to metadata. Subject to authorization.',
+                        required: false,
+                        schema: ['type' => 'string', 'enum' => ['1', '0'], 'default' => '0'],
+                        example: '0'
+                    ),
+                    new Parameter(
                         name: 'deleteIn',
                         in: 'query',
                         description: 'Iso8601 duration in which the file should be deleted',

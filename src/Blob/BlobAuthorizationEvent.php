@@ -16,7 +16,12 @@ class BlobAuthorizationEvent extends Event
         private readonly mixed $oldMetadata,
         private readonly mixed $newMetadata,
         private readonly ?string $oldType,
-        private readonly ?string $newType)
+        private readonly ?string $newType,
+        private readonly ?string $oldPrefix = null,
+        private readonly ?string $newPrefix = null,
+        private readonly bool $hasOldDeleteAt = false,
+        private readonly bool $hasNewDeleteAt = false,
+        private readonly bool $fileUpdateRequested = false)
     {
     }
 
@@ -53,6 +58,31 @@ class BlobAuthorizationEvent extends Event
     public function getType(): ?string
     {
         return $this->getNewType() ?? $this->oldType;
+    }
+
+    public function getOldPrefix(): ?string
+    {
+        return $this->oldPrefix;
+    }
+
+    public function getNewPrefix(): ?string
+    {
+        return $this->newPrefix;
+    }
+
+    public function hasOldDeleteAt(): bool
+    {
+        return $this->hasOldDeleteAt;
+    }
+
+    public function hasNewDeleteAt(): bool
+    {
+        return $this->hasNewDeleteAt;
+    }
+
+    public function isFileUpdateRequested(): bool
+    {
+        return $this->fileUpdateRequested;
     }
 
     public function grantAccess(): void

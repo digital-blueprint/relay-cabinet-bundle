@@ -30,10 +30,10 @@ class BlobService implements LoggerAwareInterface
     ];
 
     private const OPTIONAL_QUERY_PARAMETERS = [
-        'POST' => ['includeDeleteAt', 'includeData', 'deleteIn'],
+        'POST' => ['includeDeleteAt', 'includeData', 'deleteIn', 'updateFile'],
         'GET' => ['includeDeleteAt', 'includeData'],
         'DELETE' => ['includeDeleteAt'],
-        'PATCH' => ['includeDeleteAt', 'includeData', 'prefix', 'type', 'deleteIn'],
+        'PATCH' => ['includeDeleteAt', 'includeData', 'prefix', 'type', 'deleteIn', 'updateFile'],
         'DOWNLOAD' => ['includeDeleteAt'],
     ];
 
@@ -156,6 +156,18 @@ class BlobService implements LoggerAwareInterface
                     "The parameter '$key' is not defined for method '$method'");
             }
         }
+        if (isset($queryParameters['updateFile']) && !in_array($queryParameters['updateFile'], ['1', '0'], true)) {
+            throw ApiError::withDetails(Response::HTTP_BAD_REQUEST,
+                "The parameter 'updateFile' must be '1' or '0'.");
+        }
+    }
+
+    /**
+     * @param array<string, mixed> $queryParameters Validated signing parameters
+     */
+    public static function isFileUpdateRequested(array $queryParameters): bool
+    {
+        return ($queryParameters['updateFile'] ?? '0') === '1';
     }
 
     /**
@@ -168,6 +180,12 @@ class BlobService implements LoggerAwareInterface
     {
         $this->validateSignedUrlQueryParameters($queryParameters);
         $method = $queryParameters['method'];
+
+        if (in_array($method, ['POST', 'PATCH'], true)) {
+            $queryParameters['allowedFields'] = self::isFileUpdateRequested($queryParameters)
+                ? 'metadata,file,fileName' : 'metadata';
+        }
+        unset($queryParameters['updateFile']);
 
         if ($method !== 'POST') {
             $queryParameters['includeDeleteAt'] = '1';

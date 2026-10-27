@@ -53,6 +53,8 @@ class BlobSignatureController extends AbstractController
         }
         $oldMetadata = null;
         $oldType = null;
+        $oldPrefix = null;
+        $hasOldDeleteAt = false;
         if ($queryParameters['method'] !== 'POST') {
             $blobFile = $this->blobService->getFile($queryParameters['identifier']);
             try {
@@ -62,15 +64,26 @@ class BlobSignatureController extends AbstractController
                 throw new HttpException(Response::HTTP_INTERNAL_SERVER_ERROR, 'Stored Blob metadata contains invalid JSON.', $exception);
             }
             $oldType = $blobFile->getType();
+            $oldPrefix = $blobFile->getPrefix();
+            $hasOldDeleteAt = $blobFile->getDeleteAt() !== null;
         }
+        $isWrite = in_array($queryParameters['method'], ['POST', 'PATCH'], true);
+        // Blob ignores falsy prefixes, including '' and '0', rather than clearing them.
+        $newPrefix = ($queryParameters['prefix'] ?? null) ?: $oldPrefix;
+        $deleteIn = $queryParameters['deleteIn'] ?? null;
+        $hasNewDeleteAt = $deleteIn === null ? $hasOldDeleteAt : !in_array($deleteIn, ['null', ''], true);
         $event = new BlobAuthorizationEvent(
             $queryParameters['method'],
             $queryParameters['identifier'] ?? null,
             $oldMetadata,
             $newMetadata,
             $oldType,
-            in_array($queryParameters['method'], ['POST', 'PATCH'], true)
-                ? ($queryParameters['type'] ?? $oldType) : null
+            $isWrite ? ($queryParameters['type'] ?? $oldType) : null,
+            $oldPrefix,
+            $newPrefix,
+            $hasOldDeleteAt,
+            $hasNewDeleteAt,
+            BlobService::isFileUpdateRequested($queryParameters)
         );
         $this->eventDispatcher->dispatch($event);
         if (!$event->isAccessGranted()) {

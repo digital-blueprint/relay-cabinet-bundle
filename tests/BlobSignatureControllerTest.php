@@ -24,6 +24,7 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 class BlobSignatureControllerTest extends TestCase
 {
     private BlobService&MockObject $blobService;
+    private BlobFile $blobFile;
     private ConfigurationService $configurationService;
     private TestHandler $handler;
     private BlobSignatureController $controller;
@@ -33,10 +34,12 @@ class BlobSignatureControllerTest extends TestCase
     {
         $this->blobService = $this->createMock(BlobService::class);
         $this->blobService->method('getBucketIdentifier')->willReturn('cabinet');
-        $blobFile = new BlobFile();
-        $blobFile->setMetadata('{"owner":"jane.doe@example.invalid"}');
-        $blobFile->setType('existing-document');
-        $this->blobService->method('getFile')->willReturn($blobFile);
+        $this->blobFile = new BlobFile();
+        $this->blobFile->setMetadata('{"owner":"jane.doe@example.invalid"}');
+        $this->blobFile->setType('existing-document');
+        $this->blobFile->setPrefix('existing-prefix');
+        $this->blobFile->setDeleteAt('2026-12-01T12:00:00Z');
+        $this->blobService->method('getFile')->willReturn($this->blobFile);
         $this->eventDispatcher = new EventDispatcher();
         $userSession = $this->createMock(UserSessionInterface::class);
         $userSession->method('isAuthenticated')->willReturn(true);
@@ -201,6 +204,117 @@ class BlobSignatureControllerTest extends TestCase
         } finally {
             $this->assertSame([], $this->handler->getRecords());
         }
+    }
+
+    /**
+     * @return iterable<string, array{array<string, string>, ?string, bool, bool}>
+     */
+    public static function authorizationParameterProvider(): iterable
+    {
+        yield 'POST with duration' => [
+            ['method' => 'POST', 'prefix' => 'new-prefix', 'deleteIn' => 'P1D'],
+            'new-prefix', false, true,
+        ];
+        yield 'POST without duration' => [
+            ['method' => 'POST', 'prefix' => ''],
+            null, false, false,
+        ];
+        yield 'PATCH omitted parameters' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id'],
+            'existing-prefix', true, true,
+        ];
+        yield 'PATCH new prefix and duration' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id', 'prefix' => 'new-prefix', 'deleteIn' => 'PT1H'],
+            'new-prefix', true, true,
+        ];
+        yield 'PATCH empty prefix and deletion clearing' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id', 'prefix' => '', 'deleteIn' => ''],
+            'existing-prefix', true, false,
+        ];
+        yield 'PATCH null deletion clearing' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id', 'deleteIn' => 'null'],
+            'existing-prefix', true, false,
+        ];
+        yield 'PATCH zero prefix' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id', 'prefix' => '0'],
+            'existing-prefix', true, true,
+        ];
+        yield 'PATCH unscheduled deletion unchanged' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id'],
+            'existing-prefix', false, false,
+        ];
+        yield 'PATCH schedules deletion' => [
+            ['method' => 'PATCH', 'identifier' => 'file-id', 'deleteIn' => 'P1D'],
+            'existing-prefix', false, true,
+        ];
+        yield 'GET preserves stored attributes' => [
+            ['method' => 'GET', 'identifier' => 'file-id'],
+            'existing-prefix', true, true,
+        ];
+    }
+
+    /**
+     * @param array<string, string> $queryParameters
+     */
+    #[DataProvider('authorizationParameterProvider')]
+    public function testExposesTypedAuthorizationParameters(array $queryParameters, ?string $newPrefix, bool $hasOldDeleteAt, bool $hasNewDeleteAt): void
+    {
+        $this->blobFile->setDeleteAt($hasOldDeleteAt ? '2026-12-01T12:00:00Z' : null);
+        if ($queryParameters['method'] === 'POST') {
+            $queryParameters += ['type' => 'new-document', 'metadata' => '{}'];
+            $this->blobService->expects($this->never())->method('getFile');
+        }
+        $this->blobService->expects($this->once())->method('validateSignedUrlQueryParameters')
+            ->with($queryParameters);
+        $dispatched = false;
+        $this->eventDispatcher->addListener(BlobAuthorizationEvent::class, function (BlobAuthorizationEvent $event) use ($queryParameters, $newPrefix, $hasOldDeleteAt, $hasNewDeleteAt, &$dispatched): void {
+            $isPost = $queryParameters['method'] === 'POST';
+            $this->assertSame($isPost ? null : 'existing-prefix', $event->getOldPrefix());
+            $this->assertSame($newPrefix, $event->getNewPrefix());
+            $this->assertSame($hasOldDeleteAt, $event->hasOldDeleteAt());
+            $this->assertSame($hasNewDeleteAt, $event->hasNewDeleteAt());
+            $dispatched = true;
+        });
+        $this->blobService->expects($this->once())->method('createSignedUrlForGivenQueryParameters')
+            ->with($queryParameters)->willReturn('https://blob.invalid/signed');
+
+        ($this->controller)($this->createRequest($queryParameters));
+
+        $this->assertTrue($dispatched);
+    }
+
+    public function testAuthorizationEventConstructorRemainsCompatible(): void
+    {
+        $event = new BlobAuthorizationEvent('PATCH', 'file-id', null, null, 'existing-document', 'new-document');
+
+        $this->assertNull($event->getOldPrefix());
+        $this->assertNull($event->getNewPrefix());
+        $this->assertFalse($event->hasOldDeleteAt());
+        $this->assertFalse($event->hasNewDeleteAt());
+        $this->assertFalse($event->isFileUpdateRequested());
+    }
+
+    #[TestWith([null, false])]
+    #[TestWith(['1', true])]
+    public function testListenerCanDenyRequestedFileUpdates(?string $updateFile, bool $denied): void
+    {
+        $parameters = ['method' => 'PATCH', 'identifier' => 'file-id', 'metadata' => '{}'];
+        if ($updateFile !== null) {
+            $parameters['updateFile'] = $updateFile;
+        }
+        $this->eventDispatcher->addListener(BlobAuthorizationEvent::class, function (BlobAuthorizationEvent $event) use ($denied): void {
+            $this->assertSame($denied, $event->isFileUpdateRequested());
+            if ($event->isFileUpdateRequested()) {
+                $event->denyAccess();
+            }
+        });
+        $this->blobService->expects($denied ? $this->never() : $this->once())->method('createSignedUrlForGivenQueryParameters')
+            ->with($parameters)->willReturn('https://blob.invalid/signed');
+        if ($denied) {
+            $this->expectException(HttpException::class);
+        }
+
+        ($this->controller)($this->createRequest($parameters));
     }
 
     /**
