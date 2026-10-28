@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+## 0.3.25
+
+* Restrict signed Blob POST/PATCH URLs to metadata-only changes by default;
+  require `updateFile=1` to allow file uploads and filename changes, including
+  uploads of new files.
+* Expose existing/resulting prefixes, scheduled deletion state, and file update
+  intent to Blob authorization listeners.
+* Require `dbp/relay-blob-bundle` 0.2.19 or newer for signed field restrictions.
+
 ## 0.3.24
 
 * Add `BlobAuthorizationEvent` for optional authorization restrictions before
