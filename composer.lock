@@ -404,16 +404,16 @@
         },
         {
             "name": "api-platform/metadata",
-            "version": "v5.0.7",
+            "version": "v5.0.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/api-platform/metadata.git",
-                "reference": "6360ddc4ec4219a1b335a0c3b0eb4a98ed7a47a1"
+                "reference": "8f019426a57392eb413c563af4eca614b68edeb7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/api-platform/metadata/zipball/6360ddc4ec4219a1b335a0c3b0eb4a98ed7a47a1",
-                "reference": "6360ddc4ec4219a1b335a0c3b0eb4a98ed7a47a1",
+                "url": "https://api.github.com/repos/api-platform/metadata/zipball/8f019426a57392eb413c563af4eca614b68edeb7",
+                "reference": "8f019426a57392eb413c563af4eca614b68edeb7",
                 "shasum": ""
             },
             "require": {
@@ -496,14 +496,14 @@
                 "swagger"
             ],
             "support": {
-                "source": "https://github.com/api-platform/metadata/tree/v5.0.7"
+                "source": "https://github.com/api-platform/metadata/tree/v5.0.9"
             },
-            "time": "2026-11-06T08:25:24+00:00",
-            "published-time": "2026-11-13T14:12:07+00:00"
+            "time": "2026-11-16T09:48:48+00:00",
+            "published-time": "2026-11-20T12:24:09+00:00"
         },
         {
             "name": "api-platform/openapi",
-            "version": "v5.0.7",
+            "version": "v5.0.9",
             "source": {
                 "type": "git",
                 "url": "https://github.com/api-platform/openapi.git",
@@ -588,10 +588,10 @@
                 "swagger"
             ],
             "support": {
-                "source": "https://github.com/api-platform/openapi/tree/v5.0.7"
+                "source": "https://github.com/api-platform/openapi/tree/v5.0.9"
             },
             "time": "2026-11-06T08:24:38+00:00",
-            "published-time": "2026-11-13T14:11:04+00:00"
+            "published-time": "2026-11-20T12:24:40+00:00"
         },
         {
             "name": "api-platform/serializer",
@@ -1188,16 +1188,16 @@
         },
         {
             "name": "dbp/relay-blob-bundle",
-            "version": "v0.2.20",
+            "version": "v0.2.21",
             "source": {
                 "type": "git",
                 "url": "https://github.com/digital-blueprint/relay-blob-bundle.git",
-                "reference": "99e0c46561071b7abbf22e179cae03e8af5a2f5c"
+                "reference": "9f31f2538f34a8f95763ee9c5093bf1d1214a8cb"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/99e0c46561071b7abbf22e179cae03e8af5a2f5c",
-                "reference": "99e0c46561071b7abbf22e179cae03e8af5a2f5c",
+                "url": "https://api.github.com/repos/digital-blueprint/relay-blob-bundle/zipball/9f31f2538f34a8f95763ee9c5093bf1d1214a8cb",
+                "reference": "9f31f2538f34a8f95763ee9c5093bf1d1214a8cb",
                 "shasum": ""
             },
             "require": {
@@ -1260,10 +1260,10 @@
             "description": "A bundle for file-serving, persisting and managing",
             "support": {
                 "issues": "https://github.com/digital-blueprint/relay-blob-bundle/issues",
-                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.2.20"
+                "source": "https://github.com/digital-blueprint/relay-blob-bundle/tree/v0.2.21"
             },
-            "time": "2026-10-29T10:51:21+00:00",
-            "published-time": "2026-10-29T10:53:35+00:00"
+            "time": "2026-11-16T15:31:30+00:00",
+            "published-time": "2026-11-16T15:33:00+00:00"
         },
         {
             "name": "dbp/relay-blob-library",
